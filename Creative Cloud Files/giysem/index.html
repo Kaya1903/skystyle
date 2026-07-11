@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>SkyStyle</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧥</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="stage">
+    <div class="phone" id="phone">
+      <main class="screen" id="screen" aria-live="polite"></main>
+      <nav class="bottom-nav" id="bottom-nav">
+        <button class="nav-btn" data-tab="today" aria-label="Bugün">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke-linecap="round"/></svg>
+          <span>Bugün</span>
+        </button>
+        <button class="nav-btn" data-tab="wardrobe" aria-label="Dolap">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l-3 2.6M12 3l3 2.6M12 3v4" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 5.6L3.5 9.4C3.2 9.6 3 9.9 3 10.3V20a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-9.7c0-.4-.2-.7-.5-.9l-6.1-3.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 5.6a2.4 2.4 0 0 0 4.8 0" stroke-linecap="round"/></svg>
+          <span>Dolap</span>
+        </button>
+        <button class="nav-btn" data-tab="week" aria-label="Hafta">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="4.5" width="17" height="16" rx="2.4"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke-linecap="round"/><path d="M8.5 13.5h1.4M14 13.5h1.5M8.5 17h1.4M14 17h1.5" stroke-linecap="round"/></svg>
+          <span>Hafta</span>
+        </button>
+        <button class="nav-btn" data-tab="profile" aria-label="Profil">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.5 20c0-3.6 3.4-6.2 7.5-6.2s7.5 2.6 7.5 6.2" stroke-linecap="round"/></svg>
+          <span>Profil</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

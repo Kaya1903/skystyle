@@ -1,0 +1,572 @@
+import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
+import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto } from './wardrobe.js';
+import { generateOutfit } from './outfit.js';
+import { t } from './i18n.js';
+import { loadProfile, saveProfile, clearProfile } from './profile.js';
+import { getSmartTip } from './ai.js';
+import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
+import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
+import { renderWeekScreen, attachWeekHandlers } from './render_week.js';
+import { renderProfileScreen, attachProfileHandlers } from './render_profile.js';
+import { renderCitySheet, attachCitySheetHandlers } from './render_city.js';
+import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboarding.js';
+
+const CITY_KEY = 'giysem_city_v1';
+const LANG_KEY = 'giysem_lang_v1';
+const FALLBACK_CITY = 'Warsaw';
+
+const savedProfile = loadProfile();
+
+export const state = {
+  activeTab: 'today',
+  gender: savedProfile ? savedProfile.gender : 'unisex',
+  lang: (localStorage.getItem(LANG_KEY) === 'en') ? 'en' : 'tr',
+  city: null,
+  forecastRaw: null,
+  loading: true,
+  error: null,
+  wardrobe: loadWardrobe(),
+  wardrobeFilter: 'all',
+  wardrobeSearch: '',
+  citySheetOpen: false,
+  citySheetResults: [],
+  citySheetLoading: false,
+  citySheetMsg: '',
+  citySheetQuery: '',
+  citySheetInputFocused: false,
+  editorItem: null,
+  editorOpen: false,
+
+  profile: savedProfile,
+  screen: savedProfile ? 'app' : 'onboarding',
+  onboardStep: 'welcome',
+  onboardFromCitySheet: false,
+  onboardLocating: false,
+  onboardLocationMsg: '',
+  profileDraft: { name: '', gender: 'unisex', styleVibe: 'casual' },
+  profileNameError: false,
+  toast: null,
+  smartTip: null,
+  smartTipLoading: false,
+  smartTipKey: null,
+  avatarPickerOpen: false,
+};
+
+let toastTimer = null;
+const SMART_TIP_CACHE_KEY = 'giysem_smart_tip_v1';
+
+const screenEl = document.getElementById('screen');
+const navEl = document.getElementById('bottom-nav');
+document.documentElement.lang = state.lang;
+
+export function setState(patch) {
+  Object.assign(state, patch);
+}
+
+export function setLang(lang) {
+  if (state.lang === lang) return;
+  state.lang = lang;
+  localStorage.setItem(LANG_KEY, lang);
+  document.documentElement.lang = lang;
+  render();
+}
+
+export async function refetchForecast() {
+  if (!state.city) return;
+  try {
+    state.loading = true;
+    state.error = null;
+    render();
+    const raw = await fetchForecast(state.city.lat, state.city.lon);
+    state.forecastRaw = raw;
+    state.loading = false;
+    render();
+  } catch (e) {
+    state.loading = false;
+    state.error = t(state.lang, 'error_generic');
+    render();
+  }
+}
+
+export async function chooseCity(city, persist = true) {
+  if (state.onboardFromCitySheet) {
+    state.onboardFromCitySheet = false;
+    state.citySheetOpen = false;
+    await finishOnboarding(city);
+    return;
+  }
+  state.city = city;
+  if (persist) localStorage.setItem(CITY_KEY, JSON.stringify(city));
+  state.citySheetOpen = false;
+  await refetchForecast();
+}
+
+async function initCity() {
+  const saved = localStorage.getItem(CITY_KEY);
+  if (saved) {
+    try {
+      state.city = JSON.parse(saved);
+      await refetchForecast();
+      return;
+    } catch { /* ignore */ }
+  }
+
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        state.city = await locateFromCoords(pos.coords.latitude, pos.coords.longitude);
+        await refetchForecast();
+      },
+      async () => {
+        await useFallbackCity();
+      },
+      { timeout: 10000, maximumAge: 300000 }
+    );
+  } else {
+    await useFallbackCity();
+  }
+}
+
+// Resolves device coordinates to a real place name when possible, falling back
+// to a generic "My location" label if reverse geocoding is unavailable/fails.
+async function locateFromCoords(lat, lon) {
+  const base = { admin: '', lat, lon, isGeo: true };
+  try {
+    const place = await reverseGeocode(lat, lon, state.lang);
+    if (place && place.name) return { ...base, name: place.name, admin: place.admin };
+  } catch { /* fall through to generic label */ }
+  return { ...base, name: t(state.lang, 'my_location') };
+}
+
+async function useFallbackCity() {
+  try {
+    const c = await geocodeSingle(FALLBACK_CITY, state.lang);
+    state.city = { name: c.name, admin: c.admin, lat: c.lat, lon: c.lon };
+    await refetchForecast();
+  } catch {
+    state.loading = false;
+    state.error = t(state.lang, 'error_forecast');
+    render();
+  }
+}
+
+export function switchTab(tab) {
+  if (state.activeTab === tab) return;
+  state.activeTab = tab;
+  render();
+}
+
+export function setGender(g) {
+  if (state.gender === g) return;
+  state.gender = g;
+  render();
+}
+
+export function openCitySheet() {
+  state.citySheetOpen = true;
+  state.citySheetResults = [];
+  state.citySheetMsg = '';
+  render();
+}
+
+export function closeCitySheet() {
+  state.citySheetOpen = false;
+  render();
+}
+
+export async function searchCity(query) {
+  state.citySheetQuery = query;
+  if (!query || query.trim().length < 2) {
+    state.citySheetResults = [];
+    render();
+    return;
+  }
+  state.citySheetLoading = true;
+  render();
+  try {
+    const results = await geocodeCity(query.trim(), state.lang);
+    state.citySheetResults = results;
+    state.citySheetMsg = results.length ? '' : t(state.lang, 'city_not_found');
+  } catch {
+    state.citySheetMsg = t(state.lang, 'search_failed');
+    state.citySheetResults = [];
+  }
+  state.citySheetLoading = false;
+  render();
+}
+
+export async function useGeolocation() {
+  if (!('geolocation' in navigator)) {
+    state.citySheetMsg = t(state.lang, 'geo_unsupported');
+    render();
+    return;
+  }
+  state.citySheetLoading = true;
+  state.citySheetMsg = '';
+  render();
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const place = await locateFromCoords(pos.coords.latitude, pos.coords.longitude);
+      await chooseCity(place);
+    },
+    () => {
+      state.citySheetLoading = false;
+      state.citySheetMsg = t(state.lang, 'location_denied');
+      render();
+    },
+    { timeout: 10000 }
+  );
+}
+
+export function saveWardrobeItem(item) {
+  state.wardrobe = addOrUpdateItem(state.wardrobe, item);
+  render();
+}
+
+export function deleteWardrobeItem(id) {
+  state.wardrobe = removeItem(state.wardrobe, id);
+  render();
+}
+
+export { newItemId, resizePhoto };
+
+export function openEditor(item) {
+  state.editorItem = item;
+  state.editorOpen = true;
+  render();
+}
+
+export function closeEditor() {
+  state.editorOpen = false;
+  state.editorItem = null;
+  render();
+}
+
+export function setWardrobeFilter(f) {
+  state.wardrobeFilter = f;
+  render();
+}
+
+export function setWardrobeSearch(q) {
+  state.wardrobeSearch = q;
+  render();
+}
+
+// ---------------- Onboarding ----------------
+
+export function goToOnboardStep(step) {
+  state.onboardStep = step;
+  state.onboardLocationMsg = '';
+  render();
+}
+
+export function backToProfileStep() {
+  state.onboardStep = 'profile';
+  state.onboardLocationMsg = '';
+  render();
+}
+
+export function submitProfileStep(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) {
+    state.profileNameError = true;
+    render();
+    return;
+  }
+  state.profileDraft.name = trimmed;
+  state.profileNameError = false;
+  goToOnboardStep('location');
+}
+
+export function openCityFromOnboarding() {
+  state.onboardFromCitySheet = true;
+  openCitySheet();
+}
+
+export async function useLocationForOnboarding() {
+  if (!('geolocation' in navigator)) {
+    state.onboardLocationMsg = t(state.lang, 'geo_unsupported');
+    render();
+    return;
+  }
+  state.onboardLocating = true;
+  state.onboardLocationMsg = '';
+  render();
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const place = await locateFromCoords(pos.coords.latitude, pos.coords.longitude);
+      await finishOnboarding(place);
+    },
+    () => {
+      state.onboardLocating = false;
+      state.onboardLocationMsg = t(state.lang, 'location_denied');
+      render();
+    },
+    { timeout: 10000 }
+  );
+}
+
+async function finishOnboarding(city) {
+  const profile = { name: state.profileDraft.name, gender: state.profileDraft.gender, styleVibe: state.profileDraft.styleVibe || 'casual' };
+  saveProfile(profile);
+  state.profile = profile;
+  state.gender = profile.gender;
+  state.city = city;
+  localStorage.setItem(CITY_KEY, JSON.stringify(city));
+  state.screen = 'app';
+  state.activeTab = 'today';
+  state.onboardLocating = false;
+  await refetchForecast();
+}
+
+export function showToast(message) {
+  state.toast = message;
+  render();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    state.toast = null;
+    render();
+  }, 2200);
+}
+
+export function updateProfileGender(g) {
+  if (!state.profile || state.profile.gender === g) return;
+  state.profile = { ...state.profile, gender: g };
+  state.gender = g;
+  saveProfile(state.profile);
+  render();
+}
+
+export function saveProfileName(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed || !state.profile) return;
+  state.profile = { ...state.profile, name: trimmed };
+  saveProfile(state.profile);
+  showToast(t(state.lang, 'profile_saved'));
+}
+
+export function updateProfileStyleVibe(vibe) {
+  if (!state.profile || state.profile.styleVibe === vibe) return;
+  state.profile = { ...state.profile, styleVibe: vibe };
+  saveProfile(state.profile);
+  render();
+}
+
+export function toggleAvatarPicker() {
+  state.avatarPickerOpen = !state.avatarPickerOpen;
+  render();
+}
+
+export function setAvatarColor(key) {
+  if (!state.profile) return;
+  state.profile = { ...state.profile, avatarColor: key, avatarPhoto: null };
+  saveProfile(state.profile);
+  render();
+}
+
+export async function setAvatarPhotoFile(file) {
+  if (!state.profile || !file) return;
+  const dataUrl = await resizePhoto(file, 240);
+  state.profile = { ...state.profile, avatarPhoto: dataUrl };
+  saveProfile(state.profile);
+  render();
+}
+
+export function removeAvatarPhoto() {
+  if (!state.profile) return;
+  state.profile = { ...state.profile, avatarPhoto: null };
+  saveProfile(state.profile);
+  render();
+}
+
+export function resetProfile() {
+  clearProfile();
+  localStorage.removeItem(CITY_KEY);
+  state.profile = null;
+  state.city = null;
+  state.forecastRaw = null;
+  state.loading = true;
+  state.profileDraft = { name: '', gender: 'unisex', styleVibe: 'casual' };
+  state.avatarPickerOpen = false;
+  state.screen = 'onboarding';
+  state.onboardStep = 'welcome';
+  render();
+}
+
+// ---------------- Render orchestration ----------------
+
+function computeOutfitFor(dayOffset) {
+  if (!state.forecastRaw) return null;
+  const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
+  const outfit = generateOutfit(
+    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang },
+    state.wardrobe
+  );
+  const tip = eveningTip(dayView, state.lang);
+  return { dayView, outfit, tip };
+}
+
+function computeWeekView() {
+  if (!state.forecastRaw) return [];
+  return buildWeekView(state.forecastRaw, state.lang);
+}
+
+function loadTipCache() {
+  try {
+    return JSON.parse(localStorage.getItem(SMART_TIP_CACHE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function rememberTip(key, tip) {
+  const cache = loadTipCache();
+  cache[key] = tip;
+  const keys = Object.keys(cache);
+  if (keys.length > 20) delete cache[keys[0]];
+  localStorage.setItem(SMART_TIP_CACHE_KEY, JSON.stringify(cache));
+}
+
+// Fetches (or reuses a cached) AI styling tip for today's exact context. Cheap to
+// call on every render — it's a no-op once the tip for the current key is loaded
+// or already in flight, so it only ever hits the network once per day/city/band/style.
+function ensureSmartTip(dayView, outfit) {
+  const cityName = state.city ? state.city.name : 'unknown';
+  const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
+  const key = [dayView.date, cityName, outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
+  if (state.smartTipKey === key) return;
+  state.smartTipKey = key;
+
+  const cache = loadTipCache();
+  if (cache[key]) {
+    state.smartTip = cache[key];
+    state.smartTipLoading = false;
+    return;
+  }
+
+  state.smartTip = null;
+  state.smartTipLoading = true;
+  const wardrobeSummary = state.wardrobe.slice(0, 12).map(i => i.name).join(', ');
+  getSmartTip({
+    lang: state.lang,
+    city: cityName,
+    feelsLike: dayView.hero.feelsLike,
+    condition: dayView.hero.condition,
+    wind: dayView.hero.wind,
+    rain: dayView.hero.rain,
+    gender: state.gender,
+    styleVibe,
+    wardrobeSummary,
+  }).then(tip => {
+    if (state.smartTipKey !== key) return;
+    state.smartTip = tip;
+    state.smartTipLoading = false;
+    rememberTip(key, tip);
+    render();
+  }).catch(() => {
+    if (state.smartTipKey !== key) return;
+    state.smartTip = null;
+    state.smartTipLoading = false;
+    render();
+  });
+}
+
+// Rebuilding a container's innerHTML destroys and recreates any focused <input>
+// inside it, which fires a synchronous native blur on the old node — that made
+// per-component focus/blur flag tracking unreliable (the flag got cleared by the
+// very blur the rebuild caused, before the new input could reclaim it). Capturing
+// activeElement right before the rebuild and restoring it by id afterwards sidesteps
+// that race entirely.
+function withFocusPreserved(container, updateFn) {
+  const active = document.activeElement;
+  const isInside = active && container.contains(active);
+  const id = isInside ? active.id : null;
+  const selStart = isInside && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+
+  updateFn();
+
+  if (id) {
+    const el = container.querySelector('#' + CSS.escape(id));
+    if (el) {
+      el.focus();
+      if (selStart != null && typeof el.setSelectionRange === 'function') {
+        try { el.setSelectionRange(selStart, selStart); } catch { /* not a text-selectable input */ }
+      }
+    }
+  }
+}
+
+export function render() {
+  navEl.style.display = state.screen === 'onboarding' ? 'none' : '';
+
+  screenEl.classList.remove('screen-enter');
+  void screenEl.offsetWidth;
+  screenEl.classList.add('screen-enter');
+
+  if (state.screen === 'onboarding') {
+    withFocusPreserved(screenEl, () => {
+      screenEl.innerHTML = renderOnboardingScreen(state);
+      attachOnboardingHandlers(screenEl);
+    });
+    renderOverlays();
+    return;
+  }
+
+  navEl.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === state.activeTab);
+    const label = btn.querySelector('span');
+    const text = t(state.lang, 'tab_' + btn.dataset.tab);
+    if (label) label.textContent = text;
+    btn.setAttribute('aria-label', text);
+  });
+
+  withFocusPreserved(screenEl, () => {
+    if (state.activeTab === 'today') {
+      const data = computeOutfitFor(0);
+      if (data) ensureSmartTip(data.dayView, data.outfit);
+      screenEl.innerHTML = renderTodayScreen({ dayOffset: 0, state, data });
+      attachTodayHandlers(screenEl);
+    } else if (state.activeTab === 'week') {
+      screenEl.innerHTML = renderWeekScreen({ ...state, weekView: computeWeekView() });
+      attachWeekHandlers(screenEl);
+    } else if (state.activeTab === 'wardrobe') {
+      screenEl.innerHTML = renderWardrobeScreen(state);
+      attachWardrobeHandlers(screenEl);
+    } else if (state.activeTab === 'profile') {
+      screenEl.innerHTML = renderProfileScreen(state);
+      attachProfileHandlers(screenEl);
+    }
+  });
+
+  renderOverlays();
+}
+
+function renderOverlays() {
+  let overlayRoot = document.getElementById('overlay-root');
+  if (!overlayRoot) {
+    overlayRoot = document.createElement('div');
+    overlayRoot.id = 'overlay-root';
+    document.getElementById('phone').appendChild(overlayRoot);
+  }
+  withFocusPreserved(overlayRoot, () => {
+    let html = '';
+    html += renderCitySheet(state);
+    html += renderEditorSheet(state);
+    html += `<div class="toast ${state.toast ? 'toast-show' : ''}">${state.toast || ''}</div>`;
+    overlayRoot.innerHTML = html;
+    attachCitySheetHandlers(overlayRoot);
+    attachEditorHandlers(overlayRoot);
+  });
+}
+
+navEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('.nav-btn');
+  if (btn) switchTab(btn.dataset.tab);
+});
+
+if (state.screen === 'app') {
+  initCity();
+} else {
+  state.loading = false;
+}
+render();

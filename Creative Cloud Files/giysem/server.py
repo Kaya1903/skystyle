@@ -1,0 +1,210 @@
+"""Server for SkyStyle: serves the static app and proxies photo analysis /
+style-tip requests to the Anthropic API so the API key never reaches the browser.
+
+Usage:
+    ANTHROPIC_API_KEY=sk-ant-... python3 server.py
+
+Without ANTHROPIC_API_KEY set, the app still runs normally — only the
+AI features (photo suggestions, smart daily tip) are disabled.
+
+Optionally set SITE_PASSWORD to gate the whole site behind a single shared
+password (HTTP Basic Auth — the browser will show its own login prompt).
+Leave SITE_PASSWORD unset to keep the site open to anyone with the link.
+"""
+
+import base64
+import functools
+import hmac
+import http.server
+import json
+import os
+import socketserver
+import urllib.error
+import urllib.request
+
+PORT = int(os.environ.get('PORT', 8420))
+API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001')
+SITE_PASSWORD = os.environ.get('SITE_PASSWORD')
+ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
+
+ANALYZE_PROMPT = (
+    'You are looking at a photo of a single clothing item. Reply with ONLY a compact '
+    'JSON object (no prose, no markdown code fences) matching exactly this schema: '
+    '{"name": string (short product name in Turkish, e.g. "Gri örgü kazak"), '
+    '"category": one of "ust" | "ustune" | "dis" | "alt" | "ayak" | "yanina" '
+    '(ust=top, ustune=mid-layer, dis=outerwear, alt=bottom, ayak=shoes, yanina=accessory), '
+    '"warmth": integer 1-5 (1=very light/summer fabric, 5=thick winter piece), '
+    '"rainOk": boolean (true if this item is water-resistant or suede/fabric-safe for light rain), '
+    '"windproof": boolean (true only if this is a windproof outer layer)}'
+)
+
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def _site_authorized(self):
+        if not SITE_PASSWORD:
+            return True
+        auth = self.headers.get('Authorization', '')
+        if not auth.startswith('Basic '):
+            return False
+        try:
+            decoded = base64.b64decode(auth[6:]).decode('utf-8')
+        except Exception:
+            return False
+        _, _, password = decoded.partition(':')
+        return hmac.compare_digest(password, SITE_PASSWORD)
+
+    def _send_auth_challenge(self):
+        body = b'Password required.'
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Basic realm="SkyStyle"')
+        self.send_header('Content-Type', 'text/plain')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        if not self._site_authorized():
+            self._send_auth_challenge()
+            return
+        super().do_GET()
+
+    def do_POST(self):
+        if not self._site_authorized():
+            self._send_auth_challenge()
+            return
+        if self.path == '/api/analyze-photo':
+            self._handle_analyze()
+        elif self.path == '/api/style-tip':
+            self._handle_style_tip()
+        else:
+            self.send_error(404)
+
+    def _check_api_key(self):
+        """Returns True if the key is usable. Otherwise writes the error response and returns False."""
+        if not API_KEY:
+            self._send_json(503, {'error': 'ANTHROPIC_API_KEY not set on the server'})
+            return False
+        try:
+            API_KEY.encode('latin-1')
+        except UnicodeEncodeError:
+            self._send_json(400, {
+                'error': (
+                    'ANTHROPIC_API_KEY contains characters an HTTP header can\'t carry. '
+                    'This usually means a masked/partial key was copied (e.g. from the API '
+                    'keys list page, which only shows dots for the hidden part) instead of '
+                    'the full key, which console.anthropic.com only shows once, right when '
+                    'you create it. Create a new key and copy it immediately.'
+                ),
+            })
+            return False
+        return True
+
+    def _call_claude(self, payload, timeout=30):
+        req = urllib.request.Request(
+            ANTHROPIC_URL,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+                'content-type': 'application/json',
+                'x-api-key': API_KEY,
+                'anthropic-version': '2023-06-01',
+            },
+            method='POST',
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            result = json.loads(resp.read())
+        return result['content'][0]['text'].strip()
+
+    def _handle_style_tip(self):
+        if not self._check_api_key():
+            return
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+            ctx = json.loads(self.rfile.read(length) or b'{}')
+            lang_name = 'Turkish' if ctx.get('lang') != 'en' else 'English'
+            wardrobe_summary = ctx.get('wardrobeSummary') or 'no saved wardrobe items'
+            prompt = (
+                f'You are a warm, concise personal stylist writing inside a weather app. '
+                f'Reply in {lang_name} only, in ONE short tip of at most two short sentences. '
+                f'No greeting, no signature, no markdown, no surrounding quotes. '
+                f'Context — city: {ctx.get("city", "")}; feels-like temperature: {ctx.get("feelsLike", "")}°C; '
+                f'condition: {ctx.get("condition", "")}; wind: {ctx.get("wind", "")} km/h; '
+                f'rain chance: {ctx.get("rain", "")}%; clothing fit preference: {ctx.get("gender", "unisex")}; '
+                f'personal style vibe: {ctx.get("styleVibe", "casual")}; their wardrobe: {wardrobe_summary}. '
+                f'Let the style vibe shape your wording and suggestion — casual favors relaxed easy layers, '
+                f'elegant favors polished refined pieces, sporty favors performance/athletic fabrics, minimal '
+                f'favors clean simple silhouettes, bold favors color and statement pieces. '
+                f'If a wardrobe item genuinely fits today, mention it by name naturally. Otherwise give '
+                f'one specific, actionable styling or comfort tip (fabric, layering, footwear). '
+                f'Do not just restate the temperature number — add something the person wouldn\'t already see on screen.'
+            )
+            payload = {
+                'model': MODEL,
+                'max_tokens': 150,
+                'messages': [{'role': 'user', 'content': prompt}],
+            }
+            text = self._call_claude(payload, timeout=20)
+            self._send_json(200, {'tip': text})
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode('utf-8', 'ignore')
+            self._send_json(502, {'error': f'anthropic api error {e.code}', 'detail': detail[:300]})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_analyze(self):
+        if not self._check_api_key():
+            return
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+            body = json.loads(self.rfile.read(length) or b'{}')
+            data_url = body.get('image', '')
+            if not data_url.startswith('data:') or ',' not in data_url:
+                raise ValueError('missing or invalid "image" data URL')
+            header, b64data = data_url.split(',', 1)
+            media_type = 'image/png' if 'image/png' in header else 'image/jpeg'
+
+            payload = {
+                'model': MODEL,
+                'max_tokens': 300,
+                'messages': [{
+                    'role': 'user',
+                    'content': [
+                        {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': b64data}},
+                        {'type': 'text', 'text': ANALYZE_PROMPT},
+                    ],
+                }],
+            }
+            text = self._call_claude(payload, timeout=30)
+            if text.startswith('```'):
+                text = text.strip('`')
+                if '\n' in text:
+                    text = text.split('\n', 1)[1]
+            parsed = json.loads(text)
+            self._send_json(200, parsed)
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode('utf-8', 'ignore')
+            self._send_json(502, {'error': f'anthropic api error {e.code}', 'detail': detail[:300]})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _send_json(self, status, obj):
+        body = json.dumps(obj).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, fmt, *args):
+        # Keep default access logging but never let it choke on odd bytes.
+        super().log_message(fmt, *args)
+
+
+if __name__ == '__main__':
+    directory = os.path.dirname(os.path.abspath(__file__))
+    handler_cls = functools.partial(Handler, directory=directory)
+    with socketserver.TCPServer(('', PORT), handler_cls) as httpd:
+        status = 'enabled' if API_KEY else 'disabled — set ANTHROPIC_API_KEY to turn on AI photo suggestions'
+        auth_status = 'password-protected' if SITE_PASSWORD else 'open to anyone with the link'
+        print(f'SkyStyle serving on http://localhost:{PORT}  (AI: {status}, access: {auth_status})')
+        httpd.serve_forever()
