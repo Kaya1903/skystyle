@@ -84,6 +84,8 @@ body {
   .phone { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; border: none; }
 }
 
+.sidebar-brand { display: none; }
+
 .screen {
   flex: 1;
   overflow-y: auto;
@@ -978,3 +980,70 @@ p { margin: 0; }
   white-space: nowrap;
 }
 .toast-show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Desktop (PC) layout ---------- */
+/* Placed last so these overrides win the cascade against same-specificity
+   component rules defined earlier in the file (e.g. .wardrobe-grid). */
+@media (min-width: 860px) {
+  .stage { padding: 40px; align-items: stretch; justify-content: center; }
+  .phone {
+    width: 100%;
+    max-width: 1180px;
+    height: auto;
+    max-height: none;
+    min-height: calc(100vh - 80px);
+    border-radius: 28px;
+    flex-direction: row;
+  }
+  .screen { padding: 40px 56px 40px; }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 14px 28px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .sidebar-brand-mark {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--brand-soft);
+    color: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sidebar-brand-mark svg { width: 16px; height: 16px; }
+  .sidebar-brand-name { font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--ink); }
+
+  .bottom-nav {
+    order: -1;
+    flex-direction: column;
+    align-items: stretch;
+    width: 232px;
+    flex-shrink: 0;
+    height: auto;
+    border-top: none;
+    border-right: 1px solid var(--card-border);
+    padding: 22px 14px;
+    gap: 4px;
+    background: transparent;
+    backdrop-filter: none;
+  }
+  .nav-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    border-radius: 12px;
+  }
+  .nav-btn .nav-icon { width: 20px; height: 20px; }
+  .nav-btn.active .nav-icon { transform: none; }
+
+  .wardrobe-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1120px) {
+  .wardrobe-grid { grid-template-columns: repeat(4, 1fr); }
+}
