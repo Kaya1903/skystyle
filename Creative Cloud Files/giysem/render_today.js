@@ -2,6 +2,7 @@ import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { state, switchTab, setGender, openCitySheet, refetchForecast } from './app.js';
+import { renderLandmark } from './landmarks.js';
 
 function cityRow(s) {
   const city = s.city;
@@ -19,6 +20,7 @@ function heroSection(dayView, s) {
   const h = dayView.hero;
   return `
     <div class="hero fade-slide" style="animation-delay:60ms">
+      ${renderLandmark(s.city)}
       <div class="hero-temp-row">
         <div class="hero-temp">${h.feelsLike}°</div>
         <div class="hero-temp-meta">
