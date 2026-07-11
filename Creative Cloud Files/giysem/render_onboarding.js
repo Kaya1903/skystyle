@@ -2,17 +2,13 @@ import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { STYLE_VIBES } from './profile.js';
 import {
-  state, setLang, goToOnboardStep, submitProfileStep, useLocationForOnboarding,
+  state, goToOnboardStep, submitProfileStep, useLocationForOnboarding,
   openCityFromOnboarding, backToProfileStep,
 } from './app.js';
+import { langMenu, attachLangMenuHandlers } from './render_lang_menu.js';
 
 function langToggle(s) {
-  return `
-    <div class="lang-toggle onboard-lang" data-lang-toggle>
-      <button type="button" class="lang-btn ${s.lang === 'tr' ? 'active' : ''}" data-lang="tr">TR</button>
-      <button type="button" class="lang-btn ${s.lang === 'en' ? 'active' : ''}" data-lang="en">EN</button>
-    </div>
-  `;
+  return langMenu(s, 'onboard-lang');
 }
 
 function stepDots(step) {
@@ -121,9 +117,7 @@ function escapeAttr(str) {
 }
 
 export function attachOnboardingHandlers(root) {
-  root.querySelectorAll('[data-lang]').forEach(btn => {
-    btn.addEventListener('click', () => setLang(btn.dataset.lang));
-  });
+  attachLangMenuHandlers(root);
 
   const startBtn = root.querySelector('[data-action="onboard-start"]');
   if (startBtn) startBtn.addEventListener('click', () => goToOnboardStep('profile'));

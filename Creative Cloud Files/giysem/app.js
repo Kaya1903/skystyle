@@ -1,7 +1,7 @@
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto } from './wardrobe.js';
 import { generateOutfit } from './outfit.js';
-import { t } from './i18n.js';
+import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile } from './profile.js';
 import { getSmartTip } from './ai.js';
 import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
@@ -20,7 +20,7 @@ const savedProfile = loadProfile();
 export const state = {
   activeTab: 'today',
   gender: savedProfile ? savedProfile.gender : 'unisex',
-  lang: (localStorage.getItem(LANG_KEY) === 'en') ? 'en' : 'tr',
+  lang: LANGS.includes(localStorage.getItem(LANG_KEY)) ? localStorage.getItem(LANG_KEY) : 'tr',
   city: null,
   forecastRaw: null,
   loading: true,
@@ -50,24 +50,42 @@ export const state = {
   smartTipLoading: false,
   smartTipKey: null,
   avatarPickerOpen: false,
+  weekTips: {},
+  weekTipStatus: {},
+  langMenuOpen: false,
 };
 
 let toastTimer = null;
 const SMART_TIP_CACHE_KEY = 'giysem_smart_tip_v1';
+const WEEK_TIP_CACHE_KEY = 'giysem_week_tip_v1';
 
 const screenEl = document.getElementById('screen');
 const navEl = document.getElementById('bottom-nav');
 document.documentElement.lang = state.lang;
+document.documentElement.dir = RTL_LANGS.includes(state.lang) ? 'rtl' : 'ltr';
 
 export function setState(patch) {
   Object.assign(state, patch);
 }
 
 export function setLang(lang) {
-  if (state.lang === lang) return;
+  state.langMenuOpen = false;
+  if (state.lang === lang) { render(); return; }
   state.lang = lang;
   localStorage.setItem(LANG_KEY, lang);
   document.documentElement.lang = lang;
+  document.documentElement.dir = RTL_LANGS.includes(lang) ? 'rtl' : 'ltr';
+  render();
+}
+
+export function toggleLangMenu() {
+  state.langMenuOpen = !state.langMenuOpen;
+  render();
+}
+
+export function closeLangMenu() {
+  if (!state.langMenuOpen) return;
+  state.langMenuOpen = false;
   render();
 }
 
@@ -411,6 +429,23 @@ function computeWeekView() {
   return buildWeekView(state.forecastRaw, state.lang);
 }
 
+// Pairs each week day with its rule-based outfit plus a per-day AI tip cache key,
+// so the AI tip and its loading state can be looked up without re-deriving the key
+// in the render layer.
+function computeWeekOutfits() {
+  const week = computeWeekView();
+  const cityName = state.city ? state.city.name : 'unknown';
+  const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
+  return week.map(day => {
+    const outfit = generateOutfit(
+      { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang },
+      state.wardrobe
+    );
+    const tipKey = [day.date, cityName, outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
+    return { day, outfit, tipKey, tip: state.weekTips[tipKey] || null, tipLoading: state.weekTipStatus[tipKey] === 'loading' };
+  });
+}
+
 function loadTipCache() {
   try {
     return JSON.parse(localStorage.getItem(SMART_TIP_CACHE_KEY) || '{}');
@@ -471,6 +506,63 @@ function ensureSmartTip(dayView, outfit) {
   });
 }
 
+function loadWeekTipCache() {
+  try {
+    return JSON.parse(localStorage.getItem(WEEK_TIP_CACHE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function rememberWeekTip(key, tip) {
+  const cache = loadWeekTipCache();
+  cache[key] = tip;
+  const keys = Object.keys(cache);
+  if (keys.length > 40) delete cache[keys[0]];
+  localStorage.setItem(WEEK_TIP_CACHE_KEY, JSON.stringify(cache));
+}
+
+// Kicks off one AI tip request per week day that hasn't been attempted yet, so days
+// sharing similar weather still get distinct AI-written text instead of the same
+// fixed rule-based template string. Once a key has been attempted (loading/done/failed)
+// it's never retried — render() runs on every state change, so without this a failed
+// request (e.g. no API key configured) would refire on every single re-render.
+function ensureWeekTips(weekOutfits) {
+  const cache = loadWeekTipCache();
+  const cityName = state.city ? state.city.name : 'unknown';
+  const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
+  const wardrobeSummary = state.wardrobe.slice(0, 12).map(i => i.name).join(', ');
+
+  weekOutfits.forEach(({ day, outfit, tipKey }) => {
+    if (state.weekTipStatus[tipKey]) return;
+    if (cache[tipKey]) {
+      state.weekTips[tipKey] = cache[tipKey];
+      state.weekTipStatus[tipKey] = 'done';
+      return;
+    }
+    state.weekTipStatus[tipKey] = 'loading';
+    getSmartTip({
+      lang: state.lang,
+      city: cityName,
+      feelsLike: day.feelsLike,
+      condition: day.condition,
+      wind: day.wind,
+      rain: day.rain,
+      gender: state.gender,
+      styleVibe,
+      wardrobeSummary,
+    }).then(tip => {
+      state.weekTips[tipKey] = tip;
+      state.weekTipStatus[tipKey] = 'done';
+      rememberWeekTip(tipKey, tip);
+      render();
+    }).catch(() => {
+      state.weekTipStatus[tipKey] = 'failed';
+      render();
+    });
+  });
+}
+
 // Rebuilding a container's innerHTML destroys and recreates any focused <input>
 // inside it, which fires a synchronous native blur on the old node — that made
 // per-component focus/blur flag tracking unreliable (the flag got cleared by the
@@ -527,7 +619,9 @@ export function render() {
       screenEl.innerHTML = renderTodayScreen({ dayOffset: 0, state, data });
       attachTodayHandlers(screenEl);
     } else if (state.activeTab === 'week') {
-      screenEl.innerHTML = renderWeekScreen({ ...state, weekView: computeWeekView() });
+      const weekOutfits = computeWeekOutfits();
+      ensureWeekTips(weekOutfits);
+      screenEl.innerHTML = renderWeekScreen({ ...state, weekOutfits });
       attachWeekHandlers(screenEl);
     } else if (state.activeTab === 'wardrobe') {
       screenEl.innerHTML = renderWardrobeScreen(state);
@@ -562,6 +656,10 @@ function renderOverlays() {
 navEl.addEventListener('click', (e) => {
   const btn = e.target.closest('.nav-btn');
   if (btn) switchTab(btn.dataset.tab);
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-lang-menu]')) closeLangMenu();
 });
 
 if (state.screen === 'app') {

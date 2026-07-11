@@ -1,28 +1,27 @@
 import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { generateOutfit } from './outfit.js';
 import { refetchForecast } from './app.js';
 
-function weekDayRow(day, index, s) {
-  const outfit = generateOutfit(
-    { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: s.gender, lang: s.lang },
-    s.wardrobe
-  );
+function weekDayRow({ day, outfit, tip, tipLoading }, index, s) {
   const top = outfit.rows[0];
   const d = new Date(day.date + 'T00:00:00');
   const weekdayName = index === 0 ? t(s.lang, 'week_today') : t(s.lang, 'weekdays')[d.getDay()];
   const dateNum = d.getDate();
+  const text = tipLoading ? t(s.lang, 'smart_tip_loading') : (tip || top.item);
   return `
     <div class="week-row fade-slide" style="animation-delay:${60 + index * 40}ms;--band-color:var(--band-${outfit.bandKey});--band-soft:var(--band-${outfit.bandKey}-soft);">
       <div class="week-row-day">
         <span class="week-day-name">${weekdayName}</span>
         <span class="week-day-num">${dateNum}</span>
       </div>
-      <div class="week-row-icon">${icons[top.icon] || icons.ust}</div>
+      <div class="week-row-icon">${tipLoading ? `<span class="btn-spinner btn-spinner-dark"></span>` : (icons[top.icon] || icons.ust)}</div>
       <div class="week-row-body">
-        <div class="week-row-condition">${day.condition} · ${outfit.bandLabel}</div>
-        <div class="week-row-tip">${top.item}</div>
+        <div class="week-row-condition">
+          ${day.condition} · ${outfit.bandLabel}
+          ${tip && !tipLoading ? `<span class="smart-tip-badge">${t(s.lang, 'smart_tip_badge')}</span>` : ''}
+        </div>
+        <div class="week-row-tip">${text}</div>
       </div>
       <div class="week-row-temps">
         <span class="week-temp-max">${day.feelsMax}°</span>
@@ -47,15 +46,15 @@ export function renderWeekScreen(s) {
       </div>
     `;
   }
-  const week = s.weekView || [];
-  if (!week.length) {
+  const weekOutfits = s.weekOutfits || [];
+  if (!weekOutfits.length) {
     return `${brandHeader(s)}<div class="state-msg">${t(s.lang, 'loading_data')}</div>`;
   }
   return `
     ${brandHeader(s)}
     <div class="section-title fade-slide">${t(s.lang, 'week_title')}</div>
     <div class="week-list">
-      ${week.map((day, i) => weekDayRow(day, i, s)).join('')}
+      ${weekOutfits.map((wo, i) => weekDayRow(wo, i, s)).join('')}
     </div>
     <div class="footer-note">${t(s.lang, 'footer')}</div>
   `;
