@@ -6,6 +6,7 @@ import {
   openCityFromOnboarding, backToProfileStep,
 } from './app.js';
 import { langMenu, attachLangMenuHandlers } from './render_lang_menu.js';
+import { garmentArt, weatherGlyph } from './visuals.js';
 
 function langToggle(s) {
   return langMenu(s, 'onboard-lang');
@@ -26,8 +27,14 @@ function renderWelcome(s) {
     <div class="onboard onboard-welcome fade-slide">
       ${langToggle(s)}
       <div class="onboard-hero">
-        <div class="onboard-mark">${icons.hanger}</div>
-        <h1 class="onboard-title">SkyStyle</h1>
+        <div class="onboard-stage">
+          <div class="onboard-glyph pop-in">${weatherGlyph('partly', true)}</div>
+          <div class="orbit orbit-1">${garmentArt('dis', '#3f5f86')}</div>
+          <div class="orbit orbit-2">${garmentArt('ust', '#e2564c', true)}</div>
+          <div class="orbit orbit-3">${garmentArt('ayak', '#f4f2ee')}</div>
+          <div class="orbit orbit-4">${garmentArt('yanina', '#ffc93c')}</div>
+        </div>
+        <h1 class="onboard-title"><span class="title-word" style="animation-delay:120ms">Sky</span><span class="title-word" style="animation-delay:240ms">Style</span></h1>
         <p class="onboard-tag">${t(s.lang, 'onboard_tagline')}</p>
       </div>
       <div class="onboard-chips">
@@ -90,7 +97,7 @@ function renderLocationStep(s) {
       ${stepDots('location')}
       <div class="onboard-step-label">${t(s.lang, 'onboard_step', 2, 2)}</div>
       <div class="onboard-hero onboard-hero-sm">
-        <div class="onboard-mark">${icons.location}</div>
+        <div class="onboard-mark">${weatherGlyph('clear', true)}</div>
         <h2 class="onboard-title-sm">${t(s.lang, 'location_title')}</h2>
         <p class="onboard-sub">${t(s.lang, 'location_sub')}</p>
       </div>

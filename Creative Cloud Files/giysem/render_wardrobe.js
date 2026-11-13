@@ -4,6 +4,11 @@ import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { analyzePhoto } from './ai.js';
 import { COLORS, COLOR_KEYS, colorName, isValidColor, PATTERNS } from './colors.js';
+import { garmentArt } from './visuals.js';
+
+function itemArt(item) {
+  return garmentArt(item.category, isValidColor(item.color) ? COLORS[item.color].hex : null, item.pattern === 'desenli');
+}
 import {
   state, openEditor, closeEditor, saveWardrobeItem, deleteWardrobeItem,
   setWardrobeFilter, setWardrobeSearch, newItemId, resizePhoto,
@@ -28,8 +33,10 @@ export function renderWardrobeScreen(s) {
   if (s.wardrobe.length === 0) {
     return `
       ${brandHeader(s)}
-      <div class="empty-state fade-slide">
-        ${icons.hanger}
+      <div class="empty-state glass fade-slide">
+        <div class="empty-art">
+          ${garmentArt('dis', '#3f5f86')}${garmentArt('ust', '#e2564c', true)}${garmentArt('alt', '#d9c7a7')}
+        </div>
         <p>${t(s.lang, 'empty_wardrobe')}</p>
         <button class="btn-primary" data-action="add-item">${icons.plus}<span>${t(s.lang, 'add')}</span></button>
       </div>
@@ -48,7 +55,7 @@ export function renderWardrobeScreen(s) {
       `).join('')}
     </div>
     <div class="wardrobe-grid">
-      <button class="add-card fade-slide" style="animation-delay:130ms" data-action="add-item">
+      <button class="add-card rise-in" style="animation-delay:130ms" data-action="add-item">
         ${icons.plus}
         <span>${t(s.lang, 'add')}</span>
       </button>
@@ -59,9 +66,9 @@ export function renderWardrobeScreen(s) {
 
 function wardrobeCard(item, i, lang) {
   return `
-    <button class="wardrobe-card fade-slide" style="animation-delay:${150 + i * 40}ms" data-item-id="${item.id}">
-      <div class="wardrobe-thumb">
-        ${item.photo ? `<img src="${item.photo}" alt="${escapeAttr(item.name)}" />` : icons[item.category] || icons.ust}
+    <button class="glass wardrobe-card rise-in" style="animation-delay:${150 + i * 50}ms" data-item-id="${item.id}">
+      <div class="wardrobe-thumb ${item.photo ? '' : 'is-art'}" ${!item.photo && isValidColor(item.color) ? `style="--tint:${COLORS[item.color].hex}"` : ''}>
+        ${item.photo ? `<img src="${item.photo}" alt="${escapeAttr(item.name)}" />` : itemArt(item)}
         <div class="wardrobe-badges">
           ${item.rainOk ? `<span class="badge-dot badge-rain" title="${t(lang, 'toggle_rain')}">${icons.drop}</span>` : ''}
           ${item.windproof ? `<span class="badge-dot badge-wind" title="${t(lang, 'toggle_wind')}">${icons.wind}</span>` : ''}
@@ -153,7 +160,7 @@ export function renderEditorSheet(state) {
           <label class="field-label">${t(lang, 'field_photo')}</label>
           <div class="photo-picker">
             <div class="photo-thumb">
-              ${item.photo ? `<img src="${item.photo}" alt="" />` : (icons[item.category] || icons.ust)}
+              ${item.photo ? `<img src="${item.photo}" alt="" />` : itemArt(item)}
             </div>
             <button class="photo-btn" id="photo-pick-btn" type="button">${icons.camera}<span>${t(lang, 'choose_photo')}</span></button>
             <input type="file" accept="image/*" id="photo-input" style="display:none" />

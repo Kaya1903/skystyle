@@ -42,12 +42,13 @@ export function renderProfileScreen(s) {
       <div class="profile-hero-sub">${t(s.lang, 'profile_screen_sub')}</div>
     </div>
 
-    <div class="field-group fade-slide" style="animation-delay:90ms">
+    <div class="glass panel rise-in" style="animation-delay:90ms">
+    <div class="field-group">
       <label class="field-label">${t(s.lang, 'field_name')}</label>
       <input class="field-input" id="profile-tab-name" type="text" value="${escapeAttr(profile.name)}" data-original="${escapeAttr(profile.name)}" placeholder="${t(s.lang, 'name_placeholder_profile')}" autocomplete="name" />
     </div>
 
-    <div class="field-group fade-slide" style="animation-delay:130ms">
+    <div class="field-group">
       <label class="field-label">${t(s.lang, 'field_gender')}</label>
       <div class="gender-select">
         ${genderOpts.map(([key, labelKey]) => `
@@ -56,7 +57,7 @@ export function renderProfileScreen(s) {
       </div>
     </div>
 
-    <div class="field-group fade-slide" style="animation-delay:160ms">
+    <div class="field-group">
       <label class="field-label">${t(s.lang, 'field_style')}</label>
       <div class="chip-row style-vibe-row">
         ${STYLE_VIBES.map(key => `
@@ -65,7 +66,7 @@ export function renderProfileScreen(s) {
       </div>
     </div>
 
-    <div class="field-group fade-slide" style="animation-delay:190ms">
+    <div class="field-group">
       <label class="field-label">${t(s.lang, 'field_city')}</label>
       <button class="city-name-btn city-row profile-city-row" data-action="open-city" type="button">
         ${icons.location}
@@ -74,9 +75,10 @@ export function renderProfileScreen(s) {
       </button>
     </div>
 
-    <button class="btn-primary profile-save-btn fade-slide" style="animation-delay:220ms" data-action="save-profile" type="button" hidden>${t(s.lang, 'save')}</button>
-    <div class="delete-link fade-slide" style="animation-delay:240ms">
+    <button class="btn-primary profile-save-btn" data-action="save-profile" type="button" hidden>${t(s.lang, 'save')}</button>
+    <div class="delete-link">
       <button data-action="reset-profile" type="button">${t(s.lang, 'logout_reset')}</button>
+    </div>
     </div>
   `;
 }

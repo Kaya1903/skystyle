@@ -24,7 +24,7 @@ import urllib.request
 
 PORT = int(os.environ.get('PORT', 8420))
 API_KEY = os.environ.get('ANTHROPIC_API_KEY')
-MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001')
+MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-haiku-5-5')
 SITE_PASSWORD = os.environ.get('SITE_PASSWORD')
 ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 
@@ -67,6 +67,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def end_headers(self):
+        # Make browsers revalidate static files (cheap 304s via Last-Modified) so a
+        # deploy never leaves them mixing cached old JS modules with new ones.
+        if self.command in ('GET', 'HEAD'):
+            self.send_header('Cache-Control', 'no-cache')
+        super().end_headers()
 
     def do_GET(self):
         if not self._site_authorized():
@@ -208,7 +215,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     directory = os.path.dirname(os.path.abspath(__file__))
     handler_cls = functools.partial(Handler, directory=directory)
-    with socketserver.TCPServer(('', PORT), handler_cls) as httpd:
+    # Threaded so the browser's parallel module requests don't queue behind each
+    # other (or behind a slow AI call) and overflow the listen backlog.
+    socketserver.ThreadingTCPServer.allow_reuse_address = True
+    socketserver.ThreadingTCPServer.daemon_threads = True
+    with socketserver.ThreadingTCPServer(('', PORT), handler_cls) as httpd:
         status = 'enabled' if API_KEY else 'disabled — set ANTHROPIC_API_KEY to turn on AI photo suggestions'
         auth_status = 'password-protected' if SITE_PASSWORD else 'open to anyone with the link'
         print(f'SkyStyle serving on http://localhost:{PORT}  (AI: {status}, access: {auth_status})')

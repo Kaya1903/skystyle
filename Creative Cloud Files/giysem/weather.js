@@ -32,6 +32,18 @@ const WMO_TEXT = {
   },
 };
 
+// Collapses a WMO weather code into the handful of sky "moods" the UI animates.
+export function skyKind(code) {
+  if (code == null) return 'clear';
+  if (code >= 95) return 'storm';
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+  if (code === 45 || code === 48) return 'fog';
+  if (code === 3) return 'cloudy';
+  if (code === 2) return 'partly';
+  return 'clear';
+}
+
 export function wmoToText(code, lang = 'tr') {
   const dict = WMO_TEXT[lang] || WMO_TEXT.tr;
   return dict[code] || dict.default;
@@ -79,7 +91,7 @@ export async function geocodeSingle(name, lang = 'tr') {
 
 export async function fetchForecast(lat, lon) {
   const url = `${FORECAST_URL}?latitude=${lat}&longitude=${lon}`
-    + `&current=temperature_2m,apparent_temperature,wind_speed_10m,precipitation_probability,weather_code`
+    + `&current=temperature_2m,apparent_temperature,wind_speed_10m,precipitation_probability,weather_code,is_day`
     + `&hourly=apparent_temperature,wind_speed_10m,precipitation_probability`
     + `&daily=weather_code,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,wind_speed_10m_max`
     + `&forecast_days=7&timezone=auto`;
@@ -141,6 +153,8 @@ export function buildDayView(raw, dayOffset, lang = 'tr') {
       wind: Math.round(raw.current.wind_speed_10m),
       rain: raw.current.precipitation_probability ?? 0,
       condition: wmoToText(raw.current.weather_code, lang),
+      kind: skyKind(raw.current.weather_code),
+      isDay: raw.current.is_day !== 0,
       hasActualTemp: true,
     };
   } else {
@@ -156,6 +170,8 @@ export function buildDayView(raw, dayOffset, lang = 'tr') {
       wind: ref.wind,
       rain: maxRain,
       condition,
+      kind: ref.rain >= 50 ? 'rain' : ref.rain >= 20 ? 'partly' : 'clear',
+      isDay: true,
       hasActualTemp: false,
     };
   }
@@ -183,6 +199,7 @@ export function buildWeekView(raw, lang = 'tr') {
       feelsMin,
       feelsLike: Math.round((feelsMax + feelsMin) / 2),
       condition: wmoToText(d.weather_code[i], lang),
+      kind: skyKind(d.weather_code[i]),
       rain: d.precipitation_probability_max[i] ?? 0,
       wind: Math.round(d.wind_speed_10m_max[i] ?? 0),
     };

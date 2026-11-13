@@ -1,4 +1,6 @@
 import { colorName, isValidColor } from './colors.js';
+import { setSky } from './sky.js';
+import { skyKind } from './weather.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto } from './wardrobe.js';
 import { generateOutfit } from './outfit.js';
@@ -595,8 +597,21 @@ function withFocusPreserved(container, updateFn) {
   }
 }
 
+function currentSky() {
+  const cur = state.forecastRaw && state.forecastRaw.current;
+  if (state.screen === 'onboarding' || !cur) return { kind: 'partly', isDay: true };
+  let isDay = cur.is_day;
+  if (isDay == null) {
+    const hour = parseInt(String(cur.time || '').split('T')[1] || '12', 10);
+    isDay = hour >= 7 && hour < 19 ? 1 : 0;
+  }
+  return { kind: skyKind(cur.weather_code), isDay: isDay !== 0 };
+}
+
 export function render() {
   navEl.style.display = state.screen === 'onboarding' ? 'none' : '';
+  setSky(currentSky());
+  screenEl.dataset.tab = state.screen === 'onboarding' ? 'onboarding' : state.activeTab;
 
   screenEl.classList.remove('screen-enter');
   void screenEl.offsetWidth;
