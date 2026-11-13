@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { state, switchTab, setGender, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit } from './app.js';
 import { renderLandmark } from './landmarks.js';
-import { garmentArt, weatherGlyph, tempColor } from './visuals.js';
+import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows } from './visuals.js';
 
 function cityRow(s) {
   const city = s.city;
@@ -104,26 +104,13 @@ function genderSelector(s) {
   `;
 }
 
-// The outfit as one figure: top layer over the inner one, trousers below, shoes at the bottom.
+// The outfit drawn as one figure (layer rules live in figurePartsFromRows).
 function boardCard(outfit, s) {
-  const by = k => outfit.rows.find(r => r.slotKey === k);
-  const outer = by('dis') || by('ustune');
-  const top = outer || by('ust');
-  const under = outer ? by('ust') : null;
-  const alt = by('alt'), feet = by('ayak'), acc = by('yanina');
-  const art = r => garmentArt(r.art, r.color, r.look, 'flat');
+  const figure = outfitFigure(figurePartsFromRows(outfit.rows));
   return `
     <article class="glass look-card board-card rise-in" style="animation-delay:300ms" aria-label="${t(s.lang, 'board_title')}">
       <div class="look-slot board-title"><span>${t(s.lang, 'board_title')}</span></div>
-      <div class="board">
-        <div class="board-top">
-          ${under ? `<div class="board-under">${art(under)}</div>` : ''}
-          ${top ? `<div class="board-over">${art(top)}</div>` : ''}
-        </div>
-        ${alt ? `<div class="board-bottom">${art(alt)}</div>` : ''}
-        ${feet ? `<div class="board-feet"><div>${art(feet)}</div><div class="mirror">${art(feet)}</div></div>` : ''}
-        ${acc ? `<div class="board-acc">${art(acc)}</div>` : ''}
-      </div>
+      <div class="board">${figure}</div>
     </article>`;
 }
 

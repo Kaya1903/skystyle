@@ -576,20 +576,8 @@ p { margin: 0; }
 /* Outfit figure */
 .board-card { grid-column: 1 / -1; padding: 14px 12px 6px; align-items: center; justify-content: flex-start; }
 .board-title { align-self: flex-start; padding-left: 4px; }
-.board { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; padding: 4px 0 10px; }
-.board .garment { width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 10px rgba(10, 20, 50, 0.18)); }
-.board-top { position: relative; width: 150px; z-index: 3; }
-.board-over { position: relative; z-index: 2; }
-.board-under { position: absolute; left: -26px; top: 4px; width: 128px; z-index: 1; transform: rotate(-7deg); opacity: 0.95; }
-.board-bottom { width: 128px; margin-top: -38px; z-index: 2; }
-.board-feet { display: flex; justify-content: center; width: 150px; margin-top: -26px; z-index: 1; }
-.board-feet > div { width: 72px; }
-.board-feet > .mirror { transform: scaleX(-1); margin-left: -8px; }
-.board-acc { position: absolute; right: 4%; top: 34%; width: 64px; transform: rotate(10deg); z-index: 4; }
-.board > * { animation: float 6s ease-in-out infinite; }
-.board-bottom { animation-delay: -1s; }
-.board-feet { animation-delay: -2s; }
-.board-acc { animation: none; }
+.board { position: relative; display: flex; justify-content: center; align-items: center; flex: 1; width: 100%; padding: 6px 0 12px; }
+.board .figure { width: 100%; max-width: 230px; height: auto; display: block; overflow: visible; filter: drop-shadow(0 10px 14px rgba(10, 20, 50, 0.18)); animation: float 7s ease-in-out infinite; }
 
 /* Editor: photo -> drawing, style picker */
 .photo-arrow svg { width: 18px; height: 18px; color: var(--ink-faint); }

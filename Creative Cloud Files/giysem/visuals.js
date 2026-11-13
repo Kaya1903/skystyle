@@ -396,6 +396,101 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
     </svg>`;
 }
 
+// ---------- Outfit figure ----------
+// Composes an outfit into ONE drawing, placing each piece on an implied body
+// (shoulders, waist, leg length, feet) instead of stacking separate images.
+// All torso drawings share the same 120-unit frame (shoulders ~y20, centred on
+// x60), so upper layers simply sit on top of each other; bottoms hang from the
+// waist; shoes stand at the end of the legs, both pointing the same way.
+
+// Where the waistband starts inside each bottom drawing.
+const WAIST_TOP = { trousers: 14, chinos: 14, jeans: 14, shorts: 28, skirt: 24 };
+// Bottom of the sole and horizontal middle of the shoe, per shoe drawing.
+const SHOE = {
+  sneaker: { sole: 99, mid: 61 }, boot: { sole: 103, mid: 64 },
+  sandal: { sole: 100, mid: 60 }, loafer: { sole: 99, mid: 61 },
+};
+const FIG = { s: 1.3, w: 220, y0: 10, waistInTop: 92, legLen: 93, legL: 41, legR: 79 };
+
+function placed(kind, look, x, y, scale) {
+  const svg = garmentArt(kind, look.color, look, 'flat');
+  return svg.replace(/<svg class="garment[^"]*"/, `<svg x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(120 * scale).toFixed(1)}" height="${(120 * scale).toFixed(1)}" overflow="visible"`);
+}
+
+// Picks what the figure shows from an outfit's rows. Rules:
+//  - the user's own pieces win: a suggested (non-wardrobe) layer never covers one,
+//  - at most two upper layers: the outermost and the innermost,
+//  - a dress is a whole look, so no base top is drawn over it.
+export function figurePartsFromRows(rows) {
+  const by = k => rows.find(r => r.slotKey === k) || null;
+  const bottom = by('alt');
+  const isDress = bottom && bottom.art === 'dress';
+  let uppers = [by('dis'), by('ustune'), isDress ? null : by('ust')].filter(Boolean);
+  while (uppers.length > 1 && !uppers[0].fromWardrobe && uppers.slice(1).some(r => r.fromWardrobe)) uppers = uppers.slice(1);
+  const outer = uppers[0] || null;
+  const inner = uppers.length > 1 ? uppers[uppers.length - 1] : null;
+  const look = r => (r ? r.look : null);
+  return { outer: look(outer), inner: look(inner), bottom: look(bottom), feet: look(by('ayak')), acc: look(by('yanina')) };
+}
+
+// parts: { outer, inner, bottom, feet, acc } - each a look ({ art, color, ... }) or null.
+export function outfitFigure(parts) {
+  const { s, w, y0, waistInTop, legLen, legL, legR } = FIG;
+  const boxX = w / 2 - 60 * s;
+  const waistY = y0 + waistInTop * s;
+  const feetY = waistY + legLen * s;
+  const layers = [];
+
+  // Without trousers there are no legs to draw, so bring the feet up a little
+  // instead of leaving shoes floating far below shorts, skirts and dresses.
+  const longBottom = parts.bottom && !['shorts', 'skirt', 'dress'].includes(parts.bottom.art);
+  const footY = longBottom ? feetY : feetY - 20 * s;
+
+  // 1. Shoes, under the trouser hems. Both face right; the far one sits a little higher.
+  if (parts.feet) {
+    const meta = SHOE[parts.feet.art] || SHOE.sneaker;
+    const sh = s * 0.5;
+    // Feet stand just below the hem so the whole shoe shows; a boot's shaft
+    // still tucks up under the trousers.
+    const soleY = footY + 24 * s;
+    [[legL, -4 * s], [legR, 0]].forEach(([leg, lift]) => {
+      const x = boxX + leg * s - meta.mid * sh;
+      layers.push(placed(parts.feet.art, parts.feet, x, soleY - meta.sole * sh + lift, sh));
+    });
+  }
+
+  // 2. Bottoms hang from the waist. A dress hangs from the shoulders instead.
+  if (parts.bottom) {
+    const art = parts.bottom.art;
+    if (art === 'dress') {
+      layers.push(placed(art, parts.bottom, boxX, y0 + 8 * s, s));
+    } else {
+      const top = WAIST_TOP[art] ?? 14;
+      layers.push(placed(art, parts.bottom, boxX, waistY - top * s, s));
+    }
+  }
+
+  // 3. Upper body: inner layer first, outer layer on top, same frame.
+  // The inner layer is drawn 4% smaller so its sleeves and hem never poke out
+  // past the outer layer's edges as thin slivers.
+  if (parts.inner) {
+    const k = 0.96;
+    layers.push(placed(parts.inner.art, parts.inner, boxX + 60 * s * (1 - k), y0 + 20 * s * (1 - k), s * k));
+  }
+  if (parts.outer) layers.push(placed(parts.outer.art, parts.outer, boxX, y0, s));
+
+  // 4. Accessories: carried items at the right hand, hats in the corner, scarf at the neck.
+  if (parts.acc) {
+    const a = parts.acc.art;
+    if (a === 'scarf') layers.push(placed(a, parts.acc, w / 2 - 60 * 0.75 * s, y0 - 4 * s, 0.75 * s));
+    else if (a === 'beanie' || a === 'cap') layers.push(placed(a, parts.acc, w - 62, -8, 0.55));
+    else layers.push(`<g transform="rotate(10 ${w - 30} ${waistY})">${placed(a, parts.acc, w - 66, waistY - 52, 0.6)}</g>`);
+  }
+
+  const height = Math.ceil(footY + 28 * s);
+  return `<svg class="figure" viewBox="0 0 ${w} ${height}" aria-hidden="true">${layers.join('')}</svg>`;
+}
+
 const CLOUD = 'M30 86 H90 A19 19 0 0 0 88 48 A27 27 0 0 0 36 52 A17 17 0 0 0 30 86 Z';
 const CLOUD_SM = 'M58 60 H96 A12 12 0 0 0 95 36 A17 17 0 0 0 62 39 A11 11 0 0 0 58 60 Z';
 
