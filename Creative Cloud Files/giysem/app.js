@@ -515,7 +515,8 @@ function computeOutfitFor(dayOffset) {
   if (!state.forecastRaw) return null;
   const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
   const outfit = generateOutfit(
-    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile) },
+    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile),
+      vibe: state.profile ? state.profile.styleVibe : 'casual', seed: dayView.date, kind: dayView.hero.kind },
     state.wardrobe,
     dayOffset === 0 ? state.outfitLocks : {}
   );
@@ -537,7 +538,8 @@ function computeWeekOutfits() {
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
   return week.map(day => {
     const outfit = generateOutfit(
-      { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile) },
+      { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile),
+        vibe: styleVibe, seed: day.date, kind: day.kind },
       state.wardrobe
     );
     const tipKey = [day.date, cityName, outfit.bandKey, state.gender, styleVibe, state.lang].join('|');

@@ -1,5 +1,6 @@
 import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH } from './wardrobe.js';
 import { garmentVariant, itemLook } from './visuals.js';
+import { VARIANTS, EXTRAS } from './outfit_variants.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
 
@@ -30,21 +31,21 @@ const BASE = {
     dondurucu: {
       unisex: {
         ust: { item: 'İnce termal içlik, üzerine kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişörtle çıkılmaz, en alta ince bir termal giy` },
-        ustune: { item: 'Kalın polar hırka', reason: () => `Kazağın üstüne bir kat daha giy, vücut ısın kaçmasın` },
+        ustune: { item: 'Kalın polar hırka', reason: () => `Araya bir kat daha, vücut ısın kaçmasın` },
         dis: { item: 'Dizüstü kalın mont, kapüşonlu', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı giy` },
         alt: { item: 'Astarlı kalın pantolon', reason: () => `Bu soğukta ince pantolon üşütür, astarlı olanı giy` },
         ayak: { item: 'Kalın tabanlı bot, yün çorapla', reason: () => `Kalın taban, yerden gelen soğuğu keser` },
       },
       kadin: {
         ust: { item: 'İnce termal içlik, üzerine kalın triko kazak', reason: c => `Hissedilen ${c.feelsLike}°. İnce kazak tek başına yetmez, altına termal giy` },
-        ustune: { item: 'Kalın örgü hırka', reason: () => `Kazağın üstüne bir kat daha giy, vücut ısın kaçmasın` },
+        ustune: { item: 'Kalın örgü hırka', reason: () => `Araya bir kat daha, vücut ısın kaçmasın` },
         dis: { item: 'Dizüstü kalın mont, kapüşonlu', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı giy` },
         alt: { item: 'Astarlı kalın pantolon (ya da kalın tayt üstüne uzun yünlü etek)', reason: () => `Bacaklarını açıkta bırakma, kalın ve astarlı bir şey giy` },
         ayak: { item: 'Kalın tabanlı, su geçirmez bot', reason: () => `Kalın taban, yerden gelen soğuğu keser` },
       },
       erkek: {
         ust: { item: 'İnce termal içlik, üzerine kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişörtle çıkılmaz, en alta ince bir termal giy` },
-        ustune: { item: 'Kalın polar hırka', reason: () => `Kazağın üstüne bir kat daha giy, vücut ısın kaçmasın` },
+        ustune: { item: 'Kalın polar hırka', reason: () => `Araya bir kat daha, vücut ısın kaçmasın` },
         dis: { item: 'Dizüstü kalın mont, kapüşonlu', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı giy` },
         alt: { item: 'Astarlı kalın kumaş pantolon', reason: () => `Bu soğukta ince pantolon üşütür, astarlı olanı giy` },
         ayak: { item: 'Kalın tabanlı bot, yün çorapla', reason: () => `Kalın taban, yerden gelen soğuğu keser` },
@@ -73,21 +74,21 @@ const BASE = {
     serin: {
       unisex: {
         ust: { item: 'Kalın kumaşlı düz tişört (beyaz ya da gri)', reason: c => `Hissedilen ${c.feelsLike}°. İnce tişört üşütebilir, kalın kumaşlı olanı seç` },
-        ustune: { item: 'Tişörtün üstüne önü açık kalın gömlek', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
+        ustune: { item: 'Önü açık kalın gömlek', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
         dis: { item: 'İnce hırka ya da hafif ceket, istersen elinde taşı', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir şey olsun` },
         alt: { item: 'Kumaş pantolon', reason: () => `Bu sıcaklıkta kumaş pantolon rahat ve yeterli` },
         ayak: { item: 'Spor ayakkabı ya da kapalı bot', reason: () => `Kapalı ayakkabı bu sıcaklıkta en rahatı` },
       },
       kadin: {
         ust: { item: 'Kalın kumaşlı düz tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce tişört üşütebilir` },
-        ustune: { item: 'Üstüne önü açık ince hırka', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
+        ustune: { item: 'Önü açık ince hırka', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
         dis: { item: 'Hafif trençkot, istersen elinde taşı', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir şey olsun` },
         alt: { item: 'Kumaş pantolon (ya da ince tayt üstüne diz boyu etek)', reason: () => `Bu sıcaklıkta kumaş pantolon rahat ve yeterli` },
         ayak: { item: 'Spor ayakkabı ya da makosen', reason: () => `Kapalı ayakkabı bu sıcaklıkta en rahatı` },
       },
       erkek: {
         ust: { item: 'Kalın kumaşlı düz tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce tişört üşütebilir` },
-        ustune: { item: 'Tişörtün üstüne önü açık kalın gömlek', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
+        ustune: { item: 'Önü açık kalın gömlek', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
         dis: { item: 'İnce, hafif ceket, istersen elinde taşı', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir şey olsun` },
         alt: { item: 'Kumaş pantolon', reason: () => `Bu sıcaklıkta kumaş pantolon rahat ve yeterli` },
         ayak: { item: 'Makosen ya da spor ayakkabı', reason: () => `Kapalı ayakkabı bu sıcaklıkta en rahatı` },
@@ -152,21 +153,21 @@ const BASE = {
     dondurucu: {
       unisex: {
         ust: { item: 'Thin thermal base layer, thick knit sweater on top', reason: c => `Feels like ${c.feelsLike}°. A sweater alone won't do it, wear a thin thermal underneath` },
-        ustune: { item: 'Thick fleece pullover', reason: () => `One more layer over the sweater keeps your body heat in` },
+        ustune: { item: 'Thick fleece pullover', reason: () => `One more layer in between keeps your body heat in` },
         dis: { item: 'Knee-length puffer coat with a hood', reason: c => `A short jacket won't do in this cold, wear a long, thick one` },
         alt: { item: 'Lined, heavy trousers', reason: () => `Thin trousers will leave you cold, wear a lined pair` },
         ayak: { item: 'Thick-soled boots with wool socks', reason: () => `A thick sole keeps the cold of the ground away` },
       },
       kadin: {
         ust: { item: 'Thin thermal base layer, thick knit sweater on top', reason: c => `Feels like ${c.feelsLike}°. A thin sweater alone won't do, wear a thermal underneath` },
-        ustune: { item: 'Thick knit cardigan', reason: () => `One more layer over the sweater keeps your body heat in` },
+        ustune: { item: 'Thick knit cardigan', reason: () => `One more layer in between keeps your body heat in` },
         dis: { item: 'Knee-length puffer coat with a hood', reason: c => `A short jacket won't do in this cold, wear a long, thick one` },
         alt: { item: 'Lined, heavy trousers (or thick tights under a long wool skirt)', reason: () => `Keep your legs covered with something thick and lined` },
         ayak: { item: 'Thick-soled, waterproof boots', reason: () => `A thick sole keeps the cold of the ground away` },
       },
       erkek: {
         ust: { item: 'Thin thermal base layer, thick knit sweater on top', reason: c => `Feels like ${c.feelsLike}°. A sweater alone won't do it, wear a thin thermal underneath` },
-        ustune: { item: 'Thick fleece pullover', reason: () => `One more layer over the sweater keeps your body heat in` },
+        ustune: { item: 'Thick fleece pullover', reason: () => `One more layer in between keeps your body heat in` },
         dis: { item: 'Knee-length puffer coat with a hood', reason: c => `A short jacket won't do in this cold, wear a long, thick one` },
         alt: { item: 'Lined, heavy trousers', reason: () => `Thin trousers will leave you cold, wear a lined pair` },
         ayak: { item: 'Thick-soled boots with wool socks', reason: () => `A thick sole keeps the cold of the ground away` },
@@ -195,21 +196,21 @@ const BASE = {
     serin: {
       unisex: {
         ust: { item: 'Thick, plain t-shirt (white or grey)', reason: c => `Feels like ${c.feelsLike}°. A thin t-shirt may feel chilly, pick a heavier one` },
-        ustune: { item: 'A heavy shirt worn open over the t-shirt', reason: () => `Put it on if you get cold, take it off if you warm up` },
+        ustune: { item: 'A heavy shirt worn open', reason: () => `Put it on if you get cold, take it off if you warm up` },
         dis: { item: 'A light cardigan or jacket, carry it if you don’t need it', reason: () => `Mornings and evenings can get cool, keep something light with you` },
         alt: { item: 'Fabric trousers', reason: () => `Fabric trousers are comfortable and warm enough today` },
         ayak: { item: 'Sneakers or closed boots', reason: () => `Closed shoes are the most comfortable at this temperature` },
       },
       kadin: {
         ust: { item: 'Thick, plain t-shirt', reason: c => `Feels like ${c.feelsLike}°. A thin t-shirt may feel chilly` },
-        ustune: { item: 'A thin cardigan worn open on top', reason: () => `Put it on if you get cold, take it off if you warm up` },
+        ustune: { item: 'A thin cardigan worn open', reason: () => `Put it on if you get cold, take it off if you warm up` },
         dis: { item: 'A light trench coat, carry it if you don’t need it', reason: () => `Mornings and evenings can get cool, keep something light with you` },
         alt: { item: 'Fabric trousers (or thin tights under a knee-length skirt)', reason: () => `Fabric trousers are comfortable and warm enough today` },
         ayak: { item: 'Sneakers or loafers', reason: () => `Closed shoes are the most comfortable at this temperature` },
       },
       erkek: {
         ust: { item: 'Thick, plain t-shirt', reason: c => `Feels like ${c.feelsLike}°. A thin t-shirt may feel chilly` },
-        ustune: { item: 'A heavy shirt worn open over the t-shirt', reason: () => `Put it on if you get cold, take it off if you warm up` },
+        ustune: { item: 'A heavy shirt worn open', reason: () => `Put it on if you get cold, take it off if you warm up` },
         dis: { item: 'A light, thin jacket, carry it if you don’t need it', reason: () => `Mornings and evenings can get cool, keep something light with you` },
         alt: { item: 'Fabric trousers', reason: () => `Fabric trousers are comfortable and warm enough today` },
         ayak: { item: 'Loafers or sneakers', reason: () => `Closed shoes are the most comfortable at this temperature` },
@@ -329,26 +330,93 @@ function applyRain(rows, bandKey, rainMax, lang) {
 // there: they only appear when the user owns a piece that fits the weather
 // (a vest at 6°, a light jacket at 18°), so default suggestions stay simple.
 const OPTIONAL_SLOTS = { soguk: ['ustune'], ilik: ['dis'] };
+const UPPER = ['ust', 'ustune', 'dis'];
+const COLD_BANDS = ['dondurucu', 'soguk'];
+const WARM_BANDS = ['ilik', 'sicak', 'cok_sicak'];
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0 }, wardrobeItems = [], locks = {}) {
+function hashStr(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
+  return h;
+}
+
+// Picks today's wording for a suggested (non-wardrobe) slot: options that fit
+// the user's style first, rotating by date; never the same kind of garment
+// the user is already wearing from their own wardrobe in another upper slot.
+function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, avoidArts, warmth }) {
+  const list = ((VARIANTS[language] || VARIANTS.tr)[bandKey] || {})[slot] || [];
+  const options = [{ vibe: 'casual', item: base.item, reason: base.reason, base: true }]
+    .concat(list.filter(([, , , g]) => !g || g === genderKey).map(([v, item, reason]) => ({ vibe: v, item, reason })));
+  const usable = options.filter(o => !avoidArts.includes(garmentVariant(slot, o.item, warmth)));
+  const pool0 = usable.length ? usable : options;
+  const wanted = vibe === 'minimal' ? ['minimal', 'elegant'] : [vibe || 'casual'];
+  const preferred = pool0.filter(o => wanted.includes(o.vibe));
+  const pool = preferred.length ? preferred : pool0.filter(o => o.vibe === 'casual');
+  const list2 = pool.length ? pool : pool0;
+  // Consecutive days walk through the options in order (offset per slot), so
+  // the same suggestion doesn't come back the next day.
+  const dayNum = Math.floor(Date.parse(seed) / 86400000);
+  const step = Number.isFinite(dayNum) ? dayNum : hashStr(String(seed));
+  const pick = list2[(step + hashStr(`${slot}|${bandKey}`)) % list2.length];
+  return pick.base ? base : { item: pick.item, reason: c => pick.reason.replace('{t}', c.feelsLike) };
+}
+
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null }, wardrobeItems = [], locks = {}) {
   const language = lang === 'en' ? 'en' : 'tr';
+  const X = EXTRAS[language];
   // `comfort` shifts the band for people who run cold (-3) or warm (+3); the
   // temperatures quoted in the reasons stay the real ones.
   const bandKey = getBand(feelsLike + comfort);
   const genderKey = ['unisex', 'kadin', 'erkek'].includes(gender) ? gender : 'unisex';
   const rows = clone(BASE[language][bandKey][genderKey]);
 
-  if (wind >= 20) applyWind(rows, wind, language);
-  if (rainMax >= 50) applyRain(rows, bandKey, rainMax, language);
+  const snowy = kind === 'snow';
+  const rainy = rainMax >= 50;
+  const freezing = bandKey === 'dondurucu' || snowy;
+  const sunny = !rainy && (bandKey === 'cok_sicak' || (bandKey === 'sicak' && (kind === 'clear' || kind === 'partly')));
+  const fixed = new Set(); // slots whose text the weather rules set; variants don't override them
+
+  if (wind >= 20) { applyWind(rows, wind, language); fixed.add('dis'); }
+  if (rainy) { applyRain(rows, bandKey, rainMax, language); fixed.add('ayak'); fixed.add('yanina'); }
+  if (snowy) { rows.ayak = { item: X.snow_shoe[0], reason: () => X.snow_shoe[1] }; fixed.add('ayak'); }
+  // Accessories for the conditions: umbrella (rain), beanie/scarf/gloves (freezing), cap (strong sun).
+  let accKinds = null;
+  if (freezing && rainy) { rows.yanina = { item: X.cold_rain_acc[0], reason: () => X.cold_rain_acc[1] }; accKinds = ['umbrella']; }
+  else if (rainy) accKinds = ['umbrella'];
+  else if (freezing) { rows.yanina = { item: X.cold_acc[0], reason: () => X.cold_acc[1] }; fixed.add('yanina'); accKinds = ['beanie', 'scarf']; }
+  else if (sunny) { rows.yanina = { item: X.sun_acc[0], reason: () => X.sun_acc[1] }; fixed.add('yanina'); accKinds = ['cap']; }
 
   const ctx = { feelsLike, wind, rainMax };
-  const needsRain = rainMax >= 50;
+  const needsRain = rainy || snowy;
   const needsWind = wind >= 20;
-  const pickOpts = { bandKey, needsRain, needsWind };
+  const pickOpts = { bandKey, needsRain, needsWind, allowArts: { yanina: accKinds || ['__none__'] } };
   const optional = (OPTIONAL_SLOTS[bandKey] || []).filter(k => !rows[k]);
   const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k] || optional.includes(k)), pickOpts, locks);
   for (const k of optional) if (picks[k]) rows[k] = { item: picks[k].name, reason: '' };
   const pickedItems = Object.values(picks);
+
+  // Today's wording for every suggested slot (style + date), avoiding repeats of owned pieces.
+  const ownedUpperArts = UPPER.filter(k => picks[k]).map(k => itemLook(picks[k]).art);
+  for (const key of SLOT_ORDER) {
+    if (!rows[key] || picks[key] || fixed.has(key)) continue;
+    rows[key] = chooseVariant(rows[key], { language, bandKey, slot: key, genderKey, vibe, seed, avoidArts: ownedUpperArts, warmth: BAND_WARMTH[bandKey] });
+  }
+
+  // ---- Keep suggestions consistent with what the user is actually wearing ----
+  const ownBottom = picks.alt ? itemLook(picks.alt).art : null;
+  // A dress is a whole look: no suggested top over it when it's warm, and in
+  // the cold the top becomes the layer worn under the dress.
+  if (ownBottom === 'dress' && rows.ust && !picks.ust) {
+    if (WARM_BANDS.includes(bandKey) || bandKey === 'serin') delete rows.ust;
+    else rows.ust = { item: X.dress_cold_top[0], reason: () => X.dress_cold_top[1] };
+  }
+  // A suggested mid layer that would be the same garment as an owned top, or
+  // an extra layer under an already very warm owned coat, is dropped/softened.
+  if (rows.ustune && !picks.ustune) {
+    const midArt = garmentVariant('ustune', rows.ustune.item, BAND_WARMTH[bandKey]);
+    if (ownedUpperArts.includes(midArt)) delete rows.ustune;
+    else if (bandKey === 'dondurucu' && picks.dis && (picks.dis.warmth || 3) >= 5) rows.ustune = { item: X.soft_mid[0], reason: () => X.soft_mid[1] };
+  }
 
   const output = [];
   for (const key of SLOT_ORDER) {
@@ -371,6 +439,11 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
       itemId = match.id;
       options = slotOptionIds(wardrobeItems, key, pickOpts);
       reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems);
+      // Bare legs in the cold: remind about tights under the user's own skirt/shorts/dress.
+      if (key === 'alt' && ['skirt', 'shorts', 'dress'].includes(itemLook(match).art)) {
+        if (COLD_BANDS.includes(bandKey)) reason += X.tights_cold;
+        else if (bandKey === 'serin') reason += X.tights_cool;
+      }
     }
 
     // Wardrobe pieces draw from their own stored look; suggestions guess from the text.
