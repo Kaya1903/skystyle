@@ -304,6 +304,545 @@ export const VARIANTS = {
   },
 };
 
+// Gender-specific pools, so women's and men's suggestions actually differ.
+// Same shape as VARIANTS; entries are [vibe, item, reason]. The engine prefers
+// these over the neutral pool when a gender is chosen.
+export const GENDERED = {
+  tr: {
+    kadin: {
+      dondurucu: {
+        ust: [
+          ['casual', 'Termal içlik, üstüne uzun balıkçı yaka triko', 'Hissedilen {t}°. Uzun triko beli de örter, soğuk içeri sızmaz'],
+          ['elegant', 'İnce termal içlik, üstüne kaşmir kazak', 'Hissedilen {t}°. Kaşmir ince ama çok sıcak tutar'],
+          ['sporty', 'Termal üst, üstüne kalın kapüşonlu', 'Hissedilen {t}°. Termal üst teri atar, kapüşonlu ısıyı tutar'],
+          ['bold', 'Termal içlik, üstüne renkli desenli triko', 'Hissedilen {t}°. Soğuk günde renkli bir triko iyi gelir'],
+        ],
+        dis: [
+          ['casual', 'Uzun, kapüşonlu kaz tüyü mont', 'Dizlerine kadar örter, kapüşonu rüzgarı keser'],
+          ['elegant', 'Bele oturan uzun yün kaban', 'Uzun kaban hem şık hem sıcak'],
+          ['sporty', 'Uzun şişme mont', 'Hafif ama çok sıcak'],
+        ],
+        alt: [
+          ['casual', 'Polar astarlı tayt, üstüne kalın örgü elbise', 'Polar astarlı tayt soğuğu tamamen keser'],
+          ['elegant', 'Yün kumaş pantolon, altına termal tayt', 'Termal tayt görünmez ama çok ısıtır'],
+          ['sporty', 'Polar astarlı tayt, üstüne uzun sweatshirt', 'Rahat ve sıcak, hareket etmesi kolay'],
+        ],
+        ayak: [
+          ['casual', 'İçi kürklü, su geçirmez bot', 'Kürk iç astar ayaklarını sıcak tutar'],
+          ['elegant', 'Diz altı, içi astarlı deri çizme', 'Uzun çizme bacaklarını da korur'],
+          ['sporty', 'Kalın tabanlı kar botu', 'Kalın taban karda kaymaz ve soğuğu keser'],
+        ],
+      },
+      soguk: {
+        ust: [
+          ['casual', 'Boğazlı triko', 'Hissedilen {t}°. Boğazlı yaka boynunu sıcak tutar'],
+          ['elegant', 'Gömlek yakalı ince kazak', 'Hissedilen {t}°. Yaka kazağın üstünden şık durur'],
+          ['sporty', 'Kapüşonlu sweatshirt', 'Hissedilen {t}°. Rahat ve sıcak'],
+          ['bold', 'Renkli örgü kazak', 'Hissedilen {t}°. Kombini renkli kazak taşısın'],
+        ],
+        dis: [
+          ['casual', 'Kısa kapitone mont', 'Hafif ama sıcak'],
+          ['elegant', 'Kaşe kaban', 'Kaşe kaban soğuk günlerin klasiği'],
+          ['sporty', 'Kapüşonlu şişme ceket', 'Soğuğu rahatça keser'],
+        ],
+        alt: [
+          ['casual', 'Kalın tayt, üstüne triko elbise', 'Triko elbise ve kalın tayt sıcak tutar'],
+          ['elegant', 'Yüksek bel kumaş pantolon', 'Yüksek bel hem şık hem sıcak'],
+          ['sporty', 'Kalın tayt', 'Rahat ve hareketli bir gün için'],
+        ],
+        ayak: [
+          ['casual', 'Bilekli bot', 'Sıcak tutar ve kaymaz'],
+          ['elegant', 'Alçak topuklu deri bot', 'Deri bot her kombine yakışır'],
+          ['sporty', 'Kalın tabanlı spor ayakkabı', 'Kalın taban soğuğu keser'],
+        ],
+      },
+      serin: {
+        ust: [
+          ['casual', 'Çizgili uzun kollu tişört', 'Hissedilen {t}°. Uzun kol tek başına yetebilir'],
+          ['elegant', 'Saten gömlek', 'Hissedilen {t}°. Saten gömlek serin havada şık durur'],
+          ['sporty', 'Kısa sweatshirt', 'Hissedilen {t}°. Rahat ve sıcak tutar'],
+        ],
+        dis: [
+          ['casual', 'Kot ceket', 'Serin günlerin klasiği'],
+          ['elegant', 'Klasik trençkot', 'Trençkot serin havada en şık seçim'],
+          ['sporty', 'İnce bomber ceket', 'Hafif ve rahat'],
+        ],
+        ustune: [
+          ['casual', 'İnce hırka', 'Serinlerse giyersin'],
+          ['elegant', 'Uzun örgü hırka', 'Uzun hırka zarif durur'],
+        ],
+        alt: [
+          ['casual', 'Yüksek bel kot', 'Rahat ve her şeye uyar'],
+          ['elegant', 'Midi etek, altına ince tayt', 'İnce tayt serin havada yeterli'],
+          ['sporty', 'Tayt', 'Hareketli bir gün için'],
+        ],
+        ayak: [
+          ['casual', 'Beyaz spor ayakkabı', 'Her kombine uyar'],
+          ['elegant', 'Babet ya da loafer', 'Babet kombini zarif kılar'],
+          ['sporty', 'Koşu ayakkabısı', 'Gün boyu rahat'],
+        ],
+      },
+      ilik: {
+        ust: [
+          ['casual', 'Bisiklet yaka tişört', 'Hissedilen {t}°. Tek kat yeterli'],
+          ['elegant', 'Hafif bluz', 'Hissedilen {t}°. Hafif bluz ılık havaya çok yakışır'],
+          ['sporty', 'Hafif spor tişört', 'Hissedilen {t}°. Nefes alır'],
+        ],
+        alt: [
+          ['casual', 'Kot etek', 'Ilık havada rahat'],
+          ['elegant', 'Midi elbise', 'Tek parça elbise en rahatı'],
+          ['sporty', 'Bisiklet taytı ya da jogger', 'Rahat ve hareketli'],
+        ],
+        ayak: [
+          ['casual', 'Kanvas ayakkabı', 'Hafif ve rahat'],
+          ['elegant', 'Babet', 'Zarif ve rahat'],
+          ['sporty', 'Hafif spor ayakkabı', 'Gün boyu rahat'],
+        ],
+      },
+      sicak: {
+        ust: [
+          ['casual', 'Askılı bluz ya da crop tişört', 'Hissedilen {t}°. Hafif ve serin'],
+          ['elegant', 'İpek askılı bluz', 'Hissedilen {t}°. İpek tene serin gelir'],
+          ['sporty', 'Spor atlet', 'Hissedilen {t}°. Kolsuz serin tutar'],
+        ],
+        alt: [
+          ['casual', 'Kot şort', 'Sıcakta rahat'],
+          ['elegant', 'Uçuşan midi etek', 'Uçuşan kumaş hava alır'],
+          ['sporty', 'Spor şort', 'Hafif ve hareketli'],
+          ['bold', 'Renkli yazlık elbise', 'Yaz havasına renkli bir elbise'],
+        ],
+        ayak: [
+          ['casual', 'Sandalet', 'Ayakların nefes alsın'],
+          ['elegant', 'Bantlı sandalet', 'Şık ve serin'],
+          ['sporty', 'Fileli spor ayakkabı', 'Ayakları serin tutar'],
+        ],
+      },
+      cok_sicak: {
+        ust: [
+          ['casual', 'İnce askılı bluz', 'Hissedilen {t}°. Az kumaş, bol hava'],
+          ['elegant', 'Bol kesim keten bluz', 'Hissedilen {t}°. Keten en serin kumaş'],
+          ['sporty', 'Ter atan spor atlet', 'Hissedilen {t}°. Çabuk kurur'],
+        ],
+        alt: [
+          ['casual', 'Keten şort', 'Bacakların nefes alsın'],
+          ['elegant', 'Bol keten elbise', 'Bol kesim hava alır'],
+          ['sporty', 'Hafif koşu şortu', 'Hafif ve çabuk kurur'],
+        ],
+        ayak: [
+          ['casual', 'Parmak arası terlik ya da sandalet', 'Sıcakta en rahatı'],
+          ['elegant', 'Espadril', 'Yazın en şık seçeneklerden'],
+          ['sporty', 'Spor sandalet', 'Rahat ve sağlam'],
+        ],
+      },
+    },
+    erkek: {
+      dondurucu: {
+        ust: [
+          ['casual', 'Termal içlik, üstüne kalın balıkçı yaka kazak', 'Hissedilen {t}°. Balıkçı yaka boynunu da korur'],
+          ['elegant', 'Termal içlik, üstüne merinos yün kazak', 'Hissedilen {t}°. Merinos yün ince ama çok sıcak'],
+          ['sporty', 'Termal spor içlik, üstüne polar sweatshirt', 'Hissedilen {t}°. Ter atar, sıcak tutar'],
+          ['bold', 'Termal içlik, üstüne renkli kalın kazak', 'Hissedilen {t}°. Gri günde renkli bir kazak'],
+        ],
+        dis: [
+          ['casual', 'Kapüşonlu kaz tüyü parka', 'Rüzgarı ve soğuğu keser'],
+          ['elegant', 'Uzun yün palto, yanında kaşmir atkı', 'Uzun palto dizlere kadar sıcak tutar'],
+          ['sporty', 'Teknik kayak montu', 'Rüzgar ve su geçirmez, çok sıcak'],
+        ],
+        alt: [
+          ['casual', 'Astarlı kalın kot, altına termal tayt', 'Termal tayt kotun altında görünmez ama çok ısıtır'],
+          ['elegant', 'Kalın yün pantolon, altına termal tayt', 'Yün ve termal birlikte soğuğu keser'],
+          ['sporty', 'Polar astarlı outdoor pantolon', 'Rüzgar geçirmez kumaş, içi polar'],
+        ],
+        ayak: [
+          ['casual', 'Kalın tabanlı, su geçirmez bot', 'Yerden gelen soğuğu keser'],
+          ['elegant', 'İçi astarlı deri bot', 'Şık ve sıcak'],
+          ['sporty', 'Kar ve doğa botu', 'Karda kaymaz, ayakları kuru tutar'],
+        ],
+      },
+      soguk: {
+        ust: [
+          ['casual', 'Kalın sweatshirt', 'Hissedilen {t}°. Kalın sweatshirt tek başına iyi ısıtır'],
+          ['elegant', 'Oxford gömlek, üstüne V yaka kazak', 'Hissedilen {t}°. Gömlek yakası kazağın üstünden görünsün'],
+          ['sporty', 'Kapüşonlu sweatshirt', 'Hissedilen {t}°. Rahat ve sıcak'],
+          ['bold', 'Desenli kalın kazak', 'Hissedilen {t}°. Desen kombine karakter katar'],
+        ],
+        dis: [
+          ['casual', 'Kapitone ceket', 'Hafif ama sıcak'],
+          ['elegant', 'Kısa yün kaban', 'Kısa kaban hem şık hem sıcak'],
+          ['sporty', 'Şişme ceket', 'Soğuğu rahatça keser'],
+        ],
+        alt: [
+          ['casual', 'Koyu renk kot', 'Kalın kot bu havada yeterli'],
+          ['elegant', 'Yün kumaş pantolon', 'Şık ve sıcak'],
+          ['sporty', 'Kalın eşofman altı', 'Rahat ve sıcak'],
+        ],
+        ayak: [
+          ['casual', 'Bağcıklı bot', 'Sıcak tutar ve kaymaz'],
+          ['elegant', 'Chelsea bot', 'Her kombine yakışır'],
+          ['sporty', 'Kalın tabanlı spor ayakkabı', 'Kalın taban soğuğu keser'],
+        ],
+      },
+      serin: {
+        ust: [
+          ['casual', 'Düğmeli yakalı uzun kollu tişört', 'Hissedilen {t}°. Uzun kol tek başına yetebilir'],
+          ['elegant', 'Oxford gömlek', 'Hissedilen {t}°. Oxford gömlek her yere uyar'],
+          ['sporty', 'Uzun kollu spor tişört', 'Hissedilen {t}°. Nefes alır'],
+        ],
+        dis: [
+          ['casual', 'Kot ceket', 'Serin günlerin klasiği'],
+          ['elegant', 'Hafif blazer', 'Blazer kombini toparlar'],
+          ['sporty', 'Bomber ceket', 'Hafif ve rahat'],
+        ],
+        ustune: [
+          ['casual', 'Fermuarlı ince sweatshirt', 'Serinlerse giyersin'],
+          ['elegant', 'İnce triko hırka', 'Kat kat giyime çok uyar'],
+        ],
+        alt: [
+          ['casual', 'Kot pantolon', 'Rahat ve her şeye uyar'],
+          ['elegant', 'Chino pantolon', 'Derli toplu ve rahat'],
+          ['sporty', 'Jogger', 'Hareketli bir gün için'],
+        ],
+        ayak: [
+          ['casual', 'Süet spor ayakkabı', 'Rahat ve şık'],
+          ['elegant', 'Deri loafer', 'Kombini toparlar'],
+          ['sporty', 'Koşu ayakkabısı', 'Gün boyu rahat'],
+        ],
+      },
+      ilik: {
+        ust: [
+          ['casual', 'Pamuklu tişört', 'Hissedilen {t}°. Tek kat yeterli'],
+          ['elegant', 'Polo yaka tişört', 'Hissedilen {t}°. Polo hem rahat hem derli toplu'],
+          ['sporty', 'Nefes alan spor tişört', 'Hissedilen {t}°. Ter atar'],
+        ],
+        alt: [
+          ['casual', 'Açık renk kot', 'Ilık havaya yakışır'],
+          ['elegant', 'Chino pantolon', 'Hafif ve şık'],
+          ['sporty', 'İnce jogger', 'Rahat bir gün için'],
+        ],
+        ayak: [
+          ['casual', 'Kanvas ayakkabı', 'Hafif ve rahat'],
+          ['elegant', 'Süet loafer', 'Ilık havada şık'],
+          ['sporty', 'Hafif koşu ayakkabısı', 'Gün boyu rahat'],
+        ],
+      },
+      sicak: {
+        ust: [
+          ['casual', 'Pamuklu tişört', 'Hissedilen {t}°. İnce kumaş terletmez'],
+          ['elegant', 'Kısa kollu keten gömlek', 'Hissedilen {t}°. Keten sıcağı iyi taşır'],
+          ['sporty', 'Kolsuz atlet', 'Hissedilen {t}°. Serin tutar'],
+          ['bold', 'Renkli desenli gömlek', 'Hissedilen {t}°. Yaz havası renkli bir gömleği hak ediyor'],
+        ],
+        alt: [
+          ['casual', 'Kot şort', 'Sıcakta rahat'],
+          ['elegant', 'Keten pantolon', 'Bol keten şort kadar serin'],
+          ['sporty', 'Spor şort', 'Hafif ve hareketli'],
+        ],
+        ayak: [
+          ['casual', 'Kanvas ayakkabı', 'Hafif ve nefes alır'],
+          ['elegant', 'Deri sandalet ya da espadril', 'Şık ve serin'],
+          ['sporty', 'Fileli spor ayakkabı', 'Ayakları serin tutar'],
+        ],
+      },
+      cok_sicak: {
+        ust: [
+          ['casual', 'Beyaz ince tişört', 'Hissedilen {t}°. Açık renk güneşi yansıtır'],
+          ['elegant', 'Keten gömlek, kolları kıvrık', 'Hissedilen {t}°. Keten en serin kumaş'],
+          ['sporty', 'Kolsuz atlet', 'Hissedilen {t}°. Az kumaş, bol hava'],
+        ],
+        alt: [
+          ['casual', 'Keten şort', 'Bacakların nefes alsın'],
+          ['elegant', 'Bol keten pantolon', 'Bol kesim hava alır'],
+          ['sporty', 'Koşu şortu', 'Hafif ve çabuk kurur'],
+        ],
+        ayak: [
+          ['casual', 'Sandalet', 'Sıcakta en rahatı'],
+          ['elegant', 'Espadril', 'Yazın şık seçim'],
+          ['sporty', 'Spor sandalet', 'Rahat ve sağlam'],
+        ],
+      },
+    },
+  },
+  en: {
+    kadin: {
+      dondurucu: {
+        ust: [
+          ['casual', 'Thermal layer under a long turtleneck knit', 'Feels like {t}°. A long knit covers your waist so no cold gets in'],
+          ['elegant', 'Thin thermal layer under a cashmere sweater', 'Feels like {t}°. Cashmere is thin but very warm'],
+          ['sporty', 'Thermal top under a thick hoodie', 'Feels like {t}°. The thermal wicks, the hoodie keeps the heat'],
+          ['bold', 'Thermal layer under a colorful patterned knit', 'Feels like {t}°. A bright knit helps on a cold day'],
+        ],
+        dis: [
+          ['casual', 'Long hooded down coat', 'Covers you to the knees, the hood blocks the wind'],
+          ['elegant', 'Long belted wool coat', 'Smart and warm'],
+          ['sporty', 'Long puffer', 'Light but very warm'],
+        ],
+        alt: [
+          ['casual', 'Fleece-lined leggings under a thick knit dress', 'Fleece-lined leggings block the cold completely'],
+          ['elegant', 'Wool trousers with thermal leggings underneath', 'The thermal layer stays hidden but adds warmth'],
+          ['sporty', 'Fleece-lined leggings with a long sweatshirt', 'Comfortable, warm and easy to move in'],
+        ],
+        ayak: [
+          ['casual', 'Fur-lined waterproof boots', 'The lining keeps your feet warm'],
+          ['elegant', 'Below-the-knee lined leather boots', 'Tall boots protect your legs too'],
+          ['sporty', 'Thick-soled snow boots', 'Grippy in snow and keep the cold out'],
+        ],
+      },
+      soguk: {
+        ust: [
+          ['casual', 'Turtleneck knit', 'Feels like {t}°. A turtleneck keeps your neck warm'],
+          ['elegant', 'Thin sweater with a shirt collar', 'Feels like {t}°. The collar looks sharp over the sweater'],
+          ['sporty', 'Hoodie', 'Feels like {t}°. Easy and warm'],
+          ['bold', 'Colorful knit sweater', 'Feels like {t}°. Let a colorful sweater lead'],
+        ],
+        dis: [
+          ['casual', 'Short quilted jacket', 'Light but warm'],
+          ['elegant', 'Wool-blend coat', 'The cold-weather classic'],
+          ['sporty', 'Hooded puffer jacket', 'Handles the cold easily'],
+        ],
+        alt: [
+          ['casual', 'Knit dress over thick tights', 'A knit dress and thick tights keep you warm'],
+          ['elegant', 'High-waisted wool trousers', 'Smart and warm'],
+          ['sporty', 'Thick leggings', 'For an active day'],
+        ],
+        ayak: [
+          ['casual', 'Ankle boots', 'Warm and grippy'],
+          ['elegant', 'Low-heeled leather boots', 'Leather boots suit any outfit'],
+          ['sporty', 'Thick-soled sneakers', 'A thick sole keeps the cold out'],
+        ],
+      },
+      serin: {
+        ust: [
+          ['casual', 'Striped long-sleeve tee', 'Feels like {t}°. Long sleeves may be enough'],
+          ['elegant', 'Satin shirt', 'Feels like {t}°. Satin looks elegant on a cool day'],
+          ['sporty', 'Cropped sweatshirt', 'Feels like {t}°. Comfortable and warm'],
+        ],
+        dis: [
+          ['casual', 'Denim jacket', 'The classic for cool days'],
+          ['elegant', 'Classic trench coat', 'The smartest choice in cool weather'],
+          ['sporty', 'Light bomber jacket', 'Light and easy'],
+        ],
+        ustune: [
+          ['casual', 'Thin cardigan', 'Put it on if it cools off'],
+          ['elegant', 'Long knit cardigan', 'A long cardigan looks graceful'],
+        ],
+        alt: [
+          ['casual', 'High-waisted jeans', 'Comfortable and goes with everything'],
+          ['elegant', 'Midi skirt with thin tights', 'Thin tights are enough in cool weather'],
+          ['sporty', 'Leggings', 'For an active day'],
+        ],
+        ayak: [
+          ['casual', 'White sneakers', 'Go with everything'],
+          ['elegant', 'Ballet flats or loafers', 'Flats make the outfit graceful'],
+          ['sporty', 'Running shoes', 'Comfortable all day'],
+        ],
+      },
+      ilik: {
+        ust: [
+          ['casual', 'Crew-neck tee', 'Feels like {t}°. One layer is enough'],
+          ['elegant', 'Light blouse', 'Feels like {t}°. A light blouse suits mild weather'],
+          ['sporty', 'Light sports tee', 'Feels like {t}°. Breathable'],
+        ],
+        alt: [
+          ['casual', 'Denim skirt', 'Comfortable in mild weather'],
+          ['elegant', 'Midi dress', 'A one-piece dress is easiest'],
+          ['sporty', 'Bike shorts or joggers', 'Comfortable and active'],
+        ],
+        ayak: [
+          ['casual', 'Canvas shoes', 'Light and comfortable'],
+          ['elegant', 'Ballet flats', 'Graceful and comfortable'],
+          ['sporty', 'Light sneakers', 'Comfortable all day'],
+        ],
+      },
+      sicak: {
+        ust: [
+          ['casual', 'Strappy top or crop tee', 'Feels like {t}°. Light and cool'],
+          ['elegant', 'Silk camisole', 'Feels like {t}°. Silk feels cool on the skin'],
+          ['sporty', 'Sports tank', 'Feels like {t}°. Sleeveless keeps you cool'],
+        ],
+        alt: [
+          ['casual', 'Denim shorts', 'Comfortable in the heat'],
+          ['elegant', 'Flowy midi skirt', 'Flowy fabric lets air through'],
+          ['sporty', 'Sports shorts', 'Light and active'],
+          ['bold', 'Bright summer dress', 'A colorful dress for summer weather'],
+        ],
+        ayak: [
+          ['casual', 'Sandals', 'Let your feet breathe'],
+          ['elegant', 'Strappy sandals', 'Smart and cool'],
+          ['sporty', 'Mesh sneakers', 'Keep your feet cool'],
+        ],
+      },
+      cok_sicak: {
+        ust: [
+          ['casual', 'Thin strappy top', 'Feels like {t}°. Less fabric, more air'],
+          ['elegant', 'Loose linen blouse', 'Feels like {t}°. Linen is the coolest fabric'],
+          ['sporty', 'Wicking sports tank', 'Feels like {t}°. Dries quickly'],
+        ],
+        alt: [
+          ['casual', 'Linen shorts', 'Let your legs breathe'],
+          ['elegant', 'Loose linen dress', 'A loose cut lets air through'],
+          ['sporty', 'Light running shorts', 'Light and quick-drying'],
+        ],
+        ayak: [
+          ['casual', 'Flip-flops or sandals', 'Easiest in the heat'],
+          ['elegant', 'Espadrilles', 'A summer classic'],
+          ['sporty', 'Sport sandals', 'Comfortable and sturdy'],
+        ],
+      },
+    },
+    erkek: {
+      dondurucu: {
+        ust: [
+          ['casual', 'Thermal layer under a thick turtleneck', 'Feels like {t}°. A turtleneck protects your neck too'],
+          ['elegant', 'Thermal layer under a merino sweater', 'Feels like {t}°. Merino is thin but very warm'],
+          ['sporty', 'Thermal sports layer under a fleece sweatshirt', 'Feels like {t}°. Wicks sweat, keeps you warm'],
+          ['bold', 'Thermal layer under a bright chunky sweater', 'Feels like {t}°. A bright sweater on a grey day'],
+        ],
+        dis: [
+          ['casual', 'Hooded down parka', 'Blocks wind and cold'],
+          ['elegant', 'Long wool overcoat with a cashmere scarf', 'A long coat keeps you warm to the knees'],
+          ['sporty', 'Technical ski jacket', 'Wind- and waterproof, very warm'],
+        ],
+        alt: [
+          ['casual', 'Lined heavy jeans with thermal leggings underneath', 'Thermals stay hidden under jeans but add a lot of warmth'],
+          ['elegant', 'Heavy wool trousers with thermal leggings underneath', 'Wool and thermals together beat the cold'],
+          ['sporty', 'Fleece-lined outdoor trousers', 'Windproof shell, fleece inside'],
+        ],
+        ayak: [
+          ['casual', 'Thick-soled waterproof boots', 'Keep the cold of the ground away'],
+          ['elegant', 'Lined leather boots', 'Smart and warm'],
+          ['sporty', 'Snow and hiking boots', 'Grippy in snow, keep your feet dry'],
+        ],
+      },
+      soguk: {
+        ust: [
+          ['casual', 'Heavy sweatshirt', 'Feels like {t}°. A heavy sweatshirt warms well on its own'],
+          ['elegant', 'Oxford shirt under a V-neck sweater', 'Feels like {t}°. Let the shirt collar show'],
+          ['sporty', 'Hoodie', 'Feels like {t}°. Easy and warm'],
+          ['bold', 'Patterned chunky sweater', 'Feels like {t}°. A pattern adds character'],
+        ],
+        dis: [
+          ['casual', 'Quilted jacket', 'Light but warm'],
+          ['elegant', 'Short wool coat', 'Smart and warm'],
+          ['sporty', 'Puffer jacket', 'Handles the cold easily'],
+        ],
+        alt: [
+          ['casual', 'Dark jeans', 'Heavy jeans are enough today'],
+          ['elegant', 'Wool trousers', 'Smart and warm'],
+          ['sporty', 'Heavy joggers', 'Comfortable and warm'],
+        ],
+        ayak: [
+          ['casual', 'Lace-up boots', 'Warm and grippy'],
+          ['elegant', 'Chelsea boots', 'Go with any outfit'],
+          ['sporty', 'Thick-soled sneakers', 'A thick sole keeps the cold out'],
+        ],
+      },
+      serin: {
+        ust: [
+          ['casual', 'Long-sleeve henley', 'Feels like {t}°. Long sleeves may be enough'],
+          ['elegant', 'Oxford shirt', 'Feels like {t}°. An Oxford shirt works anywhere'],
+          ['sporty', 'Long-sleeve sports top', 'Feels like {t}°. Breathable'],
+        ],
+        dis: [
+          ['casual', 'Denim jacket', 'The classic for cool days'],
+          ['elegant', 'Light blazer', 'A blazer pulls the outfit together'],
+          ['sporty', 'Bomber jacket', 'Light and easy'],
+        ],
+        ustune: [
+          ['casual', 'Light zip-up sweatshirt', 'Put it on if it cools off'],
+          ['elegant', 'Fine-knit cardigan', 'Great for layering'],
+        ],
+        alt: [
+          ['casual', 'Jeans', 'Comfortable and goes with everything'],
+          ['elegant', 'Chinos', 'Neat and comfortable'],
+          ['sporty', 'Joggers', 'For an active day'],
+        ],
+        ayak: [
+          ['casual', 'Suede sneakers', 'Comfortable and smart'],
+          ['elegant', 'Leather loafers', 'Pull the outfit together'],
+          ['sporty', 'Running shoes', 'Comfortable all day'],
+        ],
+      },
+      ilik: {
+        ust: [
+          ['casual', 'Cotton tee', 'Feels like {t}°. One layer is enough'],
+          ['elegant', 'Polo shirt', 'Feels like {t}°. A polo is easy and neat'],
+          ['sporty', 'Breathable sports tee', 'Feels like {t}°. Wicks sweat'],
+        ],
+        alt: [
+          ['casual', 'Light-wash jeans', 'Suit mild weather'],
+          ['elegant', 'Chinos', 'Light and smart'],
+          ['sporty', 'Light joggers', 'For an easy day'],
+        ],
+        ayak: [
+          ['casual', 'Canvas shoes', 'Light and comfortable'],
+          ['elegant', 'Suede loafers', 'Smart in mild weather'],
+          ['sporty', 'Light running shoes', 'Comfortable all day'],
+        ],
+      },
+      sicak: {
+        ust: [
+          ['casual', 'Cotton tee', 'Feels like {t}°. Thin fabric keeps you from sweating'],
+          ['elegant', 'Short-sleeve linen shirt', 'Feels like {t}°. Linen handles heat well'],
+          ['sporty', 'Tank top', 'Feels like {t}°. Keeps you cool'],
+          ['bold', 'Bright printed shirt', 'Feels like {t}°. Summer weather deserves a colorful shirt'],
+        ],
+        alt: [
+          ['casual', 'Denim shorts', 'Comfortable in the heat'],
+          ['elegant', 'Linen trousers', 'Loose linen is as cool as shorts'],
+          ['sporty', 'Sports shorts', 'Light and active'],
+        ],
+        ayak: [
+          ['casual', 'Canvas shoes', 'Light and breathable'],
+          ['elegant', 'Leather sandals or espadrilles', 'Smart and cool'],
+          ['sporty', 'Mesh sneakers', 'Keep your feet cool'],
+        ],
+      },
+      cok_sicak: {
+        ust: [
+          ['casual', 'Thin white tee', 'Feels like {t}°. Light colors reflect the sun'],
+          ['elegant', 'Linen shirt, sleeves rolled', 'Feels like {t}°. Linen is the coolest fabric'],
+          ['sporty', 'Tank top', 'Feels like {t}°. Less fabric, more air'],
+        ],
+        alt: [
+          ['casual', 'Linen shorts', 'Let your legs breathe'],
+          ['elegant', 'Loose linen trousers', 'A loose cut lets air through'],
+          ['sporty', 'Running shorts', 'Light and quick-drying'],
+        ],
+        ayak: [
+          ['casual', 'Sandals', 'Easiest in the heat'],
+          ['elegant', 'Espadrilles', 'A smart summer choice'],
+          ['sporty', 'Sport sandals', 'Comfortable and sturdy'],
+        ],
+      },
+    },
+  },
+};
+
+// Extra layers by how cold or hot it really is (bands are wide; -1° and -23°
+// both sit in "dondurucu"). Level 1: below -5°, 2: below -11°, 3: below -17°.
+export const INTENSITY = {
+  tr: {
+    thermal_legs: ' Altına termal tayt giy.',
+    wool_socks: ' Yün çorapla giy.',
+    deep_coat: ['Uzun, kapüşonlu kaz tüyü parka', 'Bu soğukta en kalın montunu giy, kapüşonu da kapat'],
+    l2_acc: ['Bere, boyunluk ve kalın eldiven', 'Bu soğukta açıkta kalan cilt çabuk üşür, yüzünü ve ellerini koru'],
+    l3_acc: ['Balaklava, kalın eldiven ve yün çorap', 'Dışarıda uzun kalma; açıkta kalan cilt dakikalar içinde donabilir'],
+    l3_layers: ' Kat kat giyin, iki ince kat tek kalın kattan daha iyi ısıtır.',
+    gale: ' Rüzgar çok sert, yüzünü açıkta bırakma.',
+    heat_acc: ['Şapka, güneş gözlüğü ve su şişesi', 'Bu sıcakta uzun süre güneşte kalma, bol su iç'],
+  },
+  en: {
+    thermal_legs: ' Wear thermal leggings underneath.',
+    wool_socks: ' Wear them with wool socks.',
+    deep_coat: ['Long hooded down parka', 'Wear your warmest coat in this cold, hood up'],
+    l2_acc: ['Beanie, neck gaiter and thick gloves', 'Exposed skin gets cold fast in this, protect your face and hands'],
+    l3_acc: ['Balaclava, thick gloves and wool socks', 'Don\'t stay out long; exposed skin can freeze within minutes'],
+    l3_layers: ' Layer up, two thin layers warm better than one thick one.',
+    gale: ' The wind is very strong, keep your face covered.',
+    heat_acc: ['Hat, sunglasses and a water bottle', 'Avoid long stretches in the sun and drink plenty of water'],
+  },
+};
+
 // Condition-driven extras (accessories, snow shoes, layer softening).
 export const EXTRAS = {
   tr: {

@@ -542,7 +542,7 @@ function computeWeekOutfits() {
         vibe: styleVibe, seed: day.date, kind: day.kind },
       state.wardrobe
     );
-    const tipKey = [day.date, cityName, outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
+    const tipKey = [day.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
     return { day, outfit, tipKey, tip: state.weekTips[tipKey] || null, tipLoading: state.weekTipStatus[tipKey] === 'loading' };
   });
 }
@@ -575,7 +575,7 @@ function rememberTip(key, tip) {
 function ensureSmartTip(dayView, outfit) {
   const cityName = state.city ? state.city.name : 'unknown';
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
-  const key = [dayView.date, cityName, outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
+  const key = [dayView.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
   if (state.smartTipKey === key) return;
   state.smartTipKey = key;
 

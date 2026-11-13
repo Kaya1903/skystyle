@@ -1,6 +1,6 @@
 import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH } from './wardrobe.js';
 import { garmentVariant, itemLook } from './visuals.js';
-import { VARIANTS, EXTRAS } from './outfit_variants.js';
+import { VARIANTS, EXTRAS, GENDERED, INTENSITY } from './outfit_variants.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
 
@@ -343,22 +343,39 @@ function hashStr(str) {
 // Picks today's wording for a suggested (non-wardrobe) slot: options that fit
 // the user's style first, rotating by date; never the same kind of garment
 // the user is already wearing from their own wardrobe in another upper slot.
-function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, avoidArts, warmth }) {
+function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, avoidArts, warmth, feelsLike }) {
   const list = ((VARIANTS[language] || VARIANTS.tr)[bandKey] || {})[slot] || [];
-  const options = [{ vibe: 'casual', item: base.item, reason: base.reason, base: true }]
-    .concat(list.filter(([, , , g]) => !g || g === genderKey).map(([v, item, reason]) => ({ vibe: v, item, reason })));
+  const gList = genderKey === 'unisex' ? []
+    : ((((GENDERED[language] || GENDERED.tr)[genderKey] || {})[bandKey] || {})[slot] || []);
+  const options = [{ vibe: 'casual', item: base.item, reason: base.reason, base: true, gendered: genderKey !== 'unisex' }]
+    .concat(gList.map(([v, item, reason]) => ({ vibe: v, item, reason, gendered: true })))
+    .concat(list.filter(([, , , g]) => !g || g === genderKey).map(([v, item, reason, g]) => ({ vibe: v, item, reason, gendered: !!g })));
   const usable = options.filter(o => !avoidArts.includes(garmentVariant(slot, o.item, warmth)));
   const pool0 = usable.length ? usable : options;
   const wanted = vibe === 'minimal' ? ['minimal', 'elegant'] : [vibe || 'casual'];
-  const preferred = pool0.filter(o => wanted.includes(o.vibe));
-  const pool = preferred.length ? preferred : pool0.filter(o => o.vibe === 'casual');
-  const list2 = pool.length ? pool : pool0;
-  // Consecutive days walk through the options in order (offset per slot), so
-  // the same suggestion doesn't come back the next day.
+  let pool = pool0.filter(o => wanted.includes(o.vibe));
+  if (!pool.length) pool = pool0.filter(o => o.vibe === 'casual');
+  if (!pool.length) pool = pool0;
+  // Women's and men's picks lean on their own pieces: gendered options count
+  // twice, so the two lists rarely land on the same neutral suggestion.
+  if (genderKey !== 'unisex') pool = pool.flatMap(o => (o.gendered ? [o, o] : [o]));
+  // The pick walks forward one step per day and one step per 2°, so -1° and
+  // -23° (same band) or two neighbouring days don't give the same outfit.
   const dayNum = Math.floor(Date.parse(seed) / 86400000);
-  const step = Number.isFinite(dayNum) ? dayNum : hashStr(String(seed));
-  const pick = list2[(step + hashStr(`${slot}|${bandKey}`)) % list2.length];
+  const day = Number.isFinite(dayNum) ? dayNum : hashStr(String(seed));
+  const tempStep = Number.isFinite(feelsLike) ? Math.floor(feelsLike / 2) : 0;
+  const idx = (((day + tempStep + hashStr(`${slot}|${bandKey}|${genderKey}`)) % pool.length) + pool.length) % pool.length;
+  const pick = pool[idx];
   return pick.base ? base : { item: pick.item, reason: c => pick.reason.replace('{t}', c.feelsLike) };
+}
+
+// How far past the band edge the day really is. Bands are wide (everything
+// at or below 2° is "dondurucu"), so very cold days get extra layers on top.
+function coldLevel(temp) {
+  if (temp <= -18) return 3;
+  if (temp <= -12) return 2;
+  if (temp <= -6) return 1;
+  return 0;
 }
 
 export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null }, wardrobeItems = [], locks = {}) {
@@ -366,12 +383,18 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const X = EXTRAS[language];
   // `comfort` shifts the band for people who run cold (-3) or warm (+3); the
   // temperatures quoted in the reasons stay the real ones.
-  const bandKey = getBand(feelsLike + comfort);
+  const felt = feelsLike + comfort;
+  const bandKey = getBand(felt);
+  const cold = coldLevel(felt);
+  const extremeHeat = felt >= 35;
+  const I = INTENSITY[language];
   const genderKey = ['unisex', 'kadin', 'erkek'].includes(gender) ? gender : 'unisex';
   const rows = clone(BASE[language][bandKey][genderKey]);
 
-  const snowy = kind === 'snow';
-  const rainy = rainMax >= 50;
+  // Below -3° precipitation falls as snow: snow boots instead of an umbrella.
+  const snowFall = rainMax >= 50 && feelsLike <= -3;
+  const snowy = kind === 'snow' || snowFall;
+  const rainy = rainMax >= 50 && !snowFall;
   const freezing = bandKey === 'dondurucu' || snowy;
   const sunny = !rainy && (bandKey === 'cok_sicak' || (bandKey === 'sicak' && (kind === 'clear' || kind === 'partly')));
   const fixed = new Set(); // slots whose text the weather rules set; variants don't override them
@@ -399,7 +422,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const ownedUpperArts = UPPER.filter(k => picks[k]).map(k => itemLook(picks[k]).art);
   for (const key of SLOT_ORDER) {
     if (!rows[key] || picks[key] || fixed.has(key)) continue;
-    rows[key] = chooseVariant(rows[key], { language, bandKey, slot: key, genderKey, vibe, seed, avoidArts: ownedUpperArts, warmth: BAND_WARMTH[bandKey] });
+    rows[key] = chooseVariant(rows[key], { language, bandKey, slot: key, genderKey, vibe, seed, avoidArts: ownedUpperArts, warmth: BAND_WARMTH[bandKey], feelsLike });
   }
 
   // ---- Keep suggestions consistent with what the user is actually wearing ----
@@ -417,6 +440,21 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     if (ownedUpperArts.includes(midArt)) delete rows.ustune;
     else if (bandKey === 'dondurucu' && picks.dis && (picks.dis.warmth || 3) >= 5) rows.ustune = { item: X.soft_mid[0], reason: () => X.soft_mid[1] };
   }
+
+  // ---- Extra protection for very cold and very hot days ----
+  if (cold >= 2 && rows.dis && !picks.dis) {
+    const windNote = fixed.has('dis') && typeof rows.dis.reason === 'function' ? rows.dis.reason(ctx) : '';
+    rows.dis = { item: I.deep_coat[0], reason: () => I.deep_coat[1] + (windNote ? `. ${windNote}` : '') };
+  }
+  if (!picks.yanina && !rainy) {
+    if (cold >= 3) rows.yanina = { item: I.l3_acc[0], reason: () => I.l3_acc[1] };
+    else if (cold >= 2) rows.yanina = { item: I.l2_acc[0], reason: () => I.l2_acc[1] };
+    else if (extremeHeat) rows.yanina = { item: I.heat_acc[0], reason: () => I.heat_acc[1] };
+  }
+  const notes = {};
+  if (cold >= 1) { notes.alt = I.thermal_legs; notes.ayak = I.wool_socks; }
+  if (cold >= 3) notes.ust = I.l3_layers;
+  if (wind >= 50 && COLD_BANDS.includes(bandKey)) notes.dis = I.gale;
 
   const output = [];
   for (const key of SLOT_ORDER) {
@@ -446,6 +484,9 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
       }
     }
 
+    // Skip a note the suggestion already covers (e.g. "...altına termal tayt").
+    if (notes[key] && !(key === 'alt' && /termal|thermal|tayt|tights|leggings/i.test(item + reason)) && !(key === 'ayak' && /yün çorap|wool socks/i.test(item + reason))) reason = (reason && !/[.!?]$/.test(reason) ? reason + '.' : reason) + notes[key];
+
     // Wardrobe pieces draw from their own stored look; suggestions guess from the text.
     const look = match ? itemLook(match) : { art: garmentVariant(key, item, BAND_WARMTH[bandKey]), color: null, color2: null, patternType: 'solid', details: {} };
     if (match) color = look.color;
@@ -453,7 +494,8 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
   }
 
-  return { bandKey, bandLabel: bandLabel(bandKey, language), rows: output };
+  const labelKey = cold >= 2 ? 'extreme_cold' : cold === 1 ? 'very_cold' : extremeHeat ? 'extreme_hot' : bandKey;
+  return { bandKey, intensity: labelKey, bandLabel: bandLabel(labelKey, language), rows: output };
 }
 
 // For an accent-colored piece, the other picked piece it goes best with (if any).

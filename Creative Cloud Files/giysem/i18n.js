@@ -106,6 +106,9 @@ export const STRINGS = {
     band_ilik: 'Ilık',
     band_sicak: 'Sıcak',
     band_cok_sicak: 'Çok sıcak',
+    band_very_cold: 'Çok soğuk',
+    band_extreme_cold: 'Aşırı soğuk',
+    band_extreme_hot: 'Aşırı sıcak',
 
     weekdays: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
     week_title: '7 Günlük Hava & Kombin',
@@ -257,6 +260,9 @@ export const STRINGS = {
     band_ilik: 'Mild',
     band_sicak: 'Warm',
     band_cok_sicak: 'Very hot',
+    band_very_cold: 'Very cold',
+    band_extreme_cold: 'Extreme cold',
+    band_extreme_hot: 'Extreme heat',
 
     weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     week_title: '7-Day Weather & Outfits',
@@ -408,6 +414,9 @@ export const STRINGS = {
     band_ilik: 'Templado',
     band_sicak: 'Cálido',
     band_cok_sicak: 'Muy caluroso',
+    band_very_cold: 'Muy frío',
+    band_extreme_cold: 'Frío extremo',
+    band_extreme_hot: 'Calor extremo',
 
     weekdays: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
     week_title: 'Clima y looks de 7 días',
@@ -559,6 +568,9 @@ export const STRINGS = {
     band_ilik: 'Łagodnie',
     band_sicak: 'Ciepło',
     band_cok_sicak: 'Bardzo gorąco',
+    band_very_cold: 'Bardzo zimno',
+    band_extreme_cold: 'Ekstremalny mróz',
+    band_extreme_hot: 'Ekstremalny upał',
 
     weekdays: ['Nie', 'Pon', 'Wto', 'Śro', 'Czw', 'Pią', 'Sob'],
     week_title: 'Pogoda i stylizacje na 7 dni',
@@ -710,6 +722,9 @@ export const STRINGS = {
     band_ilik: 'دافئ قليلًا',
     band_sicak: 'دافئ',
     band_cok_sicak: 'حار جدًا',
+    band_very_cold: 'بارد جدًا',
+    band_extreme_cold: 'برد قارس',
+    band_extreme_hot: 'حر شديد',
 
     weekdays: ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'],
     week_title: 'الطقس والإطلالات لـ 7 أيام',

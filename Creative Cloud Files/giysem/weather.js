@@ -253,6 +253,7 @@ export function eveningTip(dayView, lang = 'tr') {
   const heroFeels = dayView.hero.feelsLike;
   if (lang === 'en') {
     if (!eve) return "No separate forecast for tonight, so dress for the daytime weather.";
+    if (eve.rain >= 50 && eve.feelsLike <= -3) return `${eve.rain}% chance of snow tonight. Waterproof boots with a grippy sole are the safest bet.`;
     if (eve.rain >= 50) return `${eve.rain}% chance of rain tonight. Take a small umbrella with you.`;
     if (eve.wind >= 20) return `Wind picks up to ${eve.wind} km/h tonight. Bring something windproof, even a thin one.`;
     if (heroFeels - eve.feelsLike >= 4) return `It will feel like ${eve.feelsLike}° tonight. Take an extra layer when you head out.`;
@@ -260,6 +261,9 @@ export function eveningTip(dayView, lang = 'tr') {
   }
   if (!eve) {
     return 'Akşam için ayrı tahmin yok, gündüz havasına göre giyin.';
+  }
+  if (eve.rain >= 50 && eve.feelsLike <= -3) {
+    return `Akşam kar ihtimali %${eve.rain}. Kaymaz tabanlı, su geçirmez bot en güvenlisi.`;
   }
   if (eve.rain >= 50) {
     return `Akşam yağmur ihtimali %${eve.rain}. Yanına küçük bir şemsiye al.`;
