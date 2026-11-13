@@ -3,32 +3,74 @@ const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
 const WMO_TEXT = {
   tr: {
-    0: 'Açık', 1: 'Az bulutlu', 2: 'Parçalı bulutlu', 3: 'Kapalı',
-    45: 'Sisli', 48: 'Kırağılı sis',
-    51: 'Hafif çisenti', 53: 'Çisenti', 55: 'Yoğun çisenti',
-    56: 'Dondurucu çisenti', 57: 'Yoğun dondurucu çisenti',
-    61: 'Hafif yağmurlu', 63: 'Yağmurlu', 65: 'Kuvvetli yağmurlu',
-    66: 'Dondurucu yağmur', 67: 'Kuvvetli dondurucu yağmur',
-    71: 'Hafif kar yağışlı', 73: 'Kar yağışlı', 75: 'Kuvvetli kar yağışlı',
-    77: 'Kar taneli',
-    80: 'Sağanak yağmurlu', 81: 'Kuvvetli sağanak', 82: 'Şiddetli sağanak',
-    85: 'Kar sağanağı', 86: 'Kuvvetli kar sağanağı',
+    0: 'Açık', 1: 'Çoğunlukla açık', 2: 'Parçalı bulutlu', 3: 'Kapalı',
+    45: 'Sisli', 48: 'Sisli, yer buz tutabilir',
+    51: 'Yağmur çiseliyor', 53: 'Yağmur çiseliyor', 55: 'Hafif yağmurlu',
+    56: 'Çiseliyor, yer buz tutabilir', 57: 'Yağmurlu, yer buz tutabilir',
+    61: 'Hafif yağmurlu', 63: 'Yağmurlu', 65: 'Kuvvetli yağmur',
+    66: 'Yağmurlu, yer buz tutabilir', 67: 'Kuvvetli yağmur, yer buz tutabilir',
+    71: 'Hafif kar', 73: 'Karlı', 75: 'Yoğun kar',
+    77: 'Hafif kar',
+    80: 'Sağanak yağmur', 81: 'Kuvvetli sağanak', 82: 'Şiddetli sağanak',
+    85: 'Kar sağanağı', 86: 'Yoğun kar sağanağı',
     95: 'Gök gürültülü fırtına', 96: 'Dolulu fırtına', 99: 'Şiddetli dolulu fırtına',
     default: 'Değişken hava',
   },
   en: {
     0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast',
-    45: 'Foggy', 48: 'Freezing fog',
-    51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
-    56: 'Freezing drizzle', 57: 'Heavy freezing drizzle',
+    45: 'Foggy', 48: 'Foggy, icy patches possible',
+    51: 'Light drizzle', 53: 'Drizzle', 55: 'Light rain',
+    56: 'Drizzle, icy patches possible', 57: 'Rain, icy patches possible',
     61: 'Light rain', 63: 'Rain', 65: 'Heavy rain',
-    66: 'Freezing rain', 67: 'Heavy freezing rain',
+    66: 'Rain, icy patches possible', 67: 'Heavy rain, icy patches possible',
     71: 'Light snow', 73: 'Snow', 75: 'Heavy snow',
-    77: 'Snow grains',
+    77: 'Light snow',
     80: 'Rain showers', 81: 'Heavy showers', 82: 'Violent showers',
     85: 'Snow showers', 86: 'Heavy snow showers',
     95: 'Thunderstorm', 96: 'Thunderstorm with hail', 99: 'Severe thunderstorm with hail',
     default: 'Changeable weather',
+  },
+  es: {
+    0: 'Despejado', 1: 'Mayormente despejado', 2: 'Parcialmente nublado', 3: 'Nublado',
+    45: 'Niebla', 48: 'Niebla, puede haber hielo',
+    51: 'Llovizna', 53: 'Llovizna', 55: 'Lluvia ligera',
+    56: 'Llovizna, puede haber hielo', 57: 'Lluvia, puede haber hielo',
+    61: 'Lluvia ligera', 63: 'Lluvia', 65: 'Lluvia fuerte',
+    66: 'Lluvia, puede haber hielo', 67: 'Lluvia fuerte, puede haber hielo',
+    71: 'Nieve ligera', 73: 'Nieve', 75: 'Nieve intensa',
+    77: 'Nieve ligera',
+    80: 'Chubascos', 81: 'Chubascos fuertes', 82: 'Chubascos muy fuertes',
+    85: 'Chubascos de nieve', 86: 'Chubascos de nieve intensos',
+    95: 'Tormenta eléctrica', 96: 'Tormenta con granizo', 99: 'Tormenta fuerte con granizo',
+    default: 'Tiempo variable',
+  },
+  pl: {
+    0: 'Bezchmurnie', 1: 'Przeważnie bezchmurnie', 2: 'Częściowe zachmurzenie', 3: 'Pochmurno',
+    45: 'Mgła', 48: 'Mgła, możliwa gołoledź',
+    51: 'Mżawka', 53: 'Mżawka', 55: 'Lekki deszcz',
+    56: 'Mżawka, możliwa gołoledź', 57: 'Deszcz, możliwa gołoledź',
+    61: 'Lekki deszcz', 63: 'Deszcz', 65: 'Ulewny deszcz',
+    66: 'Deszcz, możliwa gołoledź', 67: 'Ulewny deszcz, możliwa gołoledź',
+    71: 'Lekki śnieg', 73: 'Śnieg', 75: 'Intensywny śnieg',
+    77: 'Lekki śnieg',
+    80: 'Przelotne opady', 81: 'Silne przelotne opady', 82: 'Gwałtowne ulewy',
+    85: 'Przelotne opady śniegu', 86: 'Silne opady śniegu',
+    95: 'Burza', 96: 'Burza z gradem', 99: 'Silna burza z gradem',
+    default: 'Zmienna pogoda',
+  },
+  ar: {
+    0: 'صافٍ', 1: 'صافٍ غالبًا', 2: 'غائم جزئيًا', 3: 'غائم',
+    45: 'ضباب', 48: 'ضباب مع احتمال تجمّد',
+    51: 'رذاذ', 53: 'رذاذ', 55: 'مطر خفيف',
+    56: 'رذاذ مع احتمال تجمّد', 57: 'مطر مع احتمال تجمّد',
+    61: 'مطر خفيف', 63: 'مطر', 65: 'مطر غزير',
+    66: 'مطر مع احتمال تجمّد', 67: 'مطر غزير مع احتمال تجمّد',
+    71: 'ثلج خفيف', 73: 'ثلج', 75: 'ثلج كثيف',
+    77: 'ثلج خفيف',
+    80: 'زخات مطر', 81: 'زخات مطر قوية', 82: 'زخات مطر عنيفة',
+    85: 'زخات ثلج', 86: 'زخات ثلج كثيفة',
+    95: 'عاصفة رعدية', 96: 'عاصفة رعدية مع برد', 99: 'عاصفة رعدية شديدة مع برد',
+    default: 'طقس متقلّب',
   },
 };
 
@@ -66,7 +108,7 @@ export async function geocodeCity(name, lang = 'tr') {
 const REVERSE_GEOCODE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
 
 // Resolves GPS coordinates to a real place name (no API key required).
-// Returns null if the lookup fails or the response is unusable — callers should
+// Returns null if the lookup fails or the response is unusable, callers should
 // fall back to a generic "my location" label rather than surfacing an error.
 export async function reverseGeocode(lat, lon, lang = 'tr') {
   const url = `${REVERSE_GEOCODE_URL}?latitude=${lat}&longitude=${lon}&localityLanguage=${lang}`;
@@ -210,23 +252,23 @@ export function eveningTip(dayView, lang = 'tr') {
   const eve = dayView.eveningWindow;
   const heroFeels = dayView.hero.feelsLike;
   if (lang === 'en') {
-    if (!eve) return "No separate data for tonight — dress for what's forecast during the day.";
-    if (eve.rain >= 50) return `${eve.rain}% chance of rain tonight — don't leave without a small umbrella.`;
-    if (eve.wind >= 20) return `Wind picks up to ${eve.wind} km/h tonight — bring something windproof, even a thin one.`;
-    if (heroFeels - eve.feelsLike >= 4) return `Feels-like drops to ${eve.feelsLike}° tonight — grab something to put on before you head out.`;
-    return "Tonight looks calm — no need for anything extra.";
+    if (!eve) return "No separate forecast for tonight, so dress for the daytime weather.";
+    if (eve.rain >= 50) return `${eve.rain}% chance of rain tonight. Take a small umbrella with you.`;
+    if (eve.wind >= 20) return `Wind picks up to ${eve.wind} km/h tonight. Bring something windproof, even a thin one.`;
+    if (heroFeels - eve.feelsLike >= 4) return `It will feel like ${eve.feelsLike}° tonight. Take an extra layer when you head out.`;
+    return "Tonight looks calm. You won't need anything extra.";
   }
   if (!eve) {
-    return 'Akşam için ayrı bir veri yok, gün içindeki tahmine göre giyin.';
+    return 'Akşam için ayrı tahmin yok, gündüz havasına göre giyin.';
   }
   if (eve.rain >= 50) {
-    return `Akşam yağış %${eve.rain} — yanına küçük bir şemsiye almadan çıkma.`;
+    return `Akşam yağmur ihtimali %${eve.rain}. Yanına küçük bir şemsiye al.`;
   }
   if (eve.wind >= 20) {
-    return `Akşam rüzgar ${eve.wind} km/s'ye çıkıyor, ince de olsa rüzgar kesen bir şey al yanına.`;
+    return `Akşam rüzgar saatte ${eve.wind} km'ye çıkıyor. İnce de olsa rüzgarı kesen bir şey al.`;
   }
   if (heroFeels - eve.feelsLike >= 4) {
-    return `Akşam hissedilen ${eve.feelsLike}°'ye düşüyor, çıkarken üstüne bir şey al.`;
+    return `Akşam hissedilen sıcaklık ${eve.feelsLike}° olacak. Çıkarken yanına bir kat daha al.`;
   }
-  return 'Akşam hava sakin geçecek gibi, ekstra bir şeye gerek yok.';
+  return 'Akşam hava sakin görünüyor, fazladan bir şeye gerek yok.';
 }

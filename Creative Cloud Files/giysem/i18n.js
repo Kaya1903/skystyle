@@ -7,8 +7,8 @@ export const STRINGS = {
     no_city: 'Şehir seçilmedi',
     hissedilen: 'Hissedilen',
     termometre: t => `termometre ${t}°`,
-    ruzgar_yagis: (w, r) => `rüzgar ${w} km/s · yağış %${r}`,
-    unit_kmh: 'km/s',
+    ruzgar_yagis: (w, r) => `rüzgar ${w} km/sa · yağış %${r}`,
+    unit_kmh: 'km/sa',
     rain_line: r => `yağış %${r}`,
     gender_unisex: 'Unisex',
     gender_kadin: 'Kadın',
@@ -191,7 +191,7 @@ export const STRINGS = {
     week_today: 'Today',
 
     ai_analyzing: 'AI is looking at the photo…',
-    ai_suggested: 'AI filled in a suggestion — edit if needed',
+    ai_suggested: 'AI filled in a suggestion, edit it if needed',
     ai_failed: "AI analysis didn't work, fill it in yourself",
 
     profile_screen_sub: 'Update your name, style, and city here.',
@@ -306,7 +306,7 @@ export const STRINGS = {
     week_today: 'Hoy',
 
     ai_analyzing: 'La IA está mirando la foto…',
-    ai_suggested: 'La IA completó una sugerencia — edítala si quieres',
+    ai_suggested: 'La IA completó una sugerencia, edítala si quieres',
     ai_failed: 'El análisis de IA no funcionó, complétalo tú mismo',
 
     profile_screen_sub: 'Actualiza tu nombre, estilo y ciudad aquí.',
@@ -421,7 +421,7 @@ export const STRINGS = {
     week_today: 'Dziś',
 
     ai_analyzing: 'AI analizuje zdjęcie…',
-    ai_suggested: 'AI wypełniło sugestię — edytuj w razie potrzeby',
+    ai_suggested: 'AI wypełniło sugestię, edytuj w razie potrzeby',
     ai_failed: 'Analiza AI nie powiodła się, uzupełnij ręcznie',
 
     profile_screen_sub: 'Tutaj zaktualizuj swoje imię, styl i miasto.',
@@ -536,7 +536,7 @@ export const STRINGS = {
     week_today: 'اليوم',
 
     ai_analyzing: 'الذكاء الاصطناعي يفحص الصورة…',
-    ai_suggested: 'ملأ الذكاء الاصطناعي اقتراحًا — عدّله إذا أردت',
+    ai_suggested: 'ملأ الذكاء الاصطناعي اقتراحًا، عدّله إذا أردت',
     ai_failed: 'لم ينجح تحليل الذكاء الاصطناعي، يمكنك التعبئة يدويًا',
 
     profile_screen_sub: 'حدّث اسمك وأسلوبك ومدينتك هنا.',

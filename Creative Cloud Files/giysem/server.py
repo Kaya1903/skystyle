@@ -4,11 +4,11 @@ style-tip requests to the Anthropic API so the API key never reaches the browser
 Usage:
     ANTHROPIC_API_KEY=sk-ant-... python3 server.py
 
-Without ANTHROPIC_API_KEY set, the app still runs normally — only the
+Without ANTHROPIC_API_KEY set, the app still runs normally, only the
 AI features (photo suggestions, smart daily tip) are disabled.
 
 Optionally set SITE_PASSWORD to gate the whole site behind a single shared
-password (HTTP Basic Auth — the browser will show its own login prompt).
+password (HTTP Basic Auth, the browser will show its own login prompt).
 Leave SITE_PASSWORD unset to keep the site open to anyone with the link.
 """
 
@@ -40,7 +40,7 @@ ANALYZE_PROMPT = (
     '"color": the dominant color, one of "siyah" | "beyaz" | "gri" | "lacivert" | "bej" | "kahve" | '
     '"denim" | "haki" | "yesil" | "mavi" | "kirmizi" | "bordo" | "pembe" | "mor" | "sari" | "turuncu" '
     '(black, white, grey, navy, beige, brown, denim-blue, khaki/olive, green, blue, red, burgundy, '
-    'pink, purple, yellow, orange — pick the closest), '
+    'pink, purple, yellow, orange, pick the closest), '
     '"pattern": "duz" | "desenli" (duz=solid, desenli=striped/checked/printed/any visible pattern)}'
 )
 
@@ -133,22 +133,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get('Content-Length', 0))
             ctx = json.loads(self.rfile.read(length) or b'{}')
-            lang_name = 'Turkish' if ctx.get('lang') != 'en' else 'English'
+            lang_name = {'tr': 'Turkish', 'en': 'English', 'es': 'Spanish', 'pl': 'Polish', 'ar': 'Arabic'}.get(ctx.get('lang'), 'Turkish')
             wardrobe_summary = ctx.get('wardrobeSummary') or 'no saved wardrobe items'
             prompt = (
                 f'You are a warm, concise personal stylist writing inside a weather app. '
                 f'Reply in {lang_name} only, in ONE short tip of at most two short sentences. '
                 f'No greeting, no signature, no markdown, no surrounding quotes. '
-                f'Context — city: {ctx.get("city", "")}; feels-like temperature: {ctx.get("feelsLike", "")}°C; '
+                f'Never use em dashes or en dashes; use commas or periods instead. '
+                f'Write natural, everyday language a friend would use, not literal or translated-sounding phrases. '
+                f'Context, city: {ctx.get("city", "")}; feels-like temperature: {ctx.get("feelsLike", "")}°C; '
                 f'condition: {ctx.get("condition", "")}; wind: {ctx.get("wind", "")} km/h; '
                 f'rain chance: {ctx.get("rain", "")}%; clothing fit preference: {ctx.get("gender", "unisex")}; '
                 f'personal style vibe: {ctx.get("styleVibe", "casual")}; their wardrobe: {wardrobe_summary}. '
-                f'Let the style vibe shape your wording and suggestion — casual favors relaxed easy layers, '
+                f'Let the style vibe shape your wording and suggestion, casual favors relaxed easy layers, '
                 f'elegant favors polished refined pieces, sporty favors performance/athletic fabrics, minimal '
                 f'favors clean simple silhouettes, bold favors color and statement pieces. '
                 f'If a wardrobe item genuinely fits today, mention it by name naturally. Otherwise give '
                 f'one specific, actionable styling or comfort tip (fabric, layering, footwear). '
-                f'Do not just restate the temperature number — add something the person wouldn\'t already see on screen.'
+                f'Do not just restate the temperature number, add something the person wouldn\'t already see on screen.'
             )
             payload = {
                 'model': MODEL,
@@ -220,7 +222,7 @@ if __name__ == '__main__':
     socketserver.ThreadingTCPServer.allow_reuse_address = True
     socketserver.ThreadingTCPServer.daemon_threads = True
     with socketserver.ThreadingTCPServer(('', PORT), handler_cls) as httpd:
-        status = 'enabled' if API_KEY else 'disabled — set ANTHROPIC_API_KEY to turn on AI photo suggestions'
+        status = 'enabled' if API_KEY else 'disabled, set ANTHROPIC_API_KEY to turn on AI photo suggestions'
         auth_status = 'password-protected' if SITE_PASSWORD else 'open to anyone with the link'
         print(f'SkyStyle serving on http://localhost:{PORT}  (AI: {status}, access: {auth_status})')
         httpd.serve_forever()

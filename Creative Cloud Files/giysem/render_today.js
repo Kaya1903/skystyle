@@ -81,7 +81,7 @@ function daypartCard(parts, s) {
         ${pts.map(({ time, p }, i) => `
           <div class="daypart" style="--dot-y:${ys[i] != null ? ys[i].toFixed(1) : 35}">
             ${p ? `<span class="daypart-dot" style="background:${tempColor(p.feelsLike)}"></span>` : ''}
-            <span class="daypart-temp">${p ? p.feelsLike + '°' : '—'}</span>
+            <span class="daypart-temp">${p ? p.feelsLike + '°' : '?'}</span>
             <span class="daypart-time">${time}</span>
             ${p ? `<span class="daypart-sub">${icons.wind}${p.wind} · ${icons.drop}%${p.rain}</span>` : ''}
           </div>

@@ -70,7 +70,7 @@ export function renderWeekScreen(s) {
     ${brandHeader(s)}
     <div class="section-head fade-slide">
       <h2 class="section-big">${t(s.lang, 'week_title')}</h2>
-      <span class="band-chip">${range.min}° – ${range.max}°</span>
+      <span class="band-chip">${range.min}° / ${range.max}°</span>
     </div>
     <div class="week-list">
       ${weekOutfits.map((wo, i) => weekDayRow(wo, i, s, range)).join('')}

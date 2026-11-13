@@ -1,6 +1,6 @@
 // Minimal line-art landmark silhouettes for well-known cities, matched by
 // coordinates (not name) so they work regardless of the display language the
-// geocoder returns the city name in. Purely decorative — unmatched cities
+// geocoder returns the city name in. Purely decorative, unmatched cities
 // simply render nothing.
 const S = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
 

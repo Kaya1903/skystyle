@@ -472,7 +472,7 @@ function rememberTip(key, tip) {
 }
 
 // Fetches (or reuses a cached) AI styling tip for today's exact context. Cheap to
-// call on every render — it's a no-op once the tip for the current key is loaded
+// call on every render, it's a no-op once the tip for the current key is loaded
 // or already in flight, so it only ever hits the network once per day/city/band/style.
 function ensureSmartTip(dayView, outfit) {
   const cityName = state.city ? state.city.name : 'unknown';
@@ -534,7 +534,7 @@ function rememberWeekTip(key, tip) {
 // Kicks off one AI tip request per week day that hasn't been attempted yet, so days
 // sharing similar weather still get distinct AI-written text instead of the same
 // fixed rule-based template string. Once a key has been attempted (loading/done/failed)
-// it's never retried — render() runs on every state change, so without this a failed
+// it's never retried, render() runs on every state change, so without this a failed
 // request (e.g. no API key configured) would refire on every single re-render.
 function ensureWeekTips(weekOutfits) {
   const cache = loadWeekTipCache();
@@ -573,7 +573,7 @@ function ensureWeekTips(weekOutfits) {
 }
 
 // Rebuilding a container's innerHTML destroys and recreates any focused <input>
-// inside it, which fires a synchronous native blur on the old node — that made
+// inside it, which fires a synchronous native blur on the old node, that made
 // per-component focus/blur flag tracking unreliable (the flag got cleared by the
 // very blur the rebuild caused, before the new input could reclaim it). Capturing
 // activeElement right before the rebuild and restoring it by id afterwards sidesteps

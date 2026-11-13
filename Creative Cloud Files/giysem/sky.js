@@ -1,5 +1,5 @@
 // Full-screen animated sky that mirrors the current weather and time of day.
-// Lives outside #screen so it never gets rebuilt by the app's re-renders —
+// Lives outside #screen so it never gets rebuilt by the app's re-renders -
 // setSky() only toggles classes and (re)starts the particle loop when the mood changes.
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
