@@ -330,9 +330,11 @@ function applyRain(rows, bandKey, rainMax, lang) {
 // (a vest at 6°, a light jacket at 18°), so default suggestions stay simple.
 const OPTIONAL_SLOTS = { soguk: ['ustune'], ilik: ['dis'] };
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardrobeItems = [], locks = {}) {
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0 }, wardrobeItems = [], locks = {}) {
   const language = lang === 'en' ? 'en' : 'tr';
-  const bandKey = getBand(feelsLike);
+  // `comfort` shifts the band for people who run cold (-3) or warm (+3); the
+  // temperatures quoted in the reasons stay the real ones.
+  const bandKey = getBand(feelsLike + comfort);
   const genderKey = ['unisex', 'kadin', 'erkek'].includes(gender) ? gender : 'unisex';
   const rows = clone(BASE[language][bandKey][genderKey]);
 

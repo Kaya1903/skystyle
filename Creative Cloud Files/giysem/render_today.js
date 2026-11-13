@@ -123,27 +123,29 @@ function outfitSection(outfit, kombinLabel, s) {
         <span class="band-chip">${outfit.bandLabel}</span>
       </div>
     </div>
-    <div class="look-grid">
-      ${boardCard(outfit, s)}
-      ${outfit.rows.map((row, i) => `
-        <article class="glass look-card ${i === 0 ? 'lead' : ''} ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''} rise-in" style="animation-delay:${320 + i * 90}ms">
-          <div class="look-art" style="--float-delay:${i * -0.7}s">
-            ${garmentArt(row.art, row.color, row.look)}
-          </div>
-          ${row.options && row.options.length > 1 ? `
-            <button class="swap-btn" data-swap="${row.slotKey}" aria-label="${t(s.lang, 'swap_piece')}: ${row.label}">
-              ${icons.swap}<span>${row.options.indexOf(row.itemId) + 1}/${row.options.length}</span>
-            </button>` : ''}
-          <div class="look-body">
-            <div class="look-slot">
-              <span>${row.label}</span>
-              ${row.fromWardrobe ? `<span class="wardrobe-tag">${icons.hanger}${t(s.lang, 'gardirobundan')}</span>` : ''}
+    <div class="outfit-layout">
+      <div class="board-col">${boardCard(outfit, s)}</div>
+      <div class="glass pieces-card rise-in" style="animation-delay:340ms">
+        ${outfit.rows.map((row, i) => `
+          <article class="piece-row ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''}">
+            <div class="piece-art" style="--float-delay:${i * -0.8}s">
+              ${garmentArt(row.art, row.color, row.look, 'flat')}
             </div>
-            <div class="look-item">${row.color ? `<span class="color-dot ${row.patterned ? 'patterned' : ''}" style="background:${row.color}"></span>` : ''}${row.item}</div>
-            <div class="look-reason">${row.reason}</div>
-          </div>
-        </article>
-      `).join('')}
+            <div class="piece-body">
+              <div class="look-slot">
+                <span>${row.label}</span>
+                ${row.fromWardrobe ? `<span class="wardrobe-tag">${icons.hanger}${t(s.lang, 'gardirobundan')}</span>` : ''}
+              </div>
+              <div class="look-item">${row.color ? `<span class="color-dot ${row.patterned ? 'patterned' : ''}" style="background:${row.color}"></span>` : ''}${row.item}</div>
+              <div class="look-reason">${row.reason}</div>
+            </div>
+            ${row.options && row.options.length > 1 ? `
+              <button class="swap-btn" data-swap="${row.slotKey}" aria-label="${t(s.lang, 'swap_piece')}: ${row.label}">
+                ${icons.swap}<span>${row.options.indexOf(row.itemId) + 1}/${row.options.length}</span>
+              </button>` : ''}
+          </article>
+        `).join('')}
+      </div>
     </div>
   `;
 }

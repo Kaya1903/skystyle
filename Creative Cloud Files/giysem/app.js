@@ -5,7 +5,7 @@ import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe } from './wardrobe.js';
 import { generateOutfit } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
-import { loadProfile, saveProfile, clearProfile } from './profile.js';
+import { loadProfile, saveProfile, clearProfile, comfortOffset } from './profile.js';
 import { getSmartTip } from './ai.js';
 import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
 import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
@@ -112,7 +112,43 @@ export async function refetchForecast() {
   }
 }
 
+// ---- Recent city searches ----
+const RECENT_KEY = 'giysem_recent_cities_v1';
+const RECENT_MAX = 6;
+
+export function loadRecentCities() {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    return Array.isArray(list) ? list.filter(c => c && typeof c.lat === 'number') : [];
+  } catch { return []; }
+}
+
+function sameCity(a, b) {
+  return Math.abs(a.lat - b.lat) < 0.05 && Math.abs(a.lon - b.lon) < 0.05;
+}
+
+function rememberCity(city) {
+  if (!city || typeof city.lat !== 'number') return;
+  const entry = { name: city.name, admin: city.admin || '', country: city.country || '', lat: city.lat, lon: city.lon };
+  const next = [entry, ...loadRecentCities().filter(c => !sameCity(c, entry))].slice(0, RECENT_MAX);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* history is a convenience */ }
+}
+
+export function removeRecentCity(lat, lon) {
+  const next = loadRecentCities().filter(c => !sameCity(c, { lat, lon }));
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  state.quietRender = true;
+  render();
+}
+
+export function clearRecentCities() {
+  try { localStorage.removeItem(RECENT_KEY); } catch { /* ignore */ }
+  state.quietRender = true;
+  render();
+}
+
 export async function chooseCity(city, persist = true) {
+  rememberCity(city);
   if (state.onboardFromCitySheet) {
     state.onboardFromCitySheet = false;
     state.citySheetOpen = false;
@@ -131,6 +167,7 @@ async function initCity() {
   if (saved) {
     try {
       state.city = JSON.parse(saved);
+      if (!loadRecentCities().length) rememberCity(state.city);
       await refetchForecast();
       return;
     } catch { /* ignore */ }
@@ -210,6 +247,7 @@ export function resetOutfit() {
 
 export function openCitySheet() {
   state.citySheetOpen = true;
+  state.citySheetQuery = '';
   state.citySheetResults = [];
   state.citySheetMsg = '';
   render();
@@ -370,6 +408,7 @@ async function finishOnboarding(city) {
   state.profile = profile;
   state.gender = profile.gender;
   state.city = city;
+  rememberCity(city);
   localStorage.setItem(CITY_KEY, JSON.stringify(city));
   state.screen = 'app';
   state.activeTab = 'today';
@@ -378,12 +417,13 @@ async function finishOnboarding(city) {
 }
 
 export function showToast(message) {
+  // Only the overlay layer changes, so don't rebuild the screen underneath.
   state.toast = message;
-  render();
+  renderOverlays();
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     state.toast = null;
-    render();
+    renderOverlays();
   }, 2200);
 }
 
@@ -400,6 +440,9 @@ export function saveProfileName(name) {
   if (!trimmed || !state.profile) return;
   state.profile = { ...state.profile, name: trimmed };
   saveProfile(state.profile);
+  state.quietRender = true;
+  render();
+  scrollToTop();
   showToast(t(state.lang, 'profile_saved'));
 }
 
@@ -415,11 +458,26 @@ export function toggleAvatarPicker() {
   render();
 }
 
-export function setAvatarColor(key) {
+export function setAvatar(key) {
   if (!state.profile) return;
-  state.profile = { ...state.profile, avatarColor: key, avatarPhoto: null };
+  state.profile = { ...state.profile, avatar: key, avatarPhoto: null };
   saveProfile(state.profile);
+  state.quietRender = true;
   render();
+}
+
+export function setComfort(level) {
+  if (!state.profile || state.profile.comfort === level) return;
+  state.profile = { ...state.profile, comfort: level };
+  saveProfile(state.profile);
+  state.quietRender = true;
+  render();
+  showToast(t(state.lang, 'profile_saved'));
+}
+
+function scrollToTop() {
+  screenEl.scrollTop = 0;
+  window.scrollTo(0, 0);
 }
 
 export async function setAvatarPhotoFile(file) {
@@ -457,7 +515,7 @@ function computeOutfitFor(dayOffset) {
   if (!state.forecastRaw) return null;
   const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
   const outfit = generateOutfit(
-    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang },
+    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile) },
     state.wardrobe,
     dayOffset === 0 ? state.outfitLocks : {}
   );
@@ -479,7 +537,7 @@ function computeWeekOutfits() {
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
   return week.map(day => {
     const outfit = generateOutfit(
-      { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang },
+      { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile) },
       state.wardrobe
     );
     const tipKey = [day.date, cityName, outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
@@ -646,12 +704,21 @@ function currentSky() {
   return { kind: skyKind(cur.weather_code), isDay: isDay !== 0 };
 }
 
+let lastViewKey = null;
+
 export function render() {
   navEl.style.display = state.screen === 'onboarding' ? 'none' : '';
   setSky(currentSky());
   screenEl.dataset.tab = state.screen === 'onboarding' ? 'onboarding' : state.activeTab;
 
-  const quiet = state.quietRender;
+  // Entrance animations only play when the view itself changes (tab, screen,
+  // onboarding step, city, data arriving). Background updates such as an AI tip
+  // landing, photos loading or a toast closing re-render quietly; replaying the
+  // whole entrance on those made the page look like it was reloading.
+  const viewKey = [state.screen, state.screen === 'onboarding' ? state.onboardStep : state.activeTab,
+    state.loading ? 'loading' : state.error ? 'error' : 'ready', state.city ? state.city.name : ''].join('|');
+  const quiet = state.quietRender || viewKey === lastViewKey;
+  lastViewKey = viewKey;
   state.quietRender = false;
   screenEl.classList.toggle('quiet', quiet);
   if (!quiet) {

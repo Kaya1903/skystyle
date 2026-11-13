@@ -18,6 +18,8 @@ export const icons = {
   chevron: `<svg viewBox="0 0 24 24" ${S}><path d="M9 6l6 6-6 6"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" ${S}><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>`,
   swap: `<svg viewBox="0 0 24 24" ${S}><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg>`,
+  clock: `<svg viewBox="0 0 24 24" ${S}><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" ${S}><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   check: `<svg viewBox="0 0 24 24" ${S}><path d="M5 12.5l4.5 4.5L19 7"/></svg>`,
   user: `<svg viewBox="0 0 24 24" ${S}><circle cx="12" cy="8.2" r="3.6"/><path d="M4.5 20c0-3.6 3.4-6.2 7.5-6.2s7.5 2.6 7.5 6.2"/></svg>`,
 };

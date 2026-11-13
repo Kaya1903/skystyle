@@ -115,13 +115,60 @@ const CITIES = [
     { d: R(18, 96, 112, 54) + R(26, 104, 12, 46) + R(46, 104, 12, 46) + R(66, 100, 16, 50) + R(90, 104, 12, 46) + R(110, 104, 12, 46), eo: true },
     R(14, 86, 120, 10), R(44, 74, 60, 12), P('60 74, 64 62, 71 58, 77 61, 82 56, 88 62, 88 74'),
   ]],
-  ['warsaw', 52.2297, 21.0122, () => [
-    { d: R(34, 116, 132, 34) + R(18, 126, 16, 24) + R(166, 126, 16, 24) + R(56, 88, 88, 28) + R(70, 60, 60, 28) + R(80, 40, 40, 20) + R(88, 28, 24, 12) + R(92, 20, 16, 8) +
-      range(62, 136, 8).map(x => R(x, 92, 2.2, 20)).join('') + range(76, 122, 8).map(x => R(x, 64, 2.2, 20)).join('') + range(85, 113, 7).map(x => R(x, 44, 2, 12)).join('') +
-      windows(36, 120, 128, 26, 16, 2, 3, 6), eo: true },
-    P('96 20, 100 0, 104 20'),
-    [SPIRE(58, 88, 4, 9), SPIRE(142, 88, 4, 9), SPIRE(72, 60, 4, 9), SPIRE(128, 60, 4, 9), SPIRE(82, 40, 3, 8), SPIRE(118, 40, 3, 8), SPIRE(36, 116, 4, 8), SPIRE(164, 116, 4, 8)].join(''),
-  ]],
+  // Palace of Culture and Science, drawn from a straight-on reference photo
+  // (1348x2000 px): coordinates below are photo pixels, mapped into the
+  // 200x150 box with the spire tip at the top and the ground at the bottom.
+  // Tall slim main shaft, two lower flanking towers in front of it, the
+  // columned central entrance, long low wings; small pinnacles (not big
+  // turrets) on the cornices; arched belvedere, clock stage and a long spire.
+  ['warsaw', 52.2297, 21.0122, () => {
+    const k = 150 / 1860;
+    const X = px => +(100 + (px - 683) * k).toFixed(2);
+    const Y = py => +(150 - (1910 - py) * k).toFixed(2);
+    const box = (x1, y1, x2, y2) => R(X(x1), Y(y1), +((x2 - x1) * k).toFixed(2), +((y2 - y1) * k).toFixed(2));
+    const grid = (x1, x2, xs, y1, y2, ys, w, h) => {
+      let d = '';
+      for (let x = x1; x <= x2; x += xs) for (let y = y1; y <= y2; y += ys) d += box(x, y, x + w, y + h);
+      return d;
+    };
+    const pin = (px, base, h, w = 12) => SPIRE(X(px), Y(base), +(w * k).toFixed(2), +(h * k).toFixed(2));
+    const arch = (x1, x2, y1, y2) => ARCH(X(x1), Y(y2), +((x2 - x1) * k).toFixed(2), +((y2 - y1) * k).toFixed(2));
+    return [
+      // wings (extend past the photo's crop so the base reads as wide and low)
+      { d: box(-260, 1660, 465, 1910) + box(900, 1660, 1626, 1910) + box(-270, 1640, 470, 1662) + box(895, 1640, 1636, 1662) +
+          grid(-200, 400, 110, 1700, 1800, 80, 34, 46) + grid(960, 1560, 110, 1700, 1800, 80, 34, 46), o: 0.9, eo: true },
+      // main shaft (behind the flanking towers), with its window grid and tall arches up top
+      { d: box(487, 740, 878, 1640) + box(480, 712, 885, 742) +
+          grid(592, 770, 30, 940, 1600, 42, 13, 22) + grid(520, 540, 30, 940, 1600, 42, 12, 22) + grid(822, 842, 30, 940, 1600, 42, 12, 22) +
+          arch(518, 548, 800, 870) + arch(815, 845, 800, 870) + grid(588, 770, 30, 790, 790, 1, 14, 60), o: 0.82, eo: true },
+      // crown above the shaft: attic, pinnacles, small ornamental gables
+      box(495, 688, 870, 712),
+      pin(502, 688, 55) + pin(578, 688, 50) + pin(788, 688, 50) + pin(862, 688, 55) + pin(640, 688, 26, 10) + pin(726, 688, 26, 10),
+      'M' + X(520) + ' ' + Y(688) + 'Q' + X(540) + ' ' + Y(650) + ' ' + X(560) + ' ' + Y(688) + 'Z' + 'M' + X(806) + ' ' + Y(688) + 'Q' + X(826) + ' ' + Y(650) + ' ' + X(846) + ' ' + Y(688) + 'Z',
+      // belvedere with four arched openings, then the clock stage
+      { d: box(603, 525, 763, 690) + arch(620, 642, 575, 628) + arch(655, 677, 575, 628) + arch(690, 712, 575, 628) + arch(724, 746, 575, 628), eo: true },
+      box(596, 520, 770, 532),
+      pin(610, 525, 40, 10) + pin(756, 525, 40, 10),
+      { d: box(630, 400, 737, 522) + C(X(683), Y(497), +(26 * k).toFixed(2)), eo: true },
+      box(624, 392, 743, 404),
+      // lantern and the long spire
+      'M' + X(660) + ' ' + Y(392) + 'C' + X(656) + ' ' + Y(360) + ' ' + X(668) + ' ' + Y(330) + ' ' + X(683) + ' ' + Y(318) + 'C' + X(698) + ' ' + Y(330) + ' ' + X(710) + ' ' + Y(360) + ' ' + X(706) + ' ' + Y(392) + 'Z',
+      P(`${X(673)} ${Y(320)}, ${X(683)} ${Y(50)}, ${X(693)} ${Y(320)}`),
+      // flanking towers in front of the shaft, each with an ornate attic
+      { d: box(335, 1240, 552, 1640) + box(813, 1240, 1027, 1640) + box(328, 1232, 559, 1246) + box(806, 1232, 1034, 1246) +
+          grid(385, 470, 42, 1385, 1600, 50, 16, 26) + grid(878, 963, 42, 1385, 1600, 50, 16, 26) +
+          grid(388, 468, 40, 1285, 1285, 1, 16, 44) + grid(880, 960, 40, 1285, 1285, 1, 16, 44), eo: true },
+      [343, 380, 470, 512, 545, 821, 856, 945, 985, 1020].map(px => pin(px, 1232, 50, 10)).join(''),
+      'M' + X(410) + ' ' + Y(1232) + 'Q' + X(437) + ' ' + Y(1176) + ' ' + X(464) + ' ' + Y(1232) + 'Z' + 'M' + X(897) + ' ' + Y(1232) + 'Q' + X(922) + ' ' + Y(1176) + ' ' + X(948) + ' ' + Y(1232) + 'Z',
+      // central block with its decorated attic and cornice, then the columned portico
+      { d: box(505, 1560, 850, 1910) + box(495, 1535, 858, 1562) + box(515, 1445, 840, 1537) +
+          grid(605, 740, 64, 1590, 1590, 1, 28, 32) + grid(470, 470, 1, 1600, 1840, 60, 14, 22) + grid(866, 866, 1, 1600, 1840, 60, 14, 22) +
+          box(560, 1705, 795, 1900), eo: true },
+      box(555, 1648, 800, 1706),
+      [570, 633, 697, 760].map(px => box(px, 1706, px + 25, 1900)).join(''),
+      'M' + X(640) + ' ' + Y(1445) + 'Q' + X(678) + ' ' + Y(1400) + ' ' + X(716) + ' ' + Y(1445) + 'Z',
+    ];
+  }],
   ['prague', 50.0755, 14.4378, () => [
     { d: R(0, 124, 64, 26) + ARCH(4, 150, 14, 18) + ARCH(25, 150, 14, 18) + ARCH(46, 150, 14, 18), eo: true },
     R(52, 92, 14, 32), P('50 92, 59 72, 68 92'),
@@ -348,15 +395,33 @@ const CITIES = [
     R(93, 30, 14, 8), R(96, 22, 8, 8), P('98 22, 100 0, 102 22'),
   ]],
   // Americas
+  // Statue of Liberty (torch in her RIGHT hand, which is the viewer's LEFT;
+  // tablet held in her left arm), on its stepped pedestal, beside the
+  // Empire State and Chrysler buildings.
   ['newyork', 40.7128, -74.006, () => [
-    { d: R(70, 96, 16, 54) + R(90, 84, 12, 66) + R(170, 90, 16, 60) + R(186, 104, 14, 46), o: 0.55 },
-    { d: R(24, 112, 34, 38) + R(36, 122, 10, 12), eo: true }, R(29, 100, 24, 12),
-    P('34 100, 37 72, 40 58, 46 56, 50 60, 52 72, 52 100'), C(44, 52, 4),
-    { s: 'M40 48L37 43M43 47L42 41M46 47L47 41M48 48L51 43', w: 1.2 },
-    P('48 58, 54 30, 57 31, 52 60'), R(53, 24, 5, 6), P('53.5 24, 55.5 15, 57.5 24'), R(34, 64, 5, 8),
+    { d: R(98, 92, 12, 58) + R(170, 96, 16, 54) + R(186, 108, 14, 42), o: 0.5 },
+    // pedestal: wide base, shaft with recessed panel, cornice, plinth
+    { d: 'M18 150V128H22V120H66V128H70V150Z' + R(36, 132, 16, 14), eo: true },
+    { d: R(26, 96, 36, 24) + R(38, 102, 12, 14), eo: true },
+    R(23, 92, 42, 4), R(29, 86, 30, 6),
+    // robe: flared hem, drapery folds, shoulders
+    { d: 'M33.5 86C34.5 78 35.8 70 37.2 62C38.2 57 39.8 54 42 53H48.5C50.6 54 52 57 52.8 62C54 70 55.4 78 56.8 86Z' +
+        'M40.6 84L42.8 64L43.5 64L41.5 84Z' + 'M46.4 84L46 66L46.8 66L47.4 84Z' + 'M50.6 84L49.4 70L50.1 70L51.6 84Z', eo: true },
+    // head with crown rays
+    C(45, 47.5, 4.2),
+    { s: 'M41 44L38 40M42.5 43L41 38M44.5 42.6L44.5 37.4M46.5 43L48 38M48 44L51 40.5M40 46L36 45M50 46L54 45', w: 1.3 },
+    // raised right arm (viewer's left) with torch and flame
+    P('39.5 56, 34.5 26, 37.2 25.4, 42.8 55'),
+    R(33, 19.5, 5.4, 6.5), P('32.2 19.5, 34 17.6, 37.6 17.6, 39.2 19.5'),
+    'M35.7 17.8C33.2 13.6 34.6 9.6 35.7 6.4C36.8 9.6 38.8 12.8 35.7 17.8Z',
+    // tablet in the left arm (viewer's right)
+    P('50 58, 56 56, 58 70, 52 72'),
+    // Empire State
     { d: R(106, 70, 28, 80) + range(110, 128, 6).map(x => R(x, 76, 2, 70)).join(''), eo: true },
     R(110, 56, 20, 14), R(114, 44, 12, 12), R(116, 34, 8, 10), 'M118 34L119.5 6H120.5L122 34Z',
+    // Chrysler
     R(150, 70, 16, 80), 'M150 70Q158 40 166 70Z', 'M156 50L158 16L160 50Z',
+    { s: 'M152 66Q158 50 164 66M153.5 60Q158 47 162.5 60', w: 1 },
   ]],
   ['sanfrancisco', 37.7749, -122.4194, () => {
     const cable = t => [(1 - t) ** 2 * 53 + 2 * t * (1 - t) * 100 + t * t * 153, (1 - t) ** 2 * 30 + 2 * t * (1 - t) * 118 + t * t * 30];
