@@ -56,6 +56,9 @@ export const state = {
   weekTips: {},
   weekTipStatus: {},
   langMenuOpen: false,
+  outfitLocks: {},     // { slotKey: itemId } pinned by the swap button (today only)
+  swappedSlot: null,   // slot whose card should play the swap animation on the next render
+  quietRender: false,  // skip entrance animations for in-place updates (swap, gender)
 };
 
 let toastTimer = null;
@@ -117,6 +120,7 @@ export async function chooseCity(city, persist = true) {
     return;
   }
   state.city = city;
+  state.outfitLocks = {};
   if (persist) localStorage.setItem(CITY_KEY, JSON.stringify(city));
   state.citySheetOpen = false;
   await refetchForecast();
@@ -180,6 +184,27 @@ export function switchTab(tab) {
 export function setGender(g) {
   if (state.gender === g) return;
   state.gender = g;
+  state.quietRender = true;
+  render();
+}
+
+// Cycles one slot of today's outfit to the next suitable wardrobe piece.
+// The other slots are re-picked around it so colors still work together.
+export function swapOutfitPiece(slotKey) {
+  const data = computeOutfitFor(0);
+  const row = data && data.outfit.rows.find(r => r.slotKey === slotKey);
+  if (!row || row.options.length < 2) return;
+  const idx = row.options.indexOf(row.itemId);
+  state.outfitLocks = { ...state.outfitLocks, [slotKey]: row.options[(idx + 1) % row.options.length] };
+  state.swappedSlot = slotKey;
+  state.quietRender = true;
+  render();
+}
+
+export function resetOutfit() {
+  state.outfitLocks = {};
+  state.swappedSlot = null;
+  state.quietRender = true;
   render();
 }
 
@@ -421,7 +446,8 @@ function computeOutfitFor(dayOffset) {
   const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
   const outfit = generateOutfit(
     { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang },
-    state.wardrobe
+    state.wardrobe,
+    dayOffset === 0 ? state.outfitLocks : {}
   );
   const tip = eveningTip(dayView, state.lang);
   return { dayView, outfit, tip };
@@ -613,9 +639,14 @@ export function render() {
   setSky(currentSky());
   screenEl.dataset.tab = state.screen === 'onboarding' ? 'onboarding' : state.activeTab;
 
-  screenEl.classList.remove('screen-enter');
-  void screenEl.offsetWidth;
-  screenEl.classList.add('screen-enter');
+  const quiet = state.quietRender;
+  state.quietRender = false;
+  screenEl.classList.toggle('quiet', quiet);
+  if (!quiet) {
+    screenEl.classList.remove('screen-enter');
+    void screenEl.offsetWidth;
+    screenEl.classList.add('screen-enter');
+  }
 
   if (state.screen === 'onboarding') {
     withFocusPreserved(screenEl, () => {
@@ -654,6 +685,7 @@ export function render() {
     }
   });
 
+  state.swappedSlot = null;
   renderOverlays();
 }
 

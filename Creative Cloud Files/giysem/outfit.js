@@ -1,4 +1,4 @@
-import { pickWardrobeOutfit } from './wardrobe.js';
+import { pickWardrobeOutfit, slotOptionIds } from './wardrobe.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
 
@@ -324,7 +324,7 @@ function applyRain(rows, bandKey, rainMax, lang) {
   rows.yanina = { item: 'Küçük bir şemsiye', reason: () => `Yağmur ihtimali %${rainMax}. Yanına küçük bir şemsiye al` };
 }
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardrobeItems = []) {
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardrobeItems = [], locks = {}) {
   const language = lang === 'en' ? 'en' : 'tr';
   const bandKey = getBand(feelsLike);
   const genderKey = ['unisex', 'kadin', 'erkek'].includes(gender) ? gender : 'unisex';
@@ -336,7 +336,8 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardr
   const ctx = { feelsLike, wind, rainMax };
   const needsRain = rainMax >= 50;
   const needsWind = wind >= 20;
-  const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k]), { bandKey, needsRain, needsWind });
+  const pickOpts = { bandKey, needsRain, needsWind };
+  const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k]), pickOpts, locks);
   const pickedItems = Object.values(picks);
 
   const output = [];
@@ -348,6 +349,8 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardr
     let fromWardrobe = false;
     let color = null;
     let patterned = false;
+    let itemId = null;
+    let options = [];
 
     const match = picks[key];
     if (match) {
@@ -355,10 +358,12 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardr
       fromWardrobe = true;
       color = isValidColor(match.color) ? COLORS[match.color].hex : null;
       patterned = match.pattern === 'desenli';
+      itemId = match.id;
+      options = slotOptionIds(wardrobeItems, key, pickOpts);
       reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems);
     }
 
-    output.push({ slotKey: key, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned });
+    output.push({ slotKey: key, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
   }
 
   return { bandKey, bandLabel: bandLabel(bandKey, language), rows: output };

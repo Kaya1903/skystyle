@@ -1,7 +1,7 @@
 import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { state, switchTab, setGender, openCitySheet, refetchForecast } from './app.js';
+import { state, switchTab, setGender, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit } from './app.js';
 import { renderLandmark } from './landmarks.js';
 import { garmentArt, weatherGlyph, tempColor } from './visuals.js';
 
@@ -108,14 +108,21 @@ function outfitSection(outfit, kombinLabel, s) {
   return `
     <div class="section-head fade-slide" style="animation-delay:280ms">
       <h2 class="section-big">${kombinLabel}</h2>
-      <span class="band-chip">${outfit.bandLabel}</span>
+      <div class="section-actions">
+        ${Object.keys(s.outfitLocks || {}).length ? `<button class="reset-chip" data-action="reset-outfit">${t(s.lang, 'reset_outfit')}</button>` : ''}
+        <span class="band-chip">${outfit.bandLabel}</span>
+      </div>
     </div>
     <div class="look-grid">
       ${outfit.rows.map((row, i) => `
-        <article class="glass look-card ${row.fromWardrobe ? 'is-mine' : ''} rise-in" style="animation-delay:${320 + i * 90}ms">
+        <article class="glass look-card ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''} rise-in" style="animation-delay:${320 + i * 90}ms">
           <div class="look-art" style="--float-delay:${i * -0.7}s">
             ${garmentArt(row.slotKey, row.color, row.patterned)}
           </div>
+          ${row.options && row.options.length > 1 ? `
+            <button class="swap-btn" data-swap="${row.slotKey}" aria-label="${t(s.lang, 'swap_piece')}: ${row.label}">
+              ${icons.swap}<span>${row.options.indexOf(row.itemId) + 1}/${row.options.length}</span>
+            </button>` : ''}
           <div class="look-body">
             <div class="look-slot">
               <span>${row.label}</span>
@@ -223,5 +230,10 @@ export function attachTodayHandlers(root) {
   if (cityBtn) cityBtn.addEventListener('click', openCitySheet);
   const retryBtn = root.querySelector('[data-action="retry"]');
   if (retryBtn) retryBtn.addEventListener('click', refetchForecast);
+  root.querySelectorAll('[data-swap]').forEach(btn => {
+    btn.addEventListener('click', () => swapOutfitPiece(btn.dataset.swap));
+  });
+  const resetBtn = root.querySelector('[data-action="reset-outfit"]');
+  if (resetBtn) resetBtn.addEventListener('click', resetOutfit);
   animateCounts(root);
 }

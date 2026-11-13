@@ -88,7 +88,7 @@ const MAX_CANDIDATES_PER_SLOT = 5;
 const COLOR_WEIGHT = 0.7;
 
 // Viable wardrobe pieces for one slot, best weather fit first.
-function slotCandidates(items, { category, bandKey, needsRain, needsWind }) {
+function slotCandidates(items, { category, bandKey, needsRain, needsWind }, limit = MAX_CANDIDATES_PER_SLOT) {
   const desired = BAND_WARMTH[bandKey];
   return items
     .filter(i => i.category === category)
@@ -104,15 +104,29 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind }) {
       return { item: i, score };
     })
     .sort((a, b) => b.score - a.score || idHash(a.item.id) - idHash(b.item.id))
-    .slice(0, MAX_CANDIDATES_PER_SLOT);
+    .slice(0, limit);
+}
+
+// Every wardrobe piece that suits this slot today, best weather fit first.
+// The swap button cycles through these.
+export function slotOptionIds(items, category, { bandKey, needsRain, needsWind }) {
+  return slotCandidates(items, { category, bandKey, needsRain, needsWind }, Infinity).map(c => c.item.id);
 }
 
 // Picks one wardrobe piece per slot (where a viable one exists) so that the
 // whole outfit fits the weather AND its colors/patterns work together.
-// Returns { [category]: item }.
-export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind }) {
+// `locks` pins a slot to a specific item id (from the swap button); the other
+// slots are then re-picked to go with it. Returns { [category]: item }.
+export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind }, locks = {}) {
   const slots = categories
-    .map(category => ({ category, cands: slotCandidates(items, { category, bandKey, needsRain, needsWind }) }))
+    .map(category => {
+      const opts = { category, bandKey, needsRain, needsWind };
+      if (locks[category]) {
+        const locked = slotCandidates(items, opts, Infinity).filter(c => c.item.id === locks[category]);
+        if (locked.length) return { category, cands: locked };
+      }
+      return { category, cands: slotCandidates(items, opts) };
+    })
     .filter(s => s.cands.length);
   if (!slots.length) return {};
 

@@ -328,6 +328,7 @@ p { margin: 0; }
 .lang-menu-item.active { background: var(--ink); color: #fff; }
 .lang-menu-item .lang-code { font-size: 10px; font-weight: 700; color: var(--ink-faint); letter-spacing: 0.04em; }
 .lang-menu-item.active .lang-code { color: rgba(255,255,255,0.7); }
+[dir="rtl"] .swap-btn { right: auto; left: 10px; }
 [dir="rtl"] .lang-menu-list { right: auto; left: 0; transform-origin: top left; }
 
 /* ---------- City ---------- */
@@ -513,6 +514,7 @@ p { margin: 0; }
 /* Outfit look cards */
 .look-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
 .look-card {
+  position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
   display: flex; flex-direction: column;
@@ -557,6 +559,56 @@ p { margin: 0; }
   padding: 2px 8px 2px 6px; border-radius: 999px;
 }
 .wardrobe-tag svg { width: 11px; height: 11px; }
+
+/* Swap a piece */
+.section-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.reset-chip {
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 18px -8px rgba(0,0,0,0.45);
+  color: var(--ink); font-size: 12px; font-weight: 700;
+  padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  animation: popIn 0.5s var(--spring) both;
+  transition: background 0.2s ease, transform 0.25s var(--spring);
+}
+.reset-chip:hover { background: #fff; }
+.reset-chip:active { transform: scale(0.94); }
+.swap-btn {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 10px 6px 8px; border-radius: 999px;
+  border: 1px solid rgba(20, 26, 46, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 14px -6px rgba(10, 20, 50, 0.45);
+  color: var(--ink); font-size: 11.5px; font-weight: 800; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.3s var(--spring), background 0.2s ease, color 0.2s ease;
+}
+.swap-btn svg { width: 15px; height: 15px; transition: transform 0.45s var(--spring); }
+.swap-btn:hover { background: var(--ink); color: #fff; }
+.swap-btn:hover svg { transform: rotate(180deg); }
+.swap-btn:active { transform: scale(0.9); }
+.look-card.swapped .garment { animation: swap-in 0.7s var(--spring), float 5.5s ease-in-out infinite 0.7s; }
+.look-card.swapped .look-body { animation: fadeSlideIn 0.5s var(--ease-out) both; }
+.look-card.swapped { animation: swap-glow 1s ease-out; }
+@keyframes swap-in {
+  0% { transform: rotateY(90deg) scale(0.6); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes swap-glow {
+  0% { box-shadow: var(--glass-shadow), 0 0 0 0 rgba(255, 159, 90, 0.9); }
+  100% { box-shadow: var(--glass-shadow), 0 0 0 14px rgba(255, 159, 90, 0); }
+}
+
+/* In-place updates (swap, gender) shouldn't replay the whole entrance show */
+.quiet .fade-slide, .quiet .pop-in, .quiet .rise-in,
+.quiet .look-card:not(.swapped), .quiet .seg-thumb, .quiet .hero-landmark,
+.quiet .daypart-dot, .quiet .reset-chip { animation: none; opacity: 1; filter: none; }
+.quiet .fade-slide, .quiet .pop-in, .quiet .rise-in:not(.swapped) { transform: none; }
+.quiet .look-card.swapped { opacity: 1; filter: none; transform: none; }
+.quiet .daypart-dot { transform: translateX(-50%) scale(1); }
+.quiet .hero-landmark { opacity: 0.4; }
+.quiet .draw-line, .quiet .hero-landmark svg path { animation: none; stroke-dashoffset: 0; }
 
 /* Tip */
 .tip-card {
