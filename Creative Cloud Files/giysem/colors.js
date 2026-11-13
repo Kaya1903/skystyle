@@ -37,6 +37,22 @@ export function colorName(key, lang) {
   return dict[key] || COLOR_NAMES.tr[key] || '';
 }
 
+// Closest palette key for an exact color (so photo-measured colors still work
+// with the harmony rules). Weighted RGB distance is plenty for 16 swatches.
+export function nearestColorKey(hex) {
+  const toRgb = h => { const n = parseInt(h.replace('#', ''), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const [r, g, b] = toRgb(hex);
+  let best = null, bestD = Infinity;
+  for (const key of COLOR_KEYS) {
+    if (key === 'denim') continue; // too close to blue/navy to pick from pixels alone
+    const [r2, g2, b2] = toRgb(COLORS[key].hex);
+    const rm = (r + r2) / 2;
+    const d = (2 + rm / 256) * (r - r2) ** 2 + 4 * (g - g2) ** 2 + (2 + (255 - rm) / 256) * (b - b2) ** 2;
+    if (d < bestD) { bestD = d; best = key; }
+  }
+  return best;
+}
+
 export function isValidColor(key) {
   return Object.prototype.hasOwnProperty.call(COLORS, key);
 }

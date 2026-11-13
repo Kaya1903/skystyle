@@ -104,6 +104,29 @@ function genderSelector(s) {
   `;
 }
 
+// The outfit as one figure: top layer over the inner one, trousers below, shoes at the bottom.
+function boardCard(outfit, s) {
+  const by = k => outfit.rows.find(r => r.slotKey === k);
+  const outer = by('dis') || by('ustune');
+  const top = outer || by('ust');
+  const under = outer ? by('ust') : null;
+  const alt = by('alt'), feet = by('ayak'), acc = by('yanina');
+  const art = r => garmentArt(r.art, r.color, r.look, 'flat');
+  return `
+    <article class="glass look-card board-card rise-in" style="animation-delay:300ms" aria-label="${t(s.lang, 'board_title')}">
+      <div class="look-slot board-title"><span>${t(s.lang, 'board_title')}</span></div>
+      <div class="board">
+        <div class="board-top">
+          ${under ? `<div class="board-under">${art(under)}</div>` : ''}
+          ${top ? `<div class="board-over">${art(top)}</div>` : ''}
+        </div>
+        ${alt ? `<div class="board-bottom">${art(alt)}</div>` : ''}
+        ${feet ? `<div class="board-feet"><div>${art(feet)}</div><div class="mirror">${art(feet)}</div></div>` : ''}
+        ${acc ? `<div class="board-acc">${art(acc)}</div>` : ''}
+      </div>
+    </article>`;
+}
+
 function outfitSection(outfit, kombinLabel, s) {
   return `
     <div class="section-head fade-slide" style="animation-delay:280ms">
@@ -114,10 +137,11 @@ function outfitSection(outfit, kombinLabel, s) {
       </div>
     </div>
     <div class="look-grid">
+      ${boardCard(outfit, s)}
       ${outfit.rows.map((row, i) => `
-        <article class="glass look-card ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''} rise-in" style="animation-delay:${320 + i * 90}ms">
+        <article class="glass look-card ${i === 0 ? 'lead' : ''} ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''} rise-in" style="animation-delay:${320 + i * 90}ms">
           <div class="look-art" style="--float-delay:${i * -0.7}s">
-            ${garmentArt(row.art, row.color, row.patterned)}
+            ${garmentArt(row.art, row.color, row.look)}
           </div>
           ${row.options && row.options.length > 1 ? `
             <button class="swap-btn" data-swap="${row.slotKey}" aria-label="${t(s.lang, 'swap_piece')}: ${row.label}">

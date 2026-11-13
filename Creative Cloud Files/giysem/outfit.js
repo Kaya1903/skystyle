@@ -1,5 +1,5 @@
 import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH } from './wardrobe.js';
-import { garmentVariant } from './visuals.js';
+import { garmentVariant, itemLook } from './visuals.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
 
@@ -364,8 +364,11 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardr
       reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems);
     }
 
-    const art = garmentVariant(key, item, match ? (match.warmth || 3) : BAND_WARMTH[bandKey]);
-    output.push({ slotKey: key, art, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
+    // Wardrobe pieces draw from their own stored look; suggestions guess from the text.
+    const look = match ? itemLook(match) : { art: garmentVariant(key, item, BAND_WARMTH[bandKey]), color: null, color2: null, patternType: 'solid', details: {} };
+    if (match) color = look.color;
+    const art = look.art;
+    output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
   }
 
   return { bandKey, bandLabel: bandLabel(bandKey, language), rows: output };

@@ -2,6 +2,8 @@
 // and animated weather glyphs. Pure SVG strings so they slot into the
 // template-literal renderers.
 
+import { COLORS, isValidColor } from './colors.js';
+
 // Fallback color per drawing, for suggestions that don't come from the user's wardrobe.
 const DEFAULT_GARMENT_COLOR = {
   tee: '#f3eee4', longsleeve: '#e6ddcb', sweater: '#b7473b', shirt: '#d7e6f5',
@@ -10,6 +12,9 @@ const DEFAULT_GARMENT_COLOR = {
   trousers: '#2f3e5e', chinos: '#c8b48f', jeans: '#3f6496', shorts: '#d9c7a7', skirt: '#6b4a7a', dress: '#e79bb3',
   sneaker: '#f4f2ee', boot: '#6b4a32', sandal: '#b8865b', loafer: '#4a3426',
   umbrella: '#e2564c',
+  sweatshirt: '#8a9bb0', hoodie: '#5b6b7d', polo: '#2f6f5e', tank: '#f2f2f2',
+  vest: '#2f3e5e', bomber: '#4e5a3a', blazer: '#3a3f4b',
+  bag: '#8b5a3c', beanie: '#c94f4f', cap: '#2f3e5e', scarf: '#b7473b',
 };
 
 // What each wardrobe category draws when nothing more specific is known.
@@ -131,10 +136,56 @@ const GARMENTS = {
     body: 'M13 84 C13 72 21 66 31 65 L58 63 C66 69 80 71 98 73 C106 74 109 79 109 85 V90 H13 Z',
     detail: '<path d="M11 88 H111 V94 Q111 99 106 99 H16 Q11 99 11 94 Z" fill="{D}" opacity=".8"/><path d="M58 70 Q74 74 86 74" fill="none" stroke="{D}" stroke-width="3"/><rect x="66" y="72" width="10" height="4" rx="2" fill="{L}" opacity=".8"/>',
   },
+  sweatshirt: {
+    body: LONG_TOP,
+    detail: '<path d="M40 20 C44 28 51 32 60 32 C69 32 76 28 80 20" fill="none" stroke="{D}" stroke-width="5" stroke-linecap="round"/><path d="M33 96 H87 V105 H33 Z" fill="{D}" opacity=".3"/><path d="M10 82 H26 V91 H10 Z M94 82 H110 V91 H94 Z" fill="{D}" opacity=".3"/>',
+  },
+  hoodie: {
+    back: 'M42 24 C38 2 82 2 78 24 Z',
+    body: LONG_TOP,
+    detail: '<path d="M42 22 C46 30 52 34 60 34 C68 34 74 30 78 22" fill="none" stroke="{D}" stroke-width="3"/><path d="M55 34 V48 M65 34 V48" stroke="{L}" stroke-width="2" stroke-linecap="round"/><path d="M42 80 H78 L83 100 H37 Z" fill="none" stroke="{D}" stroke-width="2.2" stroke-linejoin="round"/><path d="M33 96 H87 V105 H33 Z" fill="{D}" opacity=".25"/>',
+  },
+  polo: {
+    body: 'M40 22 L17 35 L26 54 L37 49 V99 Q37 102 40 102 H80 Q83 102 83 99 V49 L94 54 L103 35 L80 22 C76 30 69 34 60 34 C51 34 44 30 40 22 Z',
+    detail: '<path d="M44 21 L52 33 L60 30 Z M76 21 L68 33 L60 30 Z" fill="{L}" stroke="{D}" stroke-width="2" stroke-linejoin="round"/><path d="M60 30 V52" stroke="{D}" stroke-width="2"/><circle cx="62.5" cy="38" r="1.6" fill="{D}"/><circle cx="62.5" cy="46" r="1.6" fill="{D}"/>',
+  },
+  tank: {
+    body: 'M44 18 Q46 36 60 38 Q74 36 76 18 L84 20 Q82 40 86 50 V100 Q86 103 83 103 H37 Q34 103 34 100 V50 Q38 40 36 20 Z',
+    detail: '<path d="M44 18 Q46 36 60 38 Q74 36 76 18" fill="none" stroke="{D}" stroke-width="2.5"/>',
+  },
+  vest: {
+    body: 'M44 16 L36 22 Q38 40 34 50 V102 Q34 105 37 105 H83 Q86 105 86 102 V50 Q82 40 84 22 L76 16 C72 22 66 25 60 25 C54 25 48 22 44 16 Z',
+    detail: '<path d="M60 25 V105" stroke="{D}" stroke-width="2.5"/><path d="M35 46 Q60 52 85 46 M34 64 Q60 70 86 64 M34 82 Q60 88 86 82" fill="none" stroke="{D}" stroke-width="2.2" opacity=".5"/>',
+  },
+  bomber: {
+    body: SHORT_JACKET,
+    detail: '<path d="M44 16 C48 26 54 29 60 29 C66 29 72 26 76 16" fill="none" stroke="{D}" stroke-width="6" stroke-linecap="round"/><path d="M33 94 H87 V103 H33 Z M11 88 H29 V98 H11 Z M91 88 H109 V98 H91 Z" fill="{D}" opacity=".35"/><path d="M60 29 V94" stroke="{D}" stroke-width="2.5"/><path d="M18 44 H26 V54 H18 Z" fill="none" stroke="{D}" stroke-width="1.6"/>',
+  },
+  blazer: {
+    body: 'M42 15 L21 26 L11 96 Q11 99 14 99 H26 Q29 99 29 96 L33 56 V108 Q33 111 36 111 H84 Q87 111 87 108 V56 L91 96 Q91 99 94 99 H106 Q109 99 109 96 L99 26 L78 15 C74 22 67 25 60 25 C53 25 46 22 42 15 Z',
+    detail: '<path d="M42 15 L50 40 L46 44 L58 70 L60 25 Z M78 15 L70 40 L74 44 L62 70 L60 25 Z" fill="{D}" opacity=".4"/><path d="M60 70 V111" stroke="{D}" stroke-width="1.8"/><circle cx="64" cy="78" r="2.2" fill="{D}"/><circle cx="64" cy="90" r="2.2" fill="{D}"/><path d="M38 88 H52 M68 88 H82" stroke="{D}" stroke-width="3" stroke-linecap="round" opacity=".6"/>',
+  },
   // ---- accessories ----
   umbrella: {
     body: 'M12 62 C12 36 34 18 60 18 C86 18 108 36 108 62 C102 56 94 56 88 62 C82 56 74 56 68 62 C64 57 56 57 52 62 C46 56 38 56 32 62 C26 56 18 56 12 62 Z',
     detail: '<path d="M60 18 V12" stroke="{D}" stroke-width="3" stroke-linecap="round"/><path d="M60 18 C50 30 46 46 52 62 M60 18 C70 30 74 46 68 62 M60 18 C40 26 30 44 32 62 M60 18 C80 26 90 44 88 62" fill="none" stroke="{D}" stroke-width="2" opacity=".4"/><path d="M60 60 V96 Q60 104 52 104 Q45 104 45 97" fill="none" stroke="#5b4636" stroke-width="4.5" stroke-linecap="round"/>',
+  },
+  bag: {
+    back: 'M42 58 Q42 26 60 26 Q78 26 78 58 H72 Q72 34 60 34 Q48 34 48 58 Z',
+    body: 'M28 56 H92 L98 104 Q98 108 94 108 H26 Q22 108 22 104 Z',
+    detail: '<path d="M28 56 H92 L93 66 H27 Z" fill="{D}" opacity=".35"/><rect x="54" y="62" width="12" height="9" rx="2" fill="{L}" stroke="{D}" stroke-width="1.6"/>',
+  },
+  beanie: {
+    body: 'M30 86 Q30 42 60 40 Q90 42 90 86 Z',
+    detail: '<path d="M27 80 H93 V98 Q93 100 91 100 H29 Q27 100 27 98 Z" fill="{D}" opacity=".45"/><path d="M34 82 V98 M42 82 V98 M50 82 V98 M58 82 V98 M66 82 V98 M74 82 V98 M82 82 V98" stroke="{D}" stroke-width="1.6" opacity=".5"/><circle cx="60" cy="34" r="9" fill="{L}" stroke="{D}" stroke-width="2"/>',
+  },
+  cap: {
+    body: 'M26 80 Q26 44 60 42 Q92 44 92 80 Z',
+    detail: '<path d="M70 80 H110 Q108 92 92 92 H70 Z" fill="{D}" opacity=".6"/><path d="M60 42 V80 M42 48 Q46 64 44 80 M78 48 Q74 64 76 80" fill="none" stroke="{D}" stroke-width="1.6" opacity=".45"/><circle cx="60" cy="42" r="3" fill="{D}"/>',
+  },
+  scarf: {
+    body: 'M36 28 Q60 40 84 28 L88 44 Q60 58 32 44 Z M62 48 L58 102 H74 L78 50 Z',
+    detail: '<path d="M60 102 V110 M64 102 V110 M68 102 V110 M72 102 V110" stroke="{D}" stroke-width="1.6"/><path d="M36 34 Q60 46 84 34" fill="none" stroke="{D}" stroke-width="1.6" opacity=".4"/>',
   },
 };
 
@@ -144,13 +195,20 @@ const GARMENTS = {
 // For bottoms and shoes the piece mentioned first wins ("sneakers or boots" -> sneakers).
 const KEYWORDS = {
   ust: [
-    ['sweater', ['kazak', 'triko', 'balıkçı', 'sweatshirt', 'sweater', 'jumper', 'knit', 'jersey', 'suéter', 'sweter', 'كنزة']],
+    ['hoodie', ['kapüşonlu', 'hoodie', 'con capucha', 'z kapturem']],
+    ['sweater', ['kazak', 'triko', 'balıkçı', 'sweater', 'jumper', 'knit', 'suéter', 'sweter', 'كنزة']],
+    ['sweatshirt', ['sweatshirt', 'sweat', 'sudadera', 'bluza']],
+    ['polo', ['polo']],
     ['shirt', ['gömlek', 'bluz', 'shirt', 'blouse', 'camisa', 'koszula', 'قميص']],
     ['longsleeve', ['uzun kollu', 'termal', 'long sleeve', 'long-sleeve', 'thermal', 'manga larga', 'longsleeve', 'golf']],
-    ['tee', ['tişört', 't-shirt', 'tshirt', 'tee', 'atlet', 'camiseta', 'koszulka', 'تيشيرت']],
+    ['tank', ['atlet', 'askılı', 'tank top', 'tirantes']],
+    ['tee', ['tişört', 't-shirt', 'tshirt', 'tee', 'camiseta', 'koszulka', 'تيشيرت']],
   ],
   ustune: [
-    ['fleece', ['polar', 'fleece', 'sweatshirt', 'hoodie', 'kapüşonlu', 'forro', 'bluza']],
+    ['hoodie', ['kapüşonlu', 'hoodie', 'con capucha', 'z kapturem']],
+    ['fleece', ['polar', 'fleece', 'forro']],
+    ['sweatshirt', ['sweatshirt', 'sudadera', 'bluza']],
+    ['vest', ['yelek', 'vest', 'gilet', 'chaleco', 'kamizelka']],
     ['cardigan', ['hırka', 'cardigan', 'rebeca', 'kardigan', 'سترة']],
     ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula']],
   ],
@@ -158,6 +216,9 @@ const KEYWORDS = {
     ['puffer', ['şişme', 'puf', 'puffer', 'down', 'kaz tüyü', 'dizüstü', 'knee-length', 'plumífero', 'puchowa']],
     ['trench', ['trençkot', 'trenchcoat', 'trench', 'gabardina', 'trencz']],
     ['coat', ['kaban', 'palto', 'parka', 'coat', 'abrigo', 'płaszcz', 'معطف']],
+    ['bomber', ['bomber']],
+    ['blazer', ['blazer', 'americana', 'marynarka', 'takım ceket']],
+    ['vest', ['şişme yelek', 'yelek', 'vest', 'gilet', 'chaleco', 'kamizelka']],
     ['windbreaker', ['yağmurluk', 'rüzgarlık', 'rüzgar geçirmez', 'windbreaker', 'windproof', 'raincoat', 'cortavientos', 'wiatrówka']],
     ['jacket', ['ceket', 'mont', 'jacket', 'blazer', 'hırka', 'chaqueta', 'kurtka', 'جاكيت']],
   ],
@@ -174,7 +235,13 @@ const KEYWORDS = {
     ['loafer', ['makosen', 'loafer', 'oxford', 'mokasyn', 'mocasín', 'babet']],
     ['sneaker', ['spor ayakkabı', 'sneaker', 'trainer', 'zapatilla', 'tenis', 'adidasy', 'ayakkabı', 'shoe']],
   ],
-  yanina: [['umbrella', ['şemsiye', 'umbrella', 'paraguas', 'parasol', 'مظلة']]],
+  yanina: [
+    ['umbrella', ['şemsiye', 'umbrella', 'paraguas', 'parasol', 'مظلة']],
+    ['bag', ['çanta', 'bag', 'bolso', 'torba', 'حقيبة']],
+    ['beanie', ['bere', 'beanie', 'gorro', 'czapka']],
+    ['cap', ['şapka', 'kasket', 'cap', 'gorra']],
+    ['scarf', ['atkı', 'şal', 'scarf', 'bufanda', 'szalik', 'وشاح']],
+  ],
 };
 
 // Picks which drawing to use for a piece: the item's own words first,
@@ -202,26 +269,130 @@ export function garmentVariant(category, text = '', warmth = 3) {
   }
 }
 
-// `kind` is either a drawing name (tee, puffer, boot, ...) or a wardrobe category (ust, dis, ...).
-export function garmentArt(kind, color, patterned = false, extraClass = '') {
+// Which drawings make sense for each wardrobe category (the editor's style picker).
+export const STYLE_OPTIONS = {
+  ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'polo', 'tank'],
+  ustune: ['cardigan', 'fleece', 'hoodie', 'sweatshirt', 'vest', 'shirt'],
+  dis: ['jacket', 'puffer', 'coat', 'trench', 'windbreaker', 'bomber', 'blazer', 'vest'],
+  alt: ['trousers', 'chinos', 'jeans', 'shorts', 'skirt', 'dress'],
+  ayak: ['sneaker', 'boot', 'sandal', 'loafer'],
+  yanina: ['umbrella', 'bag', 'beanie', 'cap', 'scarf'],
+};
+export const PATTERN_TYPES = ['solid', 'stripes', 'checks', 'dots', 'floral', 'print'];
+export const DETAIL_KEYS = ['hood', 'zip', 'buttons', 'pocket', 'logo'];
+
+// Where details can be drawn on each drawing family (neckline, hem, chest spot).
+const LONG = { neck: 32, shoulder: 20, bottom: 104, chest: [70, 50], pocket: 'kangaroo' };
+const ZONES = {
+  tee: { neck: 34, shoulder: 22, bottom: 101, chest: [70, 52], pocket: 'kangaroo' },
+  polo: { neck: 34, shoulder: 22, bottom: 101, chest: [70, 54], pocket: 'kangaroo' },
+  tank: { neck: 38, shoulder: 18, bottom: 102, chest: [68, 56], pocket: 'kangaroo' },
+  longsleeve: LONG, sweater: LONG, sweatshirt: LONG, hoodie: { ...LONG, hasHood: true }, shirt: { ...LONG, pocket: 'patch' },
+  cardigan: { neck: 62, shoulder: 19, bottom: 104, chest: [72, 70], pocket: 'patch', open: true },
+  fleece: { neck: 24, shoulder: 14, bottom: 104, chest: [72, 46], pocket: 'patch' },
+  vest: { neck: 25, shoulder: 16, bottom: 104, chest: [72, 46], pocket: 'patch' },
+  jacket: { neck: 25, shoulder: 15, bottom: 102, chest: [72, 46], pocket: 'patch' },
+  bomber: { neck: 29, shoulder: 15, bottom: 94, chest: [72, 48], pocket: 'patch' },
+  blazer: { neck: 70, shoulder: 15, bottom: 110, chest: [74, 50], pocket: 'patch', open: true },
+  windbreaker: { neck: 25, shoulder: 15, bottom: 102, chest: [72, 70], pocket: 'patch', hasHood: true },
+  puffer: { neck: 25, shoulder: 15, bottom: 114, chest: [72, 54], pocket: 'patch', hasHood: true },
+  coat: { neck: 40, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch' },
+  trench: { neck: 38, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch' },
+};
+
+const LABELS = {
+  tr: { tee: 'Tişört', longsleeve: 'Uzun kollu', sweater: 'Kazak', sweatshirt: 'Sweatshirt', hoodie: 'Kapüşonlu', shirt: 'Gömlek', polo: 'Polo', tank: 'Atlet',
+    cardigan: 'Hırka', fleece: 'Polar', vest: 'Yelek', jacket: 'Ceket', puffer: 'Şişme mont', coat: 'Kaban', trench: 'Trençkot', windbreaker: 'Rüzgarlık', bomber: 'Bomber', blazer: 'Blazer',
+    trousers: 'Pantolon', chinos: 'Chino', jeans: 'Kot', shorts: 'Şort', skirt: 'Etek', dress: 'Elbise',
+    sneaker: 'Spor ayakkabı', boot: 'Bot', sandal: 'Sandalet', loafer: 'Makosen', umbrella: 'Şemsiye', bag: 'Çanta', beanie: 'Bere', cap: 'Şapka', scarf: 'Atkı' },
+  en: { tee: 'T-shirt', longsleeve: 'Long sleeve', sweater: 'Sweater', sweatshirt: 'Sweatshirt', hoodie: 'Hoodie', shirt: 'Shirt', polo: 'Polo', tank: 'Tank top',
+    cardigan: 'Cardigan', fleece: 'Fleece', vest: 'Vest', jacket: 'Jacket', puffer: 'Puffer', coat: 'Coat', trench: 'Trench coat', windbreaker: 'Windbreaker', bomber: 'Bomber', blazer: 'Blazer',
+    trousers: 'Trousers', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Skirt', dress: 'Dress',
+    sneaker: 'Sneakers', boot: 'Boots', sandal: 'Sandals', loafer: 'Loafers', umbrella: 'Umbrella', bag: 'Bag', beanie: 'Beanie', cap: 'Cap', scarf: 'Scarf' },
+};
+export function styleLabel(name, lang) {
+  return (LABELS[lang] || (lang === 'tr' ? LABELS.tr : LABELS.en))[name] || name;
+}
+
+// Everything needed to draw one wardrobe item, from whatever it has stored.
+// Older items (before smart drawing) fall back to name/warmth guesses and palette colors.
+export function itemLook(item) {
+  const options = STYLE_OPTIONS[item.category] || [];
+  const art = options.includes(item.art) ? item.art : garmentVariant(item.category, item.name, item.warmth || 3);
+  const color = item.hex || (isValidColor(item.color) ? COLORS[item.color].hex : null);
+  const color2 = item.hex2 || (isValidColor(item.color2) ? COLORS[item.color2].hex : null);
+  const patternType = PATTERN_TYPES.includes(item.patternType) ? item.patternType : (item.pattern === 'desenli' ? 'stripes' : 'solid');
+  return { art, color, color2, patternType, details: item.details || {} };
+}
+
+function patternDefs(id, type, fill, c2) {
+  const ink = c2 || (isLight(fill) ? shade(fill, -0.45) : shade(fill, 0.6));
+  const op = c2 ? 0.95 : 0.55;
+  switch (type) {
+    case 'stripes': return `<pattern id="${id}" width="10" height="9" patternUnits="userSpaceOnUse"><rect y="0" width="10" height="3.6" fill="${ink}" opacity="${op}"/></pattern>`;
+    case 'checks': return `<pattern id="${id}" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="4.5" height="12" fill="${ink}" opacity="${op * 0.55}"/><rect width="12" height="4.5" fill="${ink}" opacity="${op * 0.55}"/><rect width="12" height="0.8" y="8" fill="${ink}" opacity="${op * 0.7}"/></pattern>`;
+    case 'dots': return `<pattern id="${id}" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="1.7" fill="${ink}" opacity="${op}"/></pattern>`;
+    case 'floral': return `<pattern id="${id}" width="16" height="16" patternUnits="userSpaceOnUse">${[[8, 5], [11, 8], [8, 11], [5, 8]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.2" fill="${ink}" opacity="${op}"/>`).join('')}<circle cx="8" cy="8" r="1.4" fill="${isLight(fill) ? '#e9b44c' : '#fff3c4'}"/></pattern>`;
+    default: return '';
+  }
+}
+
+function detailOverlays(name, d, fill, c2, dark, light) {
+  const z = ZONES[name];
+  if (!z) return { back: '', front: '' };
+  let back = '', front = '';
+  if (d.hood && !z.hasHood && name !== 'tank') {
+    back += `<path d="M42 ${z.shoulder + 6} C38 ${z.shoulder - 18} 82 ${z.shoulder - 18} 78 ${z.shoulder + 6} Z" fill="${shade(fill, -0.2)}" stroke="${dark}" stroke-width="2.5"/>`;
+    front += `<path d="M55 ${z.neck} v12 M65 ${z.neck} v12" stroke="${light}" stroke-width="2" stroke-linecap="round"/>`;
+  }
+  if (d.zip && !z.open) front += `<path d="M60 ${z.neck} V${z.bottom}" stroke="${dark}" stroke-width="2.2"/><rect x="58.2" y="${z.neck + 3}" width="3.6" height="8" rx="1" fill="${light}" stroke="${dark}" stroke-width="1"/>`;
+  if (d.buttons && !d.zip) {
+    for (let y = z.neck + 9; y < z.bottom - 4; y += 12) front += `<circle cx="64" cy="${y}" r="2" fill="${dark}"/>`;
+    if (!z.open) front += `<path d="M60 ${z.neck} V${z.bottom}" stroke="${dark}" stroke-width="1.4" opacity=".6"/>`;
+  }
+  if (d.pocket) {
+    front += z.pocket === 'kangaroo'
+      ? `<path d="M43 ${z.bottom - 26} H77 L81 ${z.bottom - 6} H39 Z" fill="none" stroke="${dark}" stroke-width="2" stroke-linejoin="round"/>`
+      : `<path d="M39 ${z.bottom - 30} h14 v13 h-14 Z M67 ${z.bottom - 30} h14 v13 h-14 Z" fill="none" stroke="${dark}" stroke-width="1.8"/>`;
+  }
+  if (d.logo) {
+    const [x, y] = z.chest;
+    front += `<rect x="${x - 4}" y="${y - 3.5}" width="8" height="7" rx="1.5" fill="${c2 || light}" stroke="${dark}" stroke-width="1"/>`;
+  }
+  return { back, front };
+}
+
+// `kind` is a drawing name (tee, puffer, boot, ...) or a wardrobe category (ust, dis, ...).
+// `opts` is either a boolean (legacy "patterned") or { patternType, color2, details }.
+// Add the class "flat" to drop the ground shadow (for stacked layouts).
+export function garmentArt(kind, color, opts = {}, extraClass = '') {
+  if (typeof opts === 'boolean') opts = { patternType: opts ? 'stripes' : 'solid' };
   const name = GARMENTS[kind] || kind === 'chinos' ? kind : (CATEGORY_DEFAULT[kind] || 'tee');
   const g = GARMENTS[name === 'chinos' ? 'trousers' : name];
   const fill = color || DEFAULT_GARMENT_COLOR[name] || '#cccccc';
+  const c2 = opts.color2 || null;
   const dark = shade(fill, isLight(fill) ? -0.32 : -0.38);
   const light = shade(fill, 0.55);
   const id = `gp${++uid}`;
-  const pattern = patterned ? `
-    <defs><pattern id="${id}" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
-      <rect width="4" height="10" fill="${isLight(fill) ? dark : light}" opacity=".45"/>
-    </pattern></defs>` : '';
+  const type = opts.patternType || 'solid';
+  const defs = patternDefs(id, type, fill, c2);
   const detail = g.detail.replaceAll('{D}', dark).replaceAll('{L}', light);
+  const over = detailOverlays(name, opts.details || {}, fill, c2, dark, light);
+  const zone = ZONES[name];
+  const print = type === 'print' && zone
+    ? `<circle cx="60" cy="${(zone.neck + zone.bottom) / 2}" r="11" fill="${c2 || light}" stroke="${dark}" stroke-width="1.5"/><path d="M53 ${(zone.neck + zone.bottom) / 2} h14 M60 ${(zone.neck + zone.bottom) / 2 - 7} v14" stroke="${dark}" stroke-width="2" stroke-linecap="round"/>`
+    : '';
   return `
     <svg class="garment ${extraClass}" viewBox="0 0 120 120" aria-hidden="true">
-      ${pattern}
-      <ellipse cx="60" cy="114" rx="34" ry="4" fill="rgba(20,24,40,.16)"/>
+      ${defs ? `<defs>${defs}</defs>` : ''}
+      ${extraClass.includes('flat') ? '' : '<ellipse cx="60" cy="114" rx="34" ry="4" fill="rgba(20,24,40,.16)"/>'}
+      ${g.back ? `<path d="${g.back}" fill="${shade(fill, -0.2)}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>` : ''}
+      ${over.back}
       <path d="${g.body}" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
-      ${patterned ? `<path d="${g.body}" fill="url(#${id})"/>` : ''}
+      ${defs ? `<path d="${g.body}" fill="url(#${id})"/>` : ''}
       ${detail}
+      ${print}
+      ${over.front}
     </svg>`;
 }
 

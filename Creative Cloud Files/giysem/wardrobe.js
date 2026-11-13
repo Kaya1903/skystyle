@@ -66,6 +66,55 @@ export function resizePhoto(file, maxDim = 480) {
   });
 }
 
+// Measures the garment's main (and second) color straight from the photo.
+// The background is guessed from the border pixels and ignored; the rest is
+// clustered and the biggest cluster wins. Returns { hex, hex2 } (hex2 may be null).
+export function photoColors(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const N = 64;
+      const canvas = document.createElement('canvas');
+      canvas.width = N; canvas.height = N;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, N, N);
+      const px = ctx.getImageData(0, 0, N, N).data;
+      const at = (x, y) => { const i = (y * N + x) * 4; return [px[i], px[i + 1], px[i + 2]]; };
+      const border = [];
+      for (let i = 0; i < N; i++) border.push(at(i, 0), at(i, N - 1), at(0, i), at(N - 1, i));
+      const bg = [0, 1, 2].map(c => border.reduce((s, p) => s + p[c], 0) / border.length);
+      const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+      const pts = [];
+      for (let y = Math.floor(N * 0.15); y < N * 0.85; y++) {
+        for (let x = Math.floor(N * 0.15); x < N * 0.85; x++) {
+          const p = at(x, y);
+          if (dist(p, bg) > 45) pts.push(p);
+        }
+      }
+      const sample = pts.length > 80 ? pts : (() => { const all = []; for (let y = 16; y < 48; y++) for (let x = 16; x < 48; x++) all.push(at(x, y)); return all; })();
+      // k-means, k=3, seeded from spread-out samples
+      let centers = [sample[0], sample[Math.floor(sample.length / 2)], sample[sample.length - 1]].map(c => [...c]);
+      let groups = [];
+      for (let it = 0; it < 10; it++) {
+        groups = centers.map(() => []);
+        for (const p of sample) {
+          let bi = 0, bd = Infinity;
+          centers.forEach((c, i) => { const d = dist(p, c); if (d < bd) { bd = d; bi = i; } });
+          groups[bi].push(p);
+        }
+        centers = groups.map((g, i) => g.length ? [0, 1, 2].map(c => g.reduce((s, p) => s + p[c], 0) / g.length) : centers[i]);
+      }
+      const ranked = groups.map((g, i) => ({ c: centers[i], n: g.length })).sort((a, b) => b.n - a.n);
+      const hex = c => '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+      const main = ranked[0];
+      const second = ranked.find(r => r !== main && r.n > sample.length * 0.18 && dist(r.c, main.c) > 60);
+      resolve({ hex: hex(main.c), hex2: second ? hex(second.c) : null });
+    };
+    img.onerror = () => resolve({ hex: null, hex2: null });
+    img.src = dataUrl;
+  });
+}
+
 // Desired warmth level (1 incecik .. 5 kışlık) per temperature band key
 export const BAND_WARMTH = {
   dondurucu: 5,

@@ -41,7 +41,21 @@ ANALYZE_PROMPT = (
     '"denim" | "haki" | "yesil" | "mavi" | "kirmizi" | "bordo" | "pembe" | "mor" | "sari" | "turuncu" '
     '(black, white, grey, navy, beige, brown, denim-blue, khaki/olive, green, blue, red, burgundy, '
     'pink, purple, yellow, orange, pick the closest), '
-    '"pattern": "duz" | "desenli" (duz=solid, desenli=striped/checked/printed/any visible pattern)}'
+    '"pattern": "duz" | "desenli" (duz=solid, desenli=striped/checked/printed/any visible pattern), '
+    '"color2": the second most visible color from the same list, or null if the item is basically one color, '
+    '"patternType": "solid" | "stripes" | "checks" | "dots" | "floral" | "print" '
+    '(print = a graphic, photo or big logo on the front), '
+    '"style": the closest drawing for this item; it must match the category: '
+    'ust -> tee | longsleeve | sweater | sweatshirt | hoodie | shirt | polo | tank; '
+    'ustune -> cardigan | fleece | hoodie | sweatshirt | vest | shirt; '
+    'dis -> jacket | puffer | coat | trench | windbreaker | bomber | blazer | vest; '
+    'alt -> trousers | chinos | jeans | shorts | skirt | dress; '
+    'ayak -> sneaker | boot | sandal | loafer; '
+    'yanina -> umbrella | bag | beanie | cap | scarf, '
+    '"details": {"hood": boolean, "zip": boolean (front zipper), "buttons": boolean (front buttons), '
+    '"pocket": boolean (visible front pockets), "logo": boolean (small chest logo)}} '
+    'The photo may be taken at an angle, folded, on a hanger or in poor light: judge the garment itself, '
+    'not the background, the hanger or the lighting.'
 )
 
 
@@ -179,7 +193,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
             payload = {
                 'model': MODEL,
-                'max_tokens': 400,
+                'max_tokens': 600,
                 'messages': [{
                     'role': 'user',
                     'content': [
