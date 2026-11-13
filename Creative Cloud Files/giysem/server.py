@@ -18,6 +18,7 @@ import hmac
 import http.server
 import json
 import os
+import re
 import socketserver
 import urllib.error
 import urllib.request
@@ -83,6 +84,20 @@ def extract_json_object(text):
     return json.loads(text[start:end + 1])
 
 
+# Only the app's own front-end files are served: the root page and top-level
+# .html/.css/.js files. Everything else in the folder (this server's source,
+# dotfiles, spreadsheets, directory listings) gets a 404.
+PUBLIC_FILE = re.compile(r'^/[A-Za-z0-9_-]+\.(?:html|css|js)$')
+PRIVATE_FILES = {'/server.py'}
+
+
+def is_public_path(raw_path):
+    path = raw_path.split('?', 1)[0].split('#', 1)[0]
+    if path == '/':
+        return True
+    return bool(PUBLIC_FILE.match(path)) and path not in PRIVATE_FILES
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def _site_authorized(self):
         if not SITE_PASSWORD:
@@ -117,7 +132,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not self._site_authorized():
             self._send_auth_challenge()
             return
+        if not is_public_path(self.path):
+            self.send_error(404)
+            return
         super().do_GET()
+
+    def do_HEAD(self):
+        if not self._site_authorized():
+            self._send_auth_challenge()
+            return
+        if not is_public_path(self.path):
+            self.send_error(404)
+            return
+        super().do_HEAD()
 
     def do_POST(self):
         if not self._site_authorized():
