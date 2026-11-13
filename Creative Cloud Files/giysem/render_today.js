@@ -117,7 +117,7 @@ function outfitSection(outfit, kombinLabel, s) {
       ${outfit.rows.map((row, i) => `
         <article class="glass look-card ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''} rise-in" style="animation-delay:${320 + i * 90}ms">
           <div class="look-art" style="--float-delay:${i * -0.7}s">
-            ${garmentArt(row.slotKey, row.color, row.patterned)}
+            ${garmentArt(row.art, row.color, row.patterned)}
           </div>
           ${row.options && row.options.length > 1 ? `
             <button class="swap-btn" data-swap="${row.slotKey}" aria-label="${t(s.lang, 'swap_piece')}: ${row.label}">

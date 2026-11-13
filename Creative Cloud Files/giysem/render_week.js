@@ -38,7 +38,7 @@ function weekDayRow({ day, outfit, tip, tipLoading }, index, s, range) {
         </div>
         <div class="week-row-tip">${tipLoading ? `<span class="btn-spinner btn-spinner-dark"></span>` : ''}${text}</div>
       </div>
-      <div class="week-piece">${garmentArt(piece.slotKey, piece.color, piece.patterned)}</div>
+      <div class="week-piece">${garmentArt(piece.art, piece.color, piece.patterned)}</div>
     </article>
   `;
 }

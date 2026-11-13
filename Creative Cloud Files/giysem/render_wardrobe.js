@@ -4,10 +4,10 @@ import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { analyzePhoto } from './ai.js';
 import { COLORS, COLOR_KEYS, colorName, isValidColor, PATTERNS } from './colors.js';
-import { garmentArt } from './visuals.js';
+import { garmentArt, garmentVariant } from './visuals.js';
 
 function itemArt(item) {
-  return garmentArt(item.category, isValidColor(item.color) ? COLORS[item.color].hex : null, item.pattern === 'desenli');
+  return garmentArt(garmentVariant(item.category, item.name, item.warmth || 3), isValidColor(item.color) ? COLORS[item.color].hex : null, item.pattern === 'desenli');
 }
 import {
   state, openEditor, closeEditor, saveWardrobeItem, deleteWardrobeItem,
@@ -35,7 +35,7 @@ export function renderWardrobeScreen(s) {
       ${brandHeader(s)}
       <div class="empty-state glass fade-slide">
         <div class="empty-art">
-          ${garmentArt('dis', '#3f5f86')}${garmentArt('ust', '#e2564c', true)}${garmentArt('alt', '#d9c7a7')}
+          ${garmentArt('puffer', '#3f5f86')}${garmentArt('sweater', '#e2564c', true)}${garmentArt('skirt', '#d9c7a7')}
         </div>
         <p>${t(s.lang, 'empty_wardrobe')}</p>
         <button class="btn-primary" data-action="add-item">${icons.plus}<span>${t(s.lang, 'add')}</span></button>

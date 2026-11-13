@@ -730,6 +730,9 @@ p { margin: 0; }
   box-shadow: var(--shadow-sm);
 }
 .search-wrap { position: relative; }
+.search-wrap .field-input { padding-left: 44px; }
+[dir="rtl"] .search-wrap .field-input { padding-left: 15px; padding-right: 44px; }
+[dir="rtl"] .search-wrap svg { left: auto; right: 16px; }
 .search-wrap svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--ink-soft); z-index: 1; }
 
 .chip-row { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 18px; padding: 2px 2px 4px; scrollbar-width: none; }

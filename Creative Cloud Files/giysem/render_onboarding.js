@@ -29,9 +29,9 @@ function renderWelcome(s) {
       <div class="onboard-hero">
         <div class="onboard-stage">
           <div class="onboard-glyph pop-in">${weatherGlyph('partly', true)}</div>
-          <div class="orbit orbit-1">${garmentArt('dis', '#3f5f86')}</div>
-          <div class="orbit orbit-2">${garmentArt('ust', '#e2564c', true)}</div>
-          <div class="orbit orbit-3">${garmentArt('ayak', '#f4f2ee')}</div>
+          <div class="orbit orbit-1">${garmentArt('trench')}</div>
+          <div class="orbit orbit-2">${garmentArt('sweater', '#e2564c', true)}</div>
+          <div class="orbit orbit-3">${garmentArt('boot')}</div>
           <div class="orbit orbit-4">${garmentArt('yanina', '#ffc93c')}</div>
         </div>
         <h1 class="onboard-title"><span class="title-word" style="animation-delay:120ms">Sky</span><span class="title-word" style="animation-delay:240ms">Style</span></h1>
