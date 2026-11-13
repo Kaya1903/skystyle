@@ -325,6 +325,11 @@ function applyRain(rows, bandKey, rainMax, lang) {
   rows.yanina = { item: 'Küçük bir şemsiye', reason: () => `Yağmur ihtimali %${rainMax}. Yanına küçük bir şemsiye al` };
 }
 
+// Layers the base outfit doesn't suggest for a band but that still make sense
+// there: they only appear when the user owns a piece that fits the weather
+// (a vest at 6°, a light jacket at 18°), so default suggestions stay simple.
+const OPTIONAL_SLOTS = { soguk: ['ustune'], ilik: ['dis'] };
+
 export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardrobeItems = [], locks = {}) {
   const language = lang === 'en' ? 'en' : 'tr';
   const bandKey = getBand(feelsLike);
@@ -338,7 +343,9 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardr
   const needsRain = rainMax >= 50;
   const needsWind = wind >= 20;
   const pickOpts = { bandKey, needsRain, needsWind };
-  const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k]), pickOpts, locks);
+  const optional = (OPTIONAL_SLOTS[bandKey] || []).filter(k => !rows[k]);
+  const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k] || optional.includes(k)), pickOpts, locks);
+  for (const k of optional) if (picks[k]) rows[k] = { item: picks[k].name, reason: '' };
   const pickedItems = Object.values(picks);
 
   const output = [];
