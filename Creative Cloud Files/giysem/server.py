@@ -59,6 +59,30 @@ ANALYZE_PROMPT = (
 )
 
 
+def extract_text(result):
+    """Joins the text blocks of a Messages API response.
+
+    Current models (e.g. Haiku 5.5) think by default, so the first content block
+    is often a `thinking` block, not text; pick text blocks by type instead of
+    assuming content[0]."""
+    stop = result.get('stop_reason')
+    if stop == 'refusal':
+        raise ValueError('model declined the request')
+    texts = [b.get('text', '') for b in result.get('content', []) if b.get('type') == 'text']
+    text = ''.join(texts).strip()
+    if not text:
+        raise ValueError(f'no text in model response (stop_reason={stop})')
+    return text
+
+
+def extract_json_object(text):
+    """Pulls the JSON object out of a reply even if it came wrapped in prose or fences."""
+    start, end = text.find('{'), text.rfind('}')
+    if start == -1 or end <= start:
+        raise ValueError('no JSON object in model reply')
+    return json.loads(text[start:end + 1])
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def _site_authorized(self):
         if not SITE_PASSWORD:
@@ -139,7 +163,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         )
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             result = json.loads(resp.read())
-        return result['content'][0]['text'].strip()
+        return extract_text(result)
 
     def _handle_style_tip(self):
         if not self._check_api_key():
@@ -168,7 +192,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
             payload = {
                 'model': MODEL,
-                'max_tokens': 150,
+                # Thinking tokens count toward max_tokens; keep headroom so the tip isn't cut off.
+                'max_tokens': 1500,
+                'output_config': {'effort': 'low'},
                 'messages': [{'role': 'user', 'content': prompt}],
             }
             text = self._call_claude(payload, timeout=20)
@@ -193,7 +219,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
             payload = {
                 'model': MODEL,
-                'max_tokens': 600,
+                'max_tokens': 3000,
+                'output_config': {'effort': 'low'},
                 'messages': [{
                     'role': 'user',
                     'content': [
@@ -202,13 +229,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     ],
                 }],
             }
-            text = self._call_claude(payload, timeout=30)
-            if text.startswith('```'):
-                text = text.strip('`')
-                if '\n' in text:
-                    text = text.split('\n', 1)[1]
-            parsed = json.loads(text)
-            self._send_json(200, parsed)
+            text = self._call_claude(payload, timeout=45)
+            self._send_json(200, extract_json_object(text))
         except urllib.error.HTTPError as e:
             detail = e.read().decode('utf-8', 'ignore')
             self._send_json(502, {'error': f'anthropic api error {e.code}', 'detail': detail[:300]})
