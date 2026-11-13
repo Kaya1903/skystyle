@@ -273,13 +273,29 @@ const CITIES = [
     R(92, 92, 20, 58), P('92 92, 102 76, 112 92'),
     ...tree(150, 10), ...tree(176, 12),
   ]],
-  ['istanbul', 41.0082, 28.9784, () => [
-    { d: R(36, 112, 116, 38) + range(42, 144, 10).map(x => ARCH(x, 132, 5, 12)).join(''), eo: true },
-    R(66, 98, 56, 14) + DOME(94, 98, 28, 24) + DOME(66, 104, 14, 10) + DOME(122, 104, 14, 10) + DOME(50, 112, 12, 8) + DOME(138, 112, 12, 8),
-    R(93.4, 62, 1.2, 12), C(94, 60, 1.8),
-    ...minaret(26, 40), ...minaret(44, 54), ...minaret(144, 54), ...minaret(162, 40),
-    { d: R(176, 74, 16, 76) + windows(178, 80, 12, 50, 2, 3, 3, 6), eo: true }, P('174 74, 184 48, 194 74'),
-  ]],
+  // Istanbul: the Blue Mosque (central dome, cascading semi-domes, four
+  // minarets) in front of the Bosphorus Bridge: two portal towers, the main
+  // cable sagging to the deck mid-span, side cables to the shores, hangers,
+  // and the water below.
+  ['istanbul', 41.0082, 28.9784, () => {
+    const towers = [10, 190];
+    const top = 46, deck = 116;
+    const cable = t => [(1 - t) ** 2 * towers[0] + 2 * t * (1 - t) * 100 + t * t * towers[1], (1 - t) ** 2 * top + 2 * t * (1 - t) * 186 + t * t * top];
+    const hangers = range(0.05, 0.96, 0.05).map(t => { const [x, y] = cable(t); return y < deck ? `M${x.toFixed(1)} ${y.toFixed(1)}V${deck}` : ''; }).join('');
+    const tower = x => R(x - 4, top, 2.6, 150 - top) + R(x + 1.4, top, 2.6, 150 - top) + R(x - 4, top, 8, 3) + R(x - 4, 78, 8, 2.4) + R(x - 4, 104, 8, 2.4);
+    return [
+      // bridge, faint, behind everything
+      { d: towers.map(tower).join('') + R(0, deck, 200, 3.2), o: 0.55 },
+      { s: `M${towers[0] + 1} ${top}Q100 186 ${towers[1] + 1} ${top}M${towers[0] + 1} ${top}L-6 ${deck}M${towers[1] + 1} ${top}L206 ${deck}`, w: 1.6, o: 0.55 },
+      { s: hangers, w: 0.5, o: 0.45 },
+      // mosque
+      { d: R(36, 112, 128, 38) + range(42, 156, 10).map(x => ARCH(x, 132, 5, 12)).join(''), eo: true },
+      R(68, 98, 64, 14) + DOME(100, 98, 30, 26) + DOME(70, 104, 15, 10) + DOME(130, 104, 15, 10) + DOME(52, 112, 13, 8) + DOME(148, 112, 13, 8),
+      R(99.4, 60, 1.2, 12), C(100, 58.5, 1.9),
+      ...minaret(30, 36), ...minaret(50, 50), ...minaret(150, 50), ...minaret(170, 36),
+      { s: 'M0 147Q12 144 24 147T48 147T72 147T96 147T120 147T144 147T168 147T192 147T216 147', w: 1.2, o: 0.7 },
+    ];
+  }],
   ['ankara', 39.9334, 32.8597, () => [
     { d: R(8, 136, 184, 14) + R(8, 140, 184, 1.2) + R(8, 145, 184, 1.2), eo: true },
     { d: R(34, 74, 132, 62) + range(40, 160, 8).map(x => R(x, 82, 4, 50)).join(''), eo: true },
@@ -395,34 +411,58 @@ const CITIES = [
     R(93, 30, 14, 8), R(96, 22, 8, 8), P('98 22, 100 0, 102 22'),
   ]],
   // Americas
-  // Statue of Liberty (torch in her RIGHT hand, which is the viewer's LEFT;
-  // tablet held in her left arm), on its stepped pedestal, beside the
-  // Empire State and Chrysler buildings.
-  ['newyork', 40.7128, -74.006, () => [
-    { d: R(98, 92, 12, 58) + R(170, 96, 16, 54) + R(186, 108, 14, 42), o: 0.5 },
-    // pedestal: wide base, shaft with recessed panel, cornice, plinth
-    { d: 'M18 150V128H22V120H66V128H70V150Z' + R(36, 132, 16, 14), eo: true },
-    { d: R(26, 96, 36, 24) + R(38, 102, 12, 14), eo: true },
-    R(23, 92, 42, 4), R(29, 86, 30, 6),
-    // robe: flared hem, drapery folds, shoulders
-    { d: 'M33.5 86C34.5 78 35.8 70 37.2 62C38.2 57 39.8 54 42 53H48.5C50.6 54 52 57 52.8 62C54 70 55.4 78 56.8 86Z' +
-        'M40.6 84L42.8 64L43.5 64L41.5 84Z' + 'M46.4 84L46 66L46.8 66L47.4 84Z' + 'M50.6 84L49.4 70L50.1 70L51.6 84Z', eo: true },
-    // head with crown rays
-    C(45, 47.5, 4.2),
-    { s: 'M41 44L38 40M42.5 43L41 38M44.5 42.6L44.5 37.4M46.5 43L48 38M48 44L51 40.5M40 46L36 45M50 46L54 45', w: 1.3 },
-    // raised right arm (viewer's left) with torch and flame
-    P('39.5 56, 34.5 26, 37.2 25.4, 42.8 55'),
-    R(33, 19.5, 5.4, 6.5), P('32.2 19.5, 34 17.6, 37.6 17.6, 39.2 19.5'),
-    'M35.7 17.8C33.2 13.6 34.6 9.6 35.7 6.4C36.8 9.6 38.8 12.8 35.7 17.8Z',
-    // tablet in the left arm (viewer's right)
-    P('50 58, 56 56, 58 70, 52 72'),
-    // Empire State
-    { d: R(106, 70, 28, 80) + range(110, 128, 6).map(x => R(x, 76, 2, 70)).join(''), eo: true },
-    R(110, 56, 20, 14), R(114, 44, 12, 12), R(116, 34, 8, 10), 'M118 34L119.5 6H120.5L122 34Z',
-    // Chrysler
-    R(150, 70, 16, 80), 'M150 70Q158 40 166 70Z', 'M156 50L158 16L160 50Z',
-    { s: 'M152 66Q158 50 164 66M153.5 60Q158 47 162.5 60', w: 1 },
-  ]],
+  // Statue of Liberty drawn from a straight-on reference photo (1305x2000 px;
+  // coordinates below are photo pixels mapped into the box: flame tip at the
+  // top, photo bottom on the ground). Torch in her RIGHT hand = viewer's LEFT,
+  // tablet in her left arm, seven-ray crown, stone pedestal with the balcony
+  // and columned loggia. Empire State and Chrysler stand to the right.
+  ['newyork', 40.7128, -74.006, () => {
+    const k = 150 / 1905;
+    const X = px => +(44 + (px - 645) * k).toFixed(2);
+    const Y = py => +(150 - (2000 - py) * k).toFixed(2);
+    const pts = list => 'M' + list.map(([x, y]) => `${X(x)} ${Y(y)}`).join('L') + 'Z';
+    const box = (x1, y1, x2, y2) => R(X(x1), Y(y1), +((x2 - x1) * k).toFixed(2), +((y2 - y1) * k).toFixed(2));
+    const slit = (x1, y1, x2, y2, w = 7) => pts([[x1, y1], [x1 + w, y1], [x2 + w, y2], [x2, y2]]);
+    const crownBase = [655, 462];
+    const rays = [[560, 456], [582, 400], [661, 372], [740, 396], [776, 440], [782, 482]].map(([tx, ty]) => {
+      const a = Math.atan2(ty - crownBase[1], tx - crownBase[0]);
+      const bx = crownBase[0] + Math.cos(a) * 46, by = crownBase[1] + Math.sin(a) * 30;
+      const nx = -Math.sin(a) * 9, ny = Math.cos(a) * 9;
+      return pts([[bx + nx, by + ny], [tx, ty], [bx - nx, by - ny]]);
+    }).join('');
+    return [
+      { d: R(98, 92, 12, 58) + R(170, 96, 16, 54) + R(186, 108, 14, 42), o: 0.5 },
+      // pedestal: flared base, shaft with the columned loggia, balcony, cap, plinth
+      { d: box(385, 1958, 905, 2000) + box(418, 1600, 870, 1960) + box(540, 1628, 583, 1782) + box(621, 1628, 664, 1782) + box(701, 1628, 746, 1782) +
+          box(452, 1880, 836, 1884), eo: true },
+      { d: box(406, 1512, 884, 1600) + [430, 490, 550, 610, 670, 730, 790, 850].map(x => box(x, 1512, x + 22, 1528)).join(''), eo: true },
+      box(455, 1420, 835, 1512),
+      box(470, 1376, 820, 1420),
+      // robe, with drapery folds as thin cuts
+      { d: pts([[495, 1376], [518, 1250], [522, 1100], [526, 965], [508, 870], [512, 790], [535, 720], [552, 640], [575, 580], [612, 562], [690, 586],
+          [752, 640], [792, 722], [818, 860], [822, 900], [812, 1050], [806, 1200], [806, 1376]]) +
+          slit(570, 760, 690, 1120) + slit(610, 980, 740, 1330) + slit(545, 980, 560, 1330) + slit(700, 700, 780, 900, 6) + slit(640, 640, 600, 760, 6), eo: true },
+      // tablet in the left arm
+      pts([[796, 748], [880, 704], [916, 742], [868, 906], [806, 904]]),
+      // neck, head, crown band and rays
+      pts([[628, 545], [684, 545], [690, 590], [622, 590]]),
+      E(X(655), Y(512), +(44 * k).toFixed(2), +(50 * k).toFixed(2)),
+      'M' + X(598) + ' ' + Y(478) + 'Q' + X(655) + ' ' + Y(418) + ' ' + X(714) + ' ' + Y(478) + 'Z',
+      rays,
+      // raised right arm (viewer's left), fist, torch and flame
+      pts([[490, 545], [495, 420], [488, 330], [545, 328], [552, 420], [586, 520], [600, 572], [560, 590]]),
+      pts([[484, 258], [540, 252], [548, 336], [490, 340]]),
+      pts([[497, 208], [528, 208], [522, 262], [503, 262]]),
+      pts([[466, 164], [556, 164], [546, 210], [476, 210]]),
+      pts([[478, 150], [544, 150], [552, 166], [470, 166]]),
+      'M' + X(492) + ' ' + Y(150) + 'C' + X(482) + ' ' + Y(118) + ' ' + X(505) + ' ' + Y(104) + ' ' + X(512) + ' ' + Y(95) + 'C' + X(522) + ' ' + Y(112) + ' ' + X(546) + ' ' + Y(110) + ' ' + X(538) + ' ' + Y(150) + 'Z',
+      // Empire State
+      { d: R(106, 70, 28, 80) + range(110, 128, 6).map(x => R(x, 76, 2, 70)).join(''), eo: true },
+      R(110, 56, 20, 14), R(114, 44, 12, 12), R(116, 34, 8, 10), 'M118 34L119.5 6H120.5L122 34Z',
+      // Chrysler
+      R(150, 70, 16, 80), 'M150 70Q158 40 166 70Z', 'M156 50L158 16L160 50Z',
+    ];
+  }],
   ['sanfrancisco', 37.7749, -122.4194, () => {
     const cable = t => [(1 - t) ** 2 * 53 + 2 * t * (1 - t) * 100 + t * t * 153, (1 - t) ** 2 * 30 + 2 * t * (1 - t) * 118 + t * t * 30];
     const hangers = range(0.06, 0.95, 0.06).map(t => { const [x, y] = cable(t); return `M${x.toFixed(1)} ${y.toFixed(1)}V108`; }).join('');
@@ -642,7 +682,7 @@ function elementSvg(el) {
   if (Array.isArray(el)) return el.map(elementSvg).join('');
   if (typeof el === 'string') return `<path d="${el}"/>`;
   if (el.text) return `<text x="${el.x}" y="${el.y}" font-size="${el.size}" transform="rotate(${el.rot || 0} ${el.x} ${el.y})" class="lm-text">${el.text}</text>`;
-  if (el.s) return `<path class="lm-stroke" d="${el.s}" stroke-width="${el.w || 2}"/>`;
+  if (el.s) return `<path class="lm-stroke" d="${el.s}" stroke-width="${el.w || 2}"${el.o ? ` stroke-opacity="${el.o}"` : ''}/>`;
   return `<path d="${el.d}"${el.eo ? ' fill-rule="evenodd"' : ''}${el.o ? ` fill-opacity="${el.o}"` : ''}/>`;
 }
 
