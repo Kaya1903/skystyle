@@ -15,20 +15,108 @@ export function loadWardrobe() {
   }
 }
 
-export function saveWardrobe(items) {
-  localStorage.setItem(KEY, JSON.stringify(items));
+// ---------- Photo store ----------
+// Item details are tiny and stay in localStorage, but photos are not: a few dozen
+// of them would blow through localStorage's ~5 MB. Photos live in IndexedDB
+// (hundreds of MB) keyed by item id. If IndexedDB isn't available (some private
+// windows), photos stay inline in localStorage exactly as before, so nothing is lost.
+
+const DB_NAME = 'skystyle';
+const STORE = 'photos';
+let dbPromise = null;
+let photoStoreOk = null; // null = not checked yet, true/false once known
+
+function openDb() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('no indexedDB')); return; }
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error('indexedDB blocked'));
+  });
+  return dbPromise;
 }
 
+function tx(mode, fn) {
+  return openDb().then(db => new Promise((resolve, reject) => {
+    const t = db.transaction(STORE, mode);
+    const store = t.objectStore(STORE);
+    const result = fn(store);
+    t.oncomplete = () => resolve(result && 'result' in result ? result.result : undefined);
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error || new Error('transaction aborted'));
+  }));
+}
+
+function putPhoto(id, dataUrl) { return tx('readwrite', s => s.put(dataUrl, id)); }
+function deletePhoto(id) { return tx('readwrite', s => s.delete(id)); }
+function getAllPhotos() {
+  return openDb()
+    .then(db => new Promise((resolve, reject) => {
+      const t = db.transaction(STORE, 'readonly');
+      const store = t.objectStore(STORE);
+      const out = new Map();
+      const req = store.openCursor();
+      req.onsuccess = () => {
+        const cur = req.result;
+        if (cur) { out.set(cur.key, cur.value); cur.continue(); } else resolve(out);
+      };
+      req.onerror = () => reject(req.error);
+    }));
+}
+
+// Called once at startup: moves any photos still stored inline into IndexedDB,
+// then attaches every stored photo to its item. Returns the hydrated items.
+export async function initPhotoStore(items) {
+  try {
+    await openDb();
+    for (const item of items) {
+      if (item.photo) await putPhoto(item.id, item.photo);
+    }
+    photoStoreOk = true;
+    const photos = await getAllPhotos();
+    const hydrated = items.map(i => (photos.has(i.id) ? { ...i, photo: photos.get(i.id), hasPhoto: true } : i));
+    // Drop photos of items that no longer exist (e.g. deleted in another tab).
+    for (const id of photos.keys()) if (!items.some(i => i.id === id)) deletePhoto(id).catch(() => {});
+    return hydrated;
+  } catch (err) {
+    console.warn('[SkyStyle] Photo store unavailable, keeping photos in localStorage:', err && err.message);
+    photoStoreOk = false;
+    return items;
+  }
+}
+
+// Returns false when localStorage is full, so the caller can tell the user.
+export function saveWardrobe(items) {
+  const slim = photoStoreOk
+    ? items.map(({ photo, ...rest }) => (photo || rest.hasPhoto ? { ...rest, hasPhoto: true } : rest))
+    : items;
+  try {
+    localStorage.setItem(KEY, JSON.stringify(slim));
+    return true;
+  } catch (err) {
+    console.error('[SkyStyle] Could not save wardrobe:', err && err.name);
+    return false;
+  }
+}
+
+// Returns { items, ok }.
 export function addOrUpdateItem(items, item) {
   const idx = items.findIndex(i => i.id === item.id);
   const next = [...items];
-  if (idx >= 0) next[idx] = item; else next.push(item);
-  saveWardrobe(next);
-  return next;
+  const stored = photoStoreOk && item.photo ? { ...item, hasPhoto: true } : item;
+  if (idx >= 0) next[idx] = stored; else next.push(stored);
+  if (photoStoreOk && item.photo) {
+    putPhoto(item.id, item.photo).catch(err => console.error('[SkyStyle] Could not store photo:', err && err.name));
+  }
+  return { items: next, ok: saveWardrobe(next) };
 }
 
 export function removeItem(items, id) {
   const next = items.filter(i => i.id !== id);
+  if (photoStoreOk) deletePhoto(id).catch(() => {});
   saveWardrobe(next);
   return next;
 }

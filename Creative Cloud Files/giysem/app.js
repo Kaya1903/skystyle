@@ -2,7 +2,7 @@ import { colorName, isValidColor } from './colors.js';
 import { setSky } from './sky.js';
 import { skyKind } from './weather.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
-import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto } from './wardrobe.js';
+import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe } from './wardrobe.js';
 import { generateOutfit } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile } from './profile.js';
@@ -265,7 +265,19 @@ export async function useGeolocation() {
 }
 
 export function saveWardrobeItem(item) {
-  state.wardrobe = addOrUpdateItem(state.wardrobe, item);
+  const { items, ok } = addOrUpdateItem(state.wardrobe, item);
+  state.wardrobe = items;
+  render();
+  if (!ok) showToast(t(state.lang, 'storage_full'));
+}
+
+// Moves photos into IndexedDB (first run) and attaches stored photos to items.
+// Merges by id so anything edited while this was running is kept.
+async function hydratePhotos() {
+  const hydrated = await initPhotoStore(state.wardrobe);
+  const byId = new Map(hydrated.map(i => [i.id, i]));
+  state.wardrobe = state.wardrobe.map(i => (i.photo || !byId.get(i.id)?.photo ? i : { ...i, photo: byId.get(i.id).photo, hasPhoto: true }));
+  saveWardrobe(state.wardrobe);
   render();
 }
 
@@ -722,3 +734,4 @@ if (state.screen === 'app') {
   state.loading = false;
 }
 render();
+hydratePhotos();
