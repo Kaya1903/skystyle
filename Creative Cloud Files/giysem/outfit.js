@@ -336,7 +336,7 @@ const WARM_BANDS = ['ilik', 'sicak', 'cok_sicak'];
 
 // Suggested pieces are drawn in a women's or men's cut when a gender is chosen.
 const GENDER_ART = {
-  kadin: { shirt: 'blouse', shorts: 'minishorts', sunglasses: 'catglasses' },
+  kadin: { shirt: 'blouse', shortshirt: 'blouse', shorts: 'minishorts', sunglasses: 'catglasses' },
   erkek: { blouse: 'shirt', minishorts: 'shorts', catglasses: 'sunglasses', leggings: 'trousers' },
 };
 const GLASSES = ['sunglasses', 'catglasses'];

@@ -47,7 +47,7 @@ ANALYZE_PROMPT = (
     '"patternType": "solid" | "stripes" | "checks" | "dots" | "floral" | "print" '
     '(print = a graphic, photo or big logo on the front), '
     '"style": the closest drawing for this item; it must match the category: '
-    'ust -> tee | longsleeve | sweater | sweatshirt | hoodie | shirt | blouse | polo | tank; '
+    'ust -> tee | longsleeve | sweater | sweatshirt | hoodie | shirt | shortshirt | blouse | polo | tank; '
     'ustune -> cardigan | fleece | hoodie | sweatshirt | vest | shirt; '
     'dis -> jacket | puffer | coat | trench | windbreaker | bomber | blazer | vest; '
     'alt -> trousers | chinos | jeans | leggings | shorts | minishorts | skirt | dress; '

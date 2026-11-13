@@ -15,7 +15,7 @@ const DEFAULT_GARMENT_COLOR = {
   sweatshirt: '#8a9bb0', hoodie: '#5b6b7d', polo: '#2f6f5e', tank: '#f2f2f2',
   vest: '#2f3e5e', bomber: '#4e5a3a', blazer: '#3a3f4b',
   bag: '#8b5a3c', beanie: '#c94f4f', cap: '#2f3e5e', scarf: '#b7473b',
-  blouse: '#f4d6dc', leggings: '#2b2b33', minishorts: '#8fb3d9', sunglasses: '#23262d', catglasses: '#5a2433',
+  blouse: '#f4d6dc', shortshirt: '#dbe8f2', leggings: '#2b2b33', minishorts: '#8fb3d9', sunglasses: '#23262d', catglasses: '#5a2433',
 };
 
 // What each wardrobe category draws when nothing more specific is known.
@@ -71,6 +71,11 @@ const GARMENTS = {
   shirt: {
     body: LONG_TOP,
     detail: '<path d="M33 40 Q60 45 87 40" fill="none" stroke="{D}" stroke-width="1.8" opacity=".4"/><path d="M41 18 L49 40 L60 29 L71 40 L79 18 C73 25 67 28 60 28 C53 28 47 25 41 18 Z" fill="{L}" stroke="{D}" stroke-width="2" stroke-linejoin="round"/><path d="M57 31 V105 M63 31 V105" stroke="{D}" stroke-width="1.6"/><circle cx="60" cy="44" r="1.8" fill="{D}"/><circle cx="60" cy="58" r="1.8" fill="{D}"/><circle cx="60" cy="72" r="1.8" fill="{D}"/><circle cx="60" cy="86" r="1.8" fill="{D}"/><circle cx="60" cy="100" r="1.8" fill="{D}"/><path d="M68 50 H81 V64 Q74.5 67 68 64 Z" fill="none" stroke="{D}" stroke-width="1.8"/><path d="M68 50 H81 V55 H68 Z" fill="{D}" opacity=".3"/><path d="M11.5 80 H25.5 L24 90 H10.5 Z M94.5 80 H108.5 L109.5 90 H96 Z" fill="{D}" opacity=".3"/><circle cx="21" cy="85" r="1.3" fill="{L}"/><circle cx="99" cy="85" r="1.3" fill="{L}"/>',
+  },
+  // Short-sleeve shirt: boxy cut, pointed collar, placket, chest pocket, rolled sleeve hems.
+  shortshirt: {
+    body: 'M40 20 L16 32 L24 56 L37 51 V102 Q37 105 40 105 H80 Q83 105 83 102 V51 L96 56 L104 32 L80 20 C76 28 69 31 60 31 C51 31 44 28 40 20 Z',
+    detail: '<path d="M16 32 L24 56 L29 54 L21 29.5 Z M104 32 L96 56 L91 54 L99 29.5 Z" fill="{D}" opacity=".3"/><path d="M41 18 L49 40 L60 29 L71 40 L79 18 C73 25 67 28 60 28 C53 28 47 25 41 18 Z" fill="{L}" stroke="{D}" stroke-width="2" stroke-linejoin="round"/><path d="M57 31 V105 M63 31 V105" stroke="{D}" stroke-width="1.6"/><circle cx="60" cy="46" r="1.8" fill="{D}"/><circle cx="60" cy="60" r="1.8" fill="{D}"/><circle cx="60" cy="74" r="1.8" fill="{D}"/><circle cx="60" cy="88" r="1.8" fill="{D}"/><path d="M67 50 H79 V63 Q73 66 67 63 Z" fill="none" stroke="{D}" stroke-width="1.8"/><path d="M37 51 V62 M83 51 V62" stroke="{D}" stroke-width="2" opacity=".3" stroke-linecap="round"/>',
   },
   // Women's blouse: puffed 3/4 sleeves, fitted waist, peplum hem, tie-neck bow.
   blouse: {
@@ -293,6 +298,9 @@ export function garmentVariant(category, text = '', warmth = 3) {
   if (best === 'leggings' && /elbise|dress|vestido|sukienka|etek|skirt|falda|spódnica/.test(lower)) {
     return /elbise|dress|vestido|sukienka/.test(lower) ? 'dress' : 'skirt';
   }
+  // "Kot şort" / "denim shorts": the cut (shorts) matters more than the fabric.
+  if (best === 'jeans' && /şort|short|szorty|شورت/.test(lower)) return 'shorts';
+  if (best === 'shirt' && /kısa kol|short-sleeve|short sleeve|manga corta|krótki rękaw/.test(lower)) return 'shortshirt';
   // Light-weather trousers read better as beige chinos than dark formal pants.
   if (best === 'trousers' && warmth <= 2) return 'chinos';
   if (best) return best;
@@ -308,7 +316,7 @@ export function garmentVariant(category, text = '', warmth = 3) {
 
 // Which drawings make sense for each wardrobe category (the editor's style picker).
 export const STYLE_OPTIONS = {
-  ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'blouse', 'polo', 'tank'],
+  ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'shortshirt', 'blouse', 'polo', 'tank'],
   ustune: ['cardigan', 'fleece', 'hoodie', 'sweatshirt', 'vest', 'shirt'],
   dis: ['jacket', 'puffer', 'coat', 'trench', 'windbreaker', 'bomber', 'blazer', 'vest'],
   alt: ['trousers', 'chinos', 'jeans', 'leggings', 'shorts', 'minishorts', 'skirt', 'dress'],
@@ -325,6 +333,7 @@ const ZONES = {
   polo: { neck: 34, shoulder: 22, bottom: 101, chest: [70, 54], pocket: 'kangaroo' },
   tank: { neck: 38, shoulder: 18, bottom: 102, chest: [68, 56], pocket: 'kangaroo' },
   longsleeve: LONG, sweater: LONG, sweatshirt: LONG, hoodie: { ...LONG, hasHood: true }, shirt: { ...LONG, pocket: 'patch' },
+  shortshirt: { neck: 31, shoulder: 20, bottom: 104, chest: [70, 52], pocket: 'patch' },
   blouse: { neck: 34, shoulder: 24, bottom: 104, chest: [70, 54], pocket: 'patch' },
   cardigan: { neck: 62, shoulder: 19, bottom: 104, chest: [72, 70], pocket: 'patch', open: true },
   fleece: { neck: 24, shoulder: 14, bottom: 104, chest: [72, 46], pocket: 'patch' },
@@ -343,12 +352,12 @@ const LABELS = {
     cardigan: 'Hırka', fleece: 'Polar', vest: 'Yelek', jacket: 'Ceket', puffer: 'Şişme mont', coat: 'Kaban', trench: 'Trençkot', windbreaker: 'Rüzgarlık', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Pantolon', chinos: 'Chino', jeans: 'Kot', shorts: 'Şort', skirt: 'Etek', dress: 'Elbise',
     sneaker: 'Spor ayakkabı', boot: 'Bot', sandal: 'Sandalet', loafer: 'Makosen', umbrella: 'Şemsiye', bag: 'Çanta', beanie: 'Bere', cap: 'Şapka', scarf: 'Atkı',
-    blouse: 'Bluz', leggings: 'Tayt', minishorts: 'Kadın şortu', sunglasses: 'Güneş gözlüğü', catglasses: 'Kedi göz gözlük' },
+    shortshirt: 'Kısa kollu gömlek', blouse: 'Bluz', leggings: 'Tayt', minishorts: 'Kadın şortu', sunglasses: 'Güneş gözlüğü', catglasses: 'Kedi göz gözlük' },
   en: { tee: 'T-shirt', longsleeve: 'Long sleeve', sweater: 'Sweater', sweatshirt: 'Sweatshirt', hoodie: 'Hoodie', shirt: 'Shirt', polo: 'Polo', tank: 'Tank top',
     cardigan: 'Cardigan', fleece: 'Fleece', vest: 'Vest', jacket: 'Jacket', puffer: 'Puffer', coat: 'Coat', trench: 'Trench coat', windbreaker: 'Windbreaker', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Trousers', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Skirt', dress: 'Dress',
     sneaker: 'Sneakers', boot: 'Boots', sandal: 'Sandals', loafer: 'Loafers', umbrella: 'Umbrella', bag: 'Bag', beanie: 'Beanie', cap: 'Cap', scarf: 'Scarf',
-    blouse: 'Blouse', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses' },
+    shortshirt: 'Short-sleeve shirt', blouse: 'Blouse', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses' },
 };
 export function styleLabel(name, lang) {
   return (LABELS[lang] || (lang === 'tr' ? LABELS.tr : LABELS.en))[name] || name;
