@@ -829,7 +829,7 @@ export const INTENSITY = {
     l3_acc: ['Balaklava, kalın eldiven ve yün çorap', 'Dışarıda uzun kalma; açıkta kalan cilt dakikalar içinde donabilir'],
     l3_layers: ' Kat kat giyin, iki ince kat tek kalın kattan daha iyi ısıtır.',
     gale: ' Rüzgar çok sert, yüzünü açıkta bırakma.',
-    heat_acc: ['Şapka, güneş gözlüğü ve su şişesi', 'Bu sıcakta uzun süre güneşte kalma, bol su iç'],
+    heat_acc: ['Güneş gözlüğü, şapka ve su şişesi', 'Bu sıcakta uzun süre güneşte kalma, bol su iç'],
   },
   en: {
     thermal_legs: ' Wear thermal leggings underneath.',
@@ -839,7 +839,7 @@ export const INTENSITY = {
     l3_acc: ['Balaclava, thick gloves and wool socks', 'Don\'t stay out long; exposed skin can freeze within minutes'],
     l3_layers: ' Layer up, two thin layers warm better than one thick one.',
     gale: ' The wind is very strong, keep your face covered.',
-    heat_acc: ['Hat, sunglasses and a water bottle', 'Avoid long stretches in the sun and drink plenty of water'],
+    heat_acc: ['Sunglasses, a hat and a water bottle', 'Avoid long stretches in the sun and drink plenty of water'],
   },
 };
 
@@ -848,7 +848,8 @@ export const EXTRAS = {
   tr: {
     cold_acc: ['Bere, atkı ve eldiven', 'Isının çoğu baştan, boyundan ve ellerden kaçar'],
     cold_rain_acc: ['Şemsiye, bere ve eldiven', 'Hem ıslanma hem üşüme, ikisine de hazırlıklı ol'],
-    sun_acc: ['Şapka ve güneş gözlüğü', 'Güneş tepede, başını ve gözlerini koru'],
+    sun_acc: ['Güneş gözlüğü ve şapka', 'Güneş tepede, gözlerini ve başını koru'],
+    cool_sun_acc: ['Güneş gözlüğü', 'Hava serin ama gökyüzü açık, alçak güneş gözünü alabilir'],
     snow_shoe: ['Kaymaz tabanlı, su geçirmez bot', 'Kar ve buz kaygan olur, tabanı tırtıklı olsun'],
     dress_cold_top: ['İnce termal içlik ve kalın tayt', 'Elbisenin altına, ısıyı içeride tutar'],
     tights_cold: ' Altına kalın tayt giy.',
@@ -858,7 +859,8 @@ export const EXTRAS = {
   en: {
     cold_acc: ['Beanie, scarf and gloves', 'Most of your heat escapes from your head, neck and hands'],
     cold_rain_acc: ['Umbrella, beanie and gloves', 'Be ready for both rain and cold'],
-    sun_acc: ['Cap and sunglasses', 'The sun is strong, protect your head and eyes'],
+    sun_acc: ['Sunglasses and a cap', 'The sun is strong, protect your eyes and head'],
+    cool_sun_acc: ['Sunglasses', 'It is cool but clear, and the low sun can be glaring'],
     snow_shoe: ['Non-slip, waterproof boots', 'Snow and ice get slippery, go for a grippy sole'],
     dress_cold_top: ['Thin thermal layer and thick tights', 'Under the dress, they keep the warmth in'],
     tights_cold: ' Wear thick tights underneath.',

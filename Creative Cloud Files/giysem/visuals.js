@@ -15,9 +15,11 @@ const DEFAULT_GARMENT_COLOR = {
   sweatshirt: '#8a9bb0', hoodie: '#5b6b7d', polo: '#2f6f5e', tank: '#f2f2f2',
   vest: '#2f3e5e', bomber: '#4e5a3a', blazer: '#3a3f4b',
   bag: '#8b5a3c', beanie: '#c94f4f', cap: '#2f3e5e', scarf: '#b7473b',
+  blouse: '#f4d6dc', leggings: '#2b2b33', minishorts: '#8fb3d9', sunglasses: '#23262d', catglasses: '#5a2433',
 };
 
 // What each wardrobe category draws when nothing more specific is known.
+const LIGHT_FRAME = { sunglasses: '#e6d6b8', catglasses: '#f1c3cd' };
 const CATEGORY_DEFAULT = { ust: 'tee', ustune: 'cardigan', dis: 'jacket', alt: 'trousers', ayak: 'sneaker', yanina: 'umbrella' };
 
 function clamp(n) { return Math.max(0, Math.min(255, Math.round(n))); }
@@ -64,9 +66,16 @@ const GARMENTS = {
     body: LONG_TOP,
     detail: '<path d="M40 20 C44 28 51 32 60 32 C69 32 76 28 80 20" fill="none" stroke="{D}" stroke-width="5" stroke-linecap="round"/><path d="M33 96 H87" stroke="{D}" stroke-width="2"/><path d="M38 97 V104 M44 97 V104 M50 97 V104 M56 97 V104 M62 97 V104 M68 97 V104 M74 97 V104 M80 97 V104" stroke="{D}" stroke-width="1.6" opacity=".55"/><path d="M11 82 H25 M95 82 H109" stroke="{D}" stroke-width="2"/><path d="M52 40 Q48 48 52 56 Q56 64 52 72 Q48 80 52 88 M68 40 Q72 48 68 56 Q64 64 68 72 Q72 80 68 88" fill="none" stroke="{D}" stroke-width="2.4" opacity=".45"/>',
   },
+  // Men's / classic shirt: pointed collar on a stand, shoulder yoke, button
+  // placket, flapped chest pocket and buttoned cuffs.
   shirt: {
     body: LONG_TOP,
-    detail: '<path d="M43 19 L52 35 L60 27 Z M77 19 L68 35 L60 27 Z" fill="{L}" stroke="{D}" stroke-width="2" stroke-linejoin="round"/><path d="M60 30 V105" stroke="{D}" stroke-width="2"/><circle cx="64" cy="46" r="1.8" fill="{D}"/><circle cx="64" cy="62" r="1.8" fill="{D}"/><circle cx="64" cy="78" r="1.8" fill="{D}"/><circle cx="64" cy="94" r="1.8" fill="{D}"/><path d="M40 48 H52 V58 H40 Z" fill="none" stroke="{D}" stroke-width="1.8" opacity=".6"/>',
+    detail: '<path d="M33 40 Q60 45 87 40" fill="none" stroke="{D}" stroke-width="1.8" opacity=".4"/><path d="M41 18 L49 40 L60 29 L71 40 L79 18 C73 25 67 28 60 28 C53 28 47 25 41 18 Z" fill="{L}" stroke="{D}" stroke-width="2" stroke-linejoin="round"/><path d="M57 31 V105 M63 31 V105" stroke="{D}" stroke-width="1.6"/><circle cx="60" cy="44" r="1.8" fill="{D}"/><circle cx="60" cy="58" r="1.8" fill="{D}"/><circle cx="60" cy="72" r="1.8" fill="{D}"/><circle cx="60" cy="86" r="1.8" fill="{D}"/><circle cx="60" cy="100" r="1.8" fill="{D}"/><path d="M68 50 H81 V64 Q74.5 67 68 64 Z" fill="none" stroke="{D}" stroke-width="1.8"/><path d="M68 50 H81 V55 H68 Z" fill="{D}" opacity=".3"/><path d="M11.5 80 H25.5 L24 90 H10.5 Z M94.5 80 H108.5 L109.5 90 H96 Z" fill="{D}" opacity=".3"/><circle cx="21" cy="85" r="1.3" fill="{L}"/><circle cx="99" cy="85" r="1.3" fill="{L}"/>',
+  },
+  // Women's blouse: puffed 3/4 sleeves, fitted waist, peplum hem, tie-neck bow.
+  blouse: {
+    body: 'M44 22 L34 26 C22 26 16 36 18 48 L14 76 Q14 79 17 79 H27 Q30 79 30 76 L35 50 Q36 64 41 76 Q36 90 31 103 Q31 106 34 106 H86 Q89 106 89 103 Q84 90 79 76 Q84 64 85 50 L90 76 Q90 79 93 79 H103 Q106 79 106 76 L102 48 C104 36 98 26 86 26 L76 22 C72 30 66 33 60 33 C54 33 48 30 44 22 Z',
+    detail: '<path d="M44 22 C48 30 54 33 60 33 C66 33 72 30 76 22" fill="none" stroke="{D}" stroke-width="2.2"/><path d="M26 30 Q23 37 25 44 M31 28 Q29 34 30 40 M94 30 Q97 37 95 44 M89 28 Q91 34 90 40" fill="none" stroke="{D}" stroke-width="1.6" opacity=".45" stroke-linecap="round"/><path d="M15 73 H29 M91 73 H105" stroke="{D}" stroke-width="2" opacity=".55"/><path d="M41 76 Q60 80 79 76" fill="none" stroke="{D}" stroke-width="2"/><path d="M45 80 L40 104 M60 80 V105 M75 80 L80 104" stroke="{D}" stroke-width="1.4" opacity=".3"/><circle cx="60" cy="50" r="1.4" fill="{D}"/><circle cx="60" cy="60" r="1.4" fill="{D}"/><circle cx="60" cy="70" r="1.4" fill="{D}"/><path d="M60 36 C52 29 46 40 56 40 Z M60 36 C68 29 74 40 64 40 Z" fill="{L}" stroke="{D}" stroke-width="1.6" stroke-linejoin="round"/><path d="M58 39 L53 54 M62 39 L67 54" stroke="{D}" stroke-width="2.2" stroke-linecap="round"/><circle cx="60" cy="37.5" r="2.4" fill="{D}"/>',
   },
   // ---- mid layers ----
   cardigan: {
@@ -107,9 +116,20 @@ const GARMENTS = {
     body: 'M35 14 H85 L92 104 Q92 107 89 107 H68 Q65 107 65 104 L60 48 L55 104 Q55 107 52 107 H31 Q28 107 28 104 Z',
     detail: '<path d="M35 14 H85 L85.8 24 H34.2 Z" fill="{D}" opacity=".45"/><path d="M38 24 Q40 36 52 38 M82 24 Q80 36 68 38" fill="none" stroke="#e9b44c" stroke-width="1.8" stroke-dasharray="3 2"/><path d="M60 24 V46" stroke="#e9b44c" stroke-width="1.8" stroke-dasharray="3 2"/><path d="M32 98 H54 M66 98 H89" stroke="{L}" stroke-width="2" opacity=".6"/>',
   },
+  // Bermuda shorts (men's / neutral): knee length, belt loops, slant pockets, hem cuff.
   shorts: {
-    body: 'M33 28 H87 L93 78 Q93 81 90 81 H67 Q64 81 64 78 L60 54 L56 78 Q56 81 53 81 H30 Q27 81 27 78 Z',
-    detail: '<path d="M33 28 H87 L87.9 37 H32.1 Z" fill="{D}" opacity=".45"/><path d="M60 37 V50" stroke="{D}" stroke-width="2.5" stroke-linecap="round"/><path d="M30 72 H55 M65 72 H90" stroke="{D}" stroke-width="2" opacity=".4"/>',
+    body: 'M32 26 H88 L93 86 Q93 89 90 89 H66 Q63 89 63 86 L60 54 L57 86 Q57 89 54 89 H30 Q27 89 27 86 Z',
+    detail: '<path d="M32 26 H88 L88.8 35 H31.2 Z" fill="{D}" opacity=".45"/><path d="M41 26 V35 M79 26 V35 M60 26 V35" stroke="{D}" stroke-width="2.2"/><path d="M60 35 V51" stroke="{D}" stroke-width="2.2" stroke-linecap="round"/><path d="M36 35 Q40 45 49 46 M84 35 Q80 45 71 46" fill="none" stroke="{D}" stroke-width="2" opacity=".55" stroke-linecap="round"/><path d="M28 80 H57 M63 80 H92" stroke="{D}" stroke-width="2" opacity=".5"/>',
+  },
+  // Women's shorts: high waist, short flared legs with rolled cuffs.
+  minishorts: {
+    body: 'M38 24 H82 L90 66 Q91 70 87 70 H66 Q63 70 63 67 L60 56 L57 67 Q57 70 54 70 H33 Q29 70 30 66 Z',
+    detail: '<path d="M38 24 H82 L83.6 34 H36.4 Z" fill="{D}" opacity=".4"/><circle cx="60" cy="29" r="2.3" fill="{L}" stroke="{D}" stroke-width="1.3"/><path d="M60 34 V50" stroke="{D}" stroke-width="2" stroke-linecap="round"/><path d="M40 34 Q43 43 51 44 M80 34 Q77 43 69 44" fill="none" stroke="{D}" stroke-width="1.8" opacity=".55" stroke-linecap="round"/><path d="M31 61 H56.5 L57 70 H30 Z M63.5 61 H89 L90 70 H63 Z" fill="{L}" opacity=".7"/><path d="M31 61 H56.5 M63.5 61 H89" stroke="{D}" stroke-width="1.6"/>',
+  },
+  // Leggings / tights: slim legs, tall waistband, no fly.
+  leggings: {
+    body: 'M36 14 H84 L86 58 L83 104 Q83 107 80 107 H68 Q65 107 65 104 L60 50 L55 104 Q55 107 52 107 H40 Q37 107 37 104 L34 58 Z',
+    detail: '<path d="M36 14 H84 L84.6 25 H35.4 Z" fill="{D}" opacity=".35"/><path d="M38 28 L41 104 M82 28 L79 104" stroke="{D}" stroke-width="1.5" opacity=".3"/><path d="M47 34 L47 96 M73 34 L73 96" stroke="{L}" stroke-width="2.5" opacity=".3" stroke-linecap="round"/>',
   },
   skirt: {
     body: 'M40 24 H80 L97 96 Q98 100 94 100 H26 Q22 100 23 96 Z',
@@ -183,6 +203,16 @@ const GARMENTS = {
     body: 'M26 80 Q26 44 60 42 Q92 44 92 80 Z',
     detail: '<path d="M70 80 H110 Q108 92 92 92 H70 Z" fill="{D}" opacity=".6"/><path d="M60 42 V80 M42 48 Q46 64 44 80 M78 48 Q74 64 76 80" fill="none" stroke="{D}" stroke-width="1.6" opacity=".45"/><circle cx="60" cy="42" r="3" fill="{D}"/>',
   },
+  // Men's sunglasses: square wayfarer frame with a heavy brow bar.
+  sunglasses: {
+    body: 'M10 46 H110 V54 Q110 58 107 58 L104 74 Q102 84 90 84 H74 Q64 84 63 74 L62 61 Q60 57 58 61 L57 74 Q56 84 46 84 H30 Q18 84 16 74 L13 58 Q10 58 10 54 Z',
+    detail: '<path d="M18 56 H56 L55 73 Q54 79 46 79 H31 Q22 79 21 73 Z M64 56 H102 L99 73 Q98 79 89 79 H74 Q66 79 65 73 Z" fill="{LENS}"/><path d="M24 61 L34 61 M70 61 L80 61" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".45"/><path d="M10 50 L3 47 M110 50 L117 47" stroke="{D}" stroke-width="3" stroke-linecap="round"/><circle cx="15" cy="51" r="1.5" fill="{L}"/><circle cx="105" cy="51" r="1.5" fill="{L}"/>',
+  },
+  // Women's sunglasses: cat-eye frame with swept-up outer corners.
+  catglasses: {
+    body: 'M8 42 Q22 48 36 49 Q50 49 57 54 Q59 65 55 73 Q48 85 34 83 Q17 81 13 68 Q9 56 8 42 Z M112 42 Q98 48 84 49 Q70 49 63 54 Q61 65 65 73 Q72 85 86 83 Q103 81 107 68 Q111 56 112 42 Z',
+    detail: '<path d="M15 51 Q27 54 37 55 Q48 55 52 58 Q53 65 50 71 Q45 79 35 77 Q22 76 19 67 Q16 59 15 51 Z M105 51 Q93 54 83 55 Q72 55 68 58 Q67 65 70 71 Q75 79 85 77 Q98 76 101 67 Q104 59 105 51 Z" fill="{LENS}"/><path d="M57 57 Q60 53 63 57" fill="none" stroke="{D}" stroke-width="3" stroke-linecap="round"/><path d="M24 60 Q30 59 34 61 M88 60 Q93 59 97 61" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".45" fill="none"/><circle cx="12" cy="46" r="1.8" fill="{L}"/><circle cx="108" cy="46" r="1.8" fill="{L}"/><circle cx="16.5" cy="47.5" r="1.2" fill="{L}"/><circle cx="103.5" cy="47.5" r="1.2" fill="{L}"/>',
+  },
   scarf: {
     body: 'M36 28 Q60 40 84 28 L88 44 Q60 58 32 44 Z M62 48 L58 102 H74 L78 50 Z',
     detail: '<path d="M60 102 V110 M64 102 V110 M68 102 V110 M72 102 V110" stroke="{D}" stroke-width="1.6"/><path d="M36 34 Q60 46 84 34" fill="none" stroke="{D}" stroke-width="1.6" opacity=".4"/>',
@@ -199,9 +229,10 @@ const KEYWORDS = {
     ['sweater', ['kazak', 'triko', 'balıkçı', 'sweater', 'jumper', 'knit', 'suéter', 'sweter', 'كنزة']],
     ['sweatshirt', ['sweatshirt', 'sweat', 'sudadera', 'bluza']],
     ['polo', ['polo']],
-    ['shirt', ['gömlek', 'bluz', 'shirt', 'blouse', 'camisa', 'koszula', 'قميص']],
+    ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula', 'قميص']],
     ['longsleeve', ['uzun kollu', 'termal', 'long sleeve', 'long-sleeve', 'thermal', 'manga larga', 'longsleeve', 'golf']],
-    ['tank', ['atlet', 'askılı', 'tank top', 'tirantes']],
+    ['tank', ['atlet', 'askılı', 'tank top', 'camisole', 'strappy', 'tirantes']],
+    ['blouse', ['bluz', 'blouse', 'blusa', 'bluzka', 'بلوزة']],
     ['tee', ['tişört', 't-shirt', 'tshirt', 'tee', 'camiseta', 'koszulka', 'تيشيرت']],
   ],
   ustune: [
@@ -226,8 +257,9 @@ const KEYWORDS = {
     ['dress', ['elbise', 'dress', 'vestido', 'sukienka', 'فستان']],
     ['skirt', ['etek', 'skirt', 'falda', 'spódnica', 'تنورة']],
     ['shorts', ['şort', 'short', 'pantalón corto', 'szorty', 'شورت']],
+    ['leggings', ['tayt', 'legging', 'tights', 'mallas', 'leginsy', 'rajstopy']],
     ['jeans', ['kot', 'jean', 'denim', 'vaquero', 'dżinsy', 'جينز']],
-    ['trousers', ['pantolon', 'chino', 'trouser', 'pant', 'tayt', 'pantalón', 'spodnie', 'بنطال']],
+    ['trousers', ['pantolon', 'chino', 'trouser', 'pant', 'eşofman', 'jogger', 'pantalón', 'spodnie', 'بنطال']],
   ],
   ayak: [
     ['boot', ['bot', 'çizme', 'boot', 'bota', 'kozaki', 'buty zimowe', 'حذاء طويل']],
@@ -236,6 +268,7 @@ const KEYWORDS = {
     ['sneaker', ['spor ayakkabı', 'sneaker', 'trainer', 'zapatilla', 'tenis', 'adidasy', 'ayakkabı', 'shoe']],
   ],
   yanina: [
+    ['sunglasses', ['güneş gözlüğü', 'gözlük', 'sunglasses', 'shades', 'gafas de sol', 'okulary', 'نظارة']],
     ['umbrella', ['şemsiye', 'umbrella', 'paraguas', 'parasol', 'مظلة']],
     ['bag', ['çanta', 'bag', 'bolso', 'torba', 'حقيبة']],
     ['beanie', ['bere', 'beanie', 'gorro', 'czapka']],
@@ -256,6 +289,10 @@ export function garmentVariant(category, text = '', warmth = 3) {
     if (byPriority) { best = variant; break; }
     if (pos < bestPos) { best = variant; bestPos = pos; }
   }
+  // Tights worn under a dress or skirt: the dress/skirt is the look.
+  if (best === 'leggings' && /elbise|dress|vestido|sukienka|etek|skirt|falda|spódnica/.test(lower)) {
+    return /elbise|dress|vestido|sukienka/.test(lower) ? 'dress' : 'skirt';
+  }
   // Light-weather trousers read better as beige chinos than dark formal pants.
   if (best === 'trousers' && warmth <= 2) return 'chinos';
   if (best) return best;
@@ -271,12 +308,12 @@ export function garmentVariant(category, text = '', warmth = 3) {
 
 // Which drawings make sense for each wardrobe category (the editor's style picker).
 export const STYLE_OPTIONS = {
-  ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'polo', 'tank'],
+  ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'blouse', 'polo', 'tank'],
   ustune: ['cardigan', 'fleece', 'hoodie', 'sweatshirt', 'vest', 'shirt'],
   dis: ['jacket', 'puffer', 'coat', 'trench', 'windbreaker', 'bomber', 'blazer', 'vest'],
-  alt: ['trousers', 'chinos', 'jeans', 'shorts', 'skirt', 'dress'],
+  alt: ['trousers', 'chinos', 'jeans', 'leggings', 'shorts', 'minishorts', 'skirt', 'dress'],
   ayak: ['sneaker', 'boot', 'sandal', 'loafer'],
-  yanina: ['umbrella', 'bag', 'beanie', 'cap', 'scarf'],
+  yanina: ['umbrella', 'bag', 'beanie', 'cap', 'scarf', 'sunglasses', 'catglasses'],
 };
 export const PATTERN_TYPES = ['solid', 'stripes', 'checks', 'dots', 'floral', 'print'];
 export const DETAIL_KEYS = ['hood', 'zip', 'buttons', 'pocket', 'logo'];
@@ -288,6 +325,7 @@ const ZONES = {
   polo: { neck: 34, shoulder: 22, bottom: 101, chest: [70, 54], pocket: 'kangaroo' },
   tank: { neck: 38, shoulder: 18, bottom: 102, chest: [68, 56], pocket: 'kangaroo' },
   longsleeve: LONG, sweater: LONG, sweatshirt: LONG, hoodie: { ...LONG, hasHood: true }, shirt: { ...LONG, pocket: 'patch' },
+  blouse: { neck: 34, shoulder: 24, bottom: 104, chest: [70, 54], pocket: 'patch' },
   cardigan: { neck: 62, shoulder: 19, bottom: 104, chest: [72, 70], pocket: 'patch', open: true },
   fleece: { neck: 24, shoulder: 14, bottom: 104, chest: [72, 46], pocket: 'patch' },
   vest: { neck: 25, shoulder: 16, bottom: 104, chest: [72, 46], pocket: 'patch' },
@@ -304,11 +342,13 @@ const LABELS = {
   tr: { tee: 'Tişört', longsleeve: 'Uzun kollu', sweater: 'Kazak', sweatshirt: 'Sweatshirt', hoodie: 'Kapüşonlu', shirt: 'Gömlek', polo: 'Polo', tank: 'Atlet',
     cardigan: 'Hırka', fleece: 'Polar', vest: 'Yelek', jacket: 'Ceket', puffer: 'Şişme mont', coat: 'Kaban', trench: 'Trençkot', windbreaker: 'Rüzgarlık', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Pantolon', chinos: 'Chino', jeans: 'Kot', shorts: 'Şort', skirt: 'Etek', dress: 'Elbise',
-    sneaker: 'Spor ayakkabı', boot: 'Bot', sandal: 'Sandalet', loafer: 'Makosen', umbrella: 'Şemsiye', bag: 'Çanta', beanie: 'Bere', cap: 'Şapka', scarf: 'Atkı' },
+    sneaker: 'Spor ayakkabı', boot: 'Bot', sandal: 'Sandalet', loafer: 'Makosen', umbrella: 'Şemsiye', bag: 'Çanta', beanie: 'Bere', cap: 'Şapka', scarf: 'Atkı',
+    blouse: 'Bluz', leggings: 'Tayt', minishorts: 'Kadın şortu', sunglasses: 'Güneş gözlüğü', catglasses: 'Kedi göz gözlük' },
   en: { tee: 'T-shirt', longsleeve: 'Long sleeve', sweater: 'Sweater', sweatshirt: 'Sweatshirt', hoodie: 'Hoodie', shirt: 'Shirt', polo: 'Polo', tank: 'Tank top',
     cardigan: 'Cardigan', fleece: 'Fleece', vest: 'Vest', jacket: 'Jacket', puffer: 'Puffer', coat: 'Coat', trench: 'Trench coat', windbreaker: 'Windbreaker', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Trousers', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Skirt', dress: 'Dress',
-    sneaker: 'Sneakers', boot: 'Boots', sandal: 'Sandals', loafer: 'Loafers', umbrella: 'Umbrella', bag: 'Bag', beanie: 'Beanie', cap: 'Cap', scarf: 'Scarf' },
+    sneaker: 'Sneakers', boot: 'Boots', sandal: 'Sandals', loafer: 'Loafers', umbrella: 'Umbrella', bag: 'Bag', beanie: 'Beanie', cap: 'Cap', scarf: 'Scarf',
+    blouse: 'Blouse', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses' },
 };
 export function styleLabel(name, lang) {
   return (LABELS[lang] || (lang === 'tr' ? LABELS.tr : LABELS.en))[name] || name;
@@ -369,14 +409,20 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
   if (typeof opts === 'boolean') opts = { patternType: opts ? 'stripes' : 'solid' };
   const name = GARMENTS[kind] || kind === 'chinos' ? kind : (CATEGORY_DEFAULT[kind] || 'tee');
   const g = GARMENTS[name === 'chinos' ? 'trousers' : name];
-  const fill = color || DEFAULT_GARMENT_COLOR[name] || '#cccccc';
+  const glasses = name === 'sunglasses' || name === 'catglasses';
+  const lightLens = glasses && opts.lens === 'light';
+  // Summer glasses: light frame with a warm, lighter tint. Otherwise dark frame and smoke lens.
+  const fill = color || (lightLens ? LIGHT_FRAME[name] : null) || DEFAULT_GARMENT_COLOR[name] || '#cccccc';
   const c2 = opts.color2 || null;
   const dark = shade(fill, isLight(fill) ? -0.32 : -0.38);
   const light = shade(fill, 0.55);
   const id = `gp${++uid}`;
   const type = opts.patternType || 'solid';
-  const defs = patternDefs(id, type, fill, c2);
-  const detail = g.detail.replaceAll('{D}', dark).replaceAll('{L}', light);
+  const lensDef = glasses
+    ? `<linearGradient id="${id}l" x1="0" y1="0" x2="0" y2="1">${(lightLens ? ['#9a5b2e', '#e9b778'] : ['#1c1f26', '#5a6474']).map((c, i) => `<stop offset="${i}" stop-color="${c}"/>`).join('')}</linearGradient>`
+    : '';
+  const defs = patternDefs(id, type, fill, c2) + lensDef;
+  const detail = g.detail.replaceAll('{D}', dark).replaceAll('{L}', light).replaceAll('{LENS}', `url(#${id}l)`);
   const over = detailOverlays(name, opts.details || {}, fill, c2, dark, light);
   const zone = ZONES[name];
   const print = type === 'print' && zone
@@ -389,7 +435,7 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
       ${g.back ? `<path d="${g.back}" fill="${shade(fill, -0.2)}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>` : ''}
       ${over.back}
       <path d="${g.body}" fill="${fill}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>
-      ${defs ? `<path d="${g.body}" fill="url(#${id})"/>` : ''}
+      ${patternDefs(id, type, fill, c2) ? `<path d="${g.body}" fill="url(#${id})"/>` : ''}
       ${detail}
       ${print}
       ${over.front}
@@ -404,7 +450,7 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
 // waist; shoes stand at the end of the legs, both pointing the same way.
 
 // Where the waistband starts inside each bottom drawing.
-const WAIST_TOP = { trousers: 14, chinos: 14, jeans: 14, shorts: 28, skirt: 24 };
+const WAIST_TOP = { trousers: 14, chinos: 14, jeans: 14, leggings: 14, shorts: 26, minishorts: 24, skirt: 24 };
 // Bottom of the sole and horizontal middle of the shoe, per shoe drawing.
 const SHOE = {
   sneaker: { sole: 99, mid: 61 }, boot: { sole: 103, mid: 64 },
@@ -443,7 +489,7 @@ export function outfitFigure(parts) {
 
   // Without trousers there are no legs to draw, so bring the feet up a little
   // instead of leaving shoes floating far below shorts, skirts and dresses.
-  const longBottom = parts.bottom && !['shorts', 'skirt', 'dress'].includes(parts.bottom.art);
+  const longBottom = parts.bottom && !['shorts', 'minishorts', 'skirt', 'dress'].includes(parts.bottom.art);
   const footY = longBottom ? feetY : feetY - 20 * s;
 
   // 1. Shoes, under the trouser hems. Both face right; the far one sits a little higher.
@@ -484,6 +530,7 @@ export function outfitFigure(parts) {
     const a = parts.acc.art;
     if (a === 'scarf') layers.push(placed(a, parts.acc, w / 2 - 60 * 0.75 * s, y0 - 4 * s, 0.75 * s));
     else if (a === 'beanie' || a === 'cap') layers.push(placed(a, parts.acc, w - 62, -8, 0.55));
+    else if (a === 'sunglasses' || a === 'catglasses') layers.push(placed(a, parts.acc, w - 64, -14, 0.55));
     else layers.push(`<g transform="rotate(10 ${w - 30} ${waistY})">${placed(a, parts.acc, w - 66, waistY - 52, 0.6)}</g>`);
   }
 

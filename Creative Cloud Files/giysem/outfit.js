@@ -334,6 +334,13 @@ const UPPER = ['ust', 'ustune', 'dis'];
 const COLD_BANDS = ['dondurucu', 'soguk'];
 const WARM_BANDS = ['ilik', 'sicak', 'cok_sicak'];
 
+// Suggested pieces are drawn in a women's or men's cut when a gender is chosen.
+const GENDER_ART = {
+  kadin: { shirt: 'blouse', shorts: 'minishorts', sunglasses: 'catglasses' },
+  erkek: { blouse: 'shirt', minishorts: 'shorts', catglasses: 'sunglasses', leggings: 'trousers' },
+};
+const GLASSES = ['sunglasses', 'catglasses'];
+
 function hashStr(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
@@ -407,7 +414,9 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   if (freezing && rainy) { rows.yanina = { item: X.cold_rain_acc[0], reason: () => X.cold_rain_acc[1] }; accKinds = ['umbrella']; }
   else if (rainy) accKinds = ['umbrella'];
   else if (freezing) { rows.yanina = { item: X.cold_acc[0], reason: () => X.cold_acc[1] }; fixed.add('yanina'); accKinds = ['beanie', 'scarf']; }
-  else if (sunny) { rows.yanina = { item: X.sun_acc[0], reason: () => X.sun_acc[1] }; fixed.add('yanina'); accKinds = ['cap']; }
+  else if (sunny) { rows.yanina = { item: X.sun_acc[0], reason: () => X.sun_acc[1] }; fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses', 'cap']; }
+  // A clear but cool day still has low, glaring sun: sunglasses (dark frame).
+  else if (kind === 'clear' && (bandKey === 'serin' || bandKey === 'ilik') && !rows.yanina) { rows.yanina = { item: X.cool_sun_acc[0], reason: () => X.cool_sun_acc[1] }; fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses']; }
 
   const ctx = { feelsLike, wind, rainMax };
   const needsRain = rainy || snowy;
@@ -478,7 +487,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
       options = slotOptionIds(wardrobeItems, key, pickOpts);
       reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems);
       // Bare legs in the cold: remind about tights under the user's own skirt/shorts/dress.
-      if (key === 'alt' && ['skirt', 'shorts', 'dress'].includes(itemLook(match).art)) {
+      if (key === 'alt' && ['skirt', 'shorts', 'minishorts', 'dress'].includes(itemLook(match).art)) {
         if (COLD_BANDS.includes(bandKey)) reason += X.tights_cold;
         else if (bandKey === 'serin') reason += X.tights_cool;
       }
@@ -488,7 +497,10 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     if (notes[key] && !(key === 'alt' && /termal|thermal|tayt|tights|leggings/i.test(item + reason)) && !(key === 'ayak' && /yün çorap|wool socks/i.test(item + reason))) reason = (reason && !/[.!?]$/.test(reason) ? reason + '.' : reason) + notes[key];
 
     // Wardrobe pieces draw from their own stored look; suggestions guess from the text.
-    const look = match ? itemLook(match) : { art: garmentVariant(key, item, BAND_WARMTH[bandKey]), color: null, color2: null, patternType: 'solid', details: {} };
+    let look = match ? itemLook(match) : { art: garmentVariant(key, item, BAND_WARMTH[bandKey]), color: null, color2: null, patternType: 'solid', details: {} };
+    if (!match && GENDER_ART[genderKey] && GENDER_ART[genderKey][look.art]) look.art = GENDER_ART[genderKey][look.art];
+    // Glasses follow the weather: light frame and warm tint in the heat, dark otherwise.
+    if (GLASSES.includes(look.art)) look = { ...look, lens: WARM_BANDS.includes(bandKey) && bandKey !== 'ilik' ? 'light' : 'dark' };
     if (match) color = look.color;
     const art = look.art;
     output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
