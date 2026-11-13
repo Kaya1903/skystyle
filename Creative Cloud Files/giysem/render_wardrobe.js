@@ -3,6 +3,7 @@ import { CATEGORIES } from './wardrobe.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { analyzePhoto } from './ai.js';
+import { COLORS, COLOR_KEYS, colorName, isValidColor, PATTERNS } from './colors.js';
 import {
   state, openEditor, closeEditor, saveWardrobeItem, deleteWardrobeItem,
   setWardrobeFilter, setWardrobeSearch, newItemId, resizePhoto,
@@ -68,7 +69,7 @@ function wardrobeCard(item, i, lang) {
       </div>
       <div class="wardrobe-info">
         <div class="wardrobe-name">${item.name}</div>
-        <div class="wardrobe-cat">${catLabel(item.category, lang)}</div>
+        <div class="wardrobe-cat">${isValidColor(item.color) ? `<span class="color-dot ${item.pattern === 'desenli' ? 'patterned' : ''}" style="background:${COLORS[item.color].hex}" title="${colorName(item.color, lang)}"></span>` : ''}${catLabel(item.category, lang)}</div>
       </div>
     </button>
   `;
@@ -124,6 +125,8 @@ function ensureDraft(state) {
       warmth: 3,
       rainOk: false,
       windproof: false,
+      color: null,
+      pattern: 'duz',
       photo: null,
       __new: true,
     };
@@ -191,6 +194,19 @@ export function renderEditorSheet(state) {
         </div>
 
         <div class="field-group">
+          <label class="field-label">${t(lang, 'field_color')}${isValidColor(item.color) ? ` · <span class="color-current">${colorName(item.color, lang)}</span>` : ''}</label>
+          <div class="swatch-grid">
+            ${COLOR_KEYS.map(key => `
+              <button type="button" class="swatch ${item.color === key ? 'active' : ''}" data-color="${key}" style="background:${COLORS[key].hex}" aria-label="${colorName(key, lang)}" title="${colorName(key, lang)}"></button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="toggle-row">
+            <span class="toggle-label">${t(lang, 'toggle_pattern')}</span>
+            <button type="button" class="switch ${item.pattern === 'desenli' ? 'on' : ''}" id="toggle-pattern"></button>
+          </div>
           <div class="toggle-row">
             <span class="toggle-label">${t(lang, 'toggle_rain')}</span>
             <button type="button" class="switch switch-rain ${item.rainOk ? 'on' : ''}" id="toggle-rain"></button>
@@ -247,6 +263,18 @@ export function attachEditorHandlers(root) {
     });
   });
 
+  root.querySelectorAll('[data-color]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      draftItem.color = draftItem.color === btn.dataset.color ? null : btn.dataset.color;
+      rerenderEditor(root);
+    });
+  });
+  const patternToggle = root.querySelector('#toggle-pattern');
+  if (patternToggle) patternToggle.addEventListener('click', () => {
+    draftItem.pattern = draftItem.pattern === 'desenli' ? 'duz' : 'desenli';
+    rerenderEditor(root);
+  });
+
   const rainToggle = root.querySelector('#toggle-rain');
   if (rainToggle) rainToggle.addEventListener('click', () => {
     draftItem.rainOk = !draftItem.rainOk;
@@ -282,6 +310,8 @@ export function attachEditorHandlers(root) {
         }
         if (typeof suggestion.rainOk === 'boolean') draftItem.rainOk = suggestion.rainOk;
         if (typeof suggestion.windproof === 'boolean') draftItem.windproof = suggestion.windproof;
+        if (isValidColor(suggestion.color)) draftItem.color = suggestion.color;
+        if (PATTERNS.includes(suggestion.pattern)) draftItem.pattern = suggestion.pattern;
         if (suggestion.name && !draftItem.name.trim()) draftItem.name = suggestion.name;
         draftAiState = 'done';
       } catch (err) {

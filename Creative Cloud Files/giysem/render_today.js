@@ -75,7 +75,7 @@ function outfitCard(outfit, kombinLabel, s) {
               <span>${row.label}</span>
               ${row.fromWardrobe ? `<span class="wardrobe-tag">${t(s.lang, 'gardirobundan')}</span>` : ''}
             </div>
-            <div class="outfit-item">${row.item}</div>
+            <div class="outfit-item">${row.color ? `<span class="color-dot ${row.patterned ? 'patterned' : ''}" style="background:${row.color}"></span>` : ''}${row.item}</div>
             <div class="outfit-reason">${row.reason}</div>
           </div>
         </div>

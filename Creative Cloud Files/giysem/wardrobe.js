@@ -1,3 +1,5 @@
+import { outfitColorScore } from './colors.js';
+
 const KEY = 'giysem_wardrobe_v1';
 
 export const CATEGORIES = ['ust', 'ustune', 'dis', 'alt', 'ayak', 'yanina'];
@@ -74,35 +76,63 @@ export const BAND_WARMTH = {
   cok_sicak: 1,
 };
 
-// Deterministic pick among equally-scored items, seeded by their ids. This avoids
-// always defaulting to the first-added item when several pieces score identically
-// (e.g. two plain t-shirts with the same warmth) while staying stable across re-renders.
-function pickAmongTies(list) {
-  if (list.length === 1) return list[0];
-  const key = list.map(x => x.item.id).sort().join('|');
+// Stable per-item hash so equally-scored pieces don't always resolve to the
+// first-added one, while staying stable across re-renders.
+function idHash(id) {
   let hash = 0;
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  return list[hash % list.length];
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return hash;
 }
 
-export function findWardrobeMatch(items, { category, bandKey, needsRain, needsWind }) {
+const MAX_CANDIDATES_PER_SLOT = 5;
+const COLOR_WEIGHT = 0.7;
+
+// Viable wardrobe pieces for one slot, best weather fit first.
+function slotCandidates(items, { category, bandKey, needsRain, needsWind }) {
   const desired = BAND_WARMTH[bandKey];
-  const candidates = items.filter(i => i.category === category);
-  if (!candidates.length) return null;
-  const scored = candidates.map(i => {
-    let score = 3 - Math.abs((i.warmth || 3) - desired);
-    if (needsRain && category !== 'yanina') score += i.rainOk ? 2 : -3;
-    if (needsWind && category === 'dis') score += i.windproof ? 2 : -3;
-    if (needsRain && i.rainOk) score += 0.5;
-    return { item: i, score };
-  });
-  const maxScore = Math.max(...scored.map(s => s.score));
-  const tied = scored.filter(s => s.score === maxScore);
-  const best = pickAmongTies(tied);
-  if (!best) return null;
-  // require a close warmth match to avoid nonsensical picks (e.g. a sweatshirt for a heatwave)
-  if (Math.abs((best.item.warmth || 3) - desired) > 1) return null;
-  if (needsRain && category === 'ayak' && !best.item.rainOk) return null;
-  if (needsWind && category === 'dis' && !best.item.windproof) return null;
-  return best.item;
+  return items
+    .filter(i => i.category === category)
+    // require a close warmth match to avoid nonsensical picks (e.g. a sweatshirt for a heatwave)
+    .filter(i => Math.abs((i.warmth || 3) - desired) <= 1)
+    .filter(i => !(needsRain && category === 'ayak' && !i.rainOk))
+    .filter(i => !(needsWind && category === 'dis' && !i.windproof))
+    .map(i => {
+      let score = 3 - Math.abs((i.warmth || 3) - desired);
+      if (needsRain && category !== 'yanina') score += i.rainOk ? 2 : -3;
+      if (needsWind && category === 'dis') score += i.windproof ? 2 : -3;
+      if (needsRain && i.rainOk) score += 0.5;
+      return { item: i, score };
+    })
+    .sort((a, b) => b.score - a.score || idHash(a.item.id) - idHash(b.item.id))
+    .slice(0, MAX_CANDIDATES_PER_SLOT);
+}
+
+// Picks one wardrobe piece per slot (where a viable one exists) so that the
+// whole outfit fits the weather AND its colors/patterns work together.
+// Returns { [category]: item }.
+export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind }) {
+  const slots = categories
+    .map(category => ({ category, cands: slotCandidates(items, { category, bandKey, needsRain, needsWind }) }))
+    .filter(s => s.cands.length);
+  if (!slots.length) return {};
+
+  let best = null;
+  let bestScore = -Infinity;
+  const chosen = [];
+  (function search(idx, weatherScore) {
+    if (idx === slots.length) {
+      const total = weatherScore + COLOR_WEIGHT * outfitColorScore(chosen.map(c => c.item));
+      if (total > bestScore) { bestScore = total; best = [...chosen]; }
+      return;
+    }
+    for (const cand of slots[idx].cands) {
+      chosen.push(cand);
+      search(idx + 1, weatherScore + cand.score);
+      chosen.pop();
+    }
+  })(0, 0);
+
+  const result = {};
+  slots.forEach((s, i) => { result[s.category] = best[i].item; });
+  return result;
 }

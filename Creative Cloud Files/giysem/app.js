@@ -1,3 +1,4 @@
+import { colorName, isValidColor } from './colors.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto } from './wardrobe.js';
 import { generateOutfit } from './outfit.js';
@@ -446,6 +447,12 @@ function computeWeekOutfits() {
   });
 }
 
+function summarizeWardrobe() {
+  return state.wardrobe.slice(0, 12)
+    .map(i => isValidColor(i.color) ? `${i.name} (${colorName(i.color, 'en').toLowerCase()})` : i.name)
+    .join(', ');
+}
+
 function loadTipCache() {
   try {
     return JSON.parse(localStorage.getItem(SMART_TIP_CACHE_KEY) || '{}');
@@ -481,7 +488,7 @@ function ensureSmartTip(dayView, outfit) {
 
   state.smartTip = null;
   state.smartTipLoading = true;
-  const wardrobeSummary = state.wardrobe.slice(0, 12).map(i => i.name).join(', ');
+  const wardrobeSummary = summarizeWardrobe();
   getSmartTip({
     lang: state.lang,
     city: cityName,
@@ -531,7 +538,7 @@ function ensureWeekTips(weekOutfits) {
   const cache = loadWeekTipCache();
   const cityName = state.city ? state.city.name : 'unknown';
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
-  const wardrobeSummary = state.wardrobe.slice(0, 12).map(i => i.name).join(', ');
+  const wardrobeSummary = summarizeWardrobe();
 
   weekOutfits.forEach(({ day, outfit, tipKey }) => {
     if (state.weekTipStatus[tipKey]) return;

@@ -1,4 +1,5 @@
-import { findWardrobeMatch } from './wardrobe.js';
+import { pickWardrobeOutfit } from './wardrobe.js';
+import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
 
 const BAND_KEYS = ['dondurucu', 'soguk', 'serin', 'ilik', 'sicak', 'cok_sicak'];
@@ -333,6 +334,11 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardr
   if (rainMax >= 50) applyRain(rows, bandKey, rainMax, language);
 
   const ctx = { feelsLike, wind, rainMax };
+  const needsRain = rainMax >= 50;
+  const needsWind = wind >= 20;
+  const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k]), { bandKey, needsRain, needsWind });
+  const pickedItems = Object.values(picks);
+
   const output = [];
   for (const key of SLOT_ORDER) {
     const r = rows[key];
@@ -340,34 +346,48 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang }, wardr
     let item = r.item;
     let reason = typeof r.reason === 'function' ? r.reason(ctx) : r.reason;
     let fromWardrobe = false;
+    let color = null;
+    let patterned = false;
 
-    const match = findWardrobeMatch(wardrobeItems, {
-      category: key,
-      bandKey,
-      needsRain: rainMax >= 50,
-      needsWind: wind >= 20,
-    });
+    const match = picks[key];
     if (match) {
       item = match.name;
       fromWardrobe = true;
-      reason = wardrobeReason(match, ctx, rainMax >= 50, wind >= 20, key, language);
+      color = isValidColor(match.color) ? COLORS[match.color].hex : null;
+      patterned = match.pattern === 'desenli';
+      reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems);
     }
 
-    output.push({ slotKey: key, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe });
+    output.push({ slotKey: key, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned });
   }
 
   return { bandKey, bandLabel: bandLabel(bandKey, language), rows: output };
 }
 
-function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang) {
+// For an accent-colored piece, the other picked piece it goes best with (if any).
+function colorPartner(item, others) {
+  if (!isValidColor(item.color) || COLORS[item.color].neutral) return null;
+  let best = null, bestScore = 0.8;
+  for (const o of others) {
+    if (o === item || !isValidColor(o.color)) continue;
+    const sc = pairScore(item.color, o.color);
+    if (sc >= bestScore) { best = o; bestScore = sc; }
+  }
+  return best;
+}
+
+function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked = []) {
+  const partner = colorPartner(item, picked);
   if (lang === 'en') {
     const bits = [`right warmth for ${ctx.feelsLike}° feels-like`];
     if (needsRain && slotKey === 'ayak' && item.rainOk) bits.push('handles rain');
     if (needsWind && slotKey === 'dis' && item.windproof) bits.push('blocks wind');
+    if (partner) bits.push(`${colorName(item.color, 'en').toLowerCase()} pairs well with your ${partner.name}`);
     return bits.join(', ') + '.';
   }
   const bits = [`Hissedilen ${ctx.feelsLike}° için sıcaklığı uygun`];
   if (needsRain && slotKey === 'ayak' && item.rainOk) bits.push('yağmura dayanıklı');
   if (needsWind && slotKey === 'dis' && item.windproof) bits.push('rüzgar geçirmiyor');
+  if (partner) bits.push(`${colorName(item.color, 'tr').toLocaleLowerCase('tr')} rengi ${partner.name} ile uyumlu`);
   return bits.join(', ') + '.';
 }

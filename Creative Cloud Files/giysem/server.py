@@ -36,7 +36,12 @@ ANALYZE_PROMPT = (
     '(ust=top, ustune=mid-layer, dis=outerwear, alt=bottom, ayak=shoes, yanina=accessory), '
     '"warmth": integer 1-5 (1=very light/summer fabric, 5=thick winter piece), '
     '"rainOk": boolean (true if this item is water-resistant or suede/fabric-safe for light rain), '
-    '"windproof": boolean (true only if this is a windproof outer layer)}'
+    '"windproof": boolean (true only if this is a windproof outer layer), '
+    '"color": the dominant color, one of "siyah" | "beyaz" | "gri" | "lacivert" | "bej" | "kahve" | '
+    '"denim" | "haki" | "yesil" | "mavi" | "kirmizi" | "bordo" | "pembe" | "mor" | "sari" | "turuncu" '
+    '(black, white, grey, navy, beige, brown, denim-blue, khaki/olive, green, blue, red, burgundy, '
+    'pink, purple, yellow, orange — pick the closest), '
+    '"pattern": "duz" | "desenli" (duz=solid, desenli=striped/checked/printed/any visible pattern)}'
 )
 
 
@@ -165,7 +170,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
             payload = {
                 'model': MODEL,
-                'max_tokens': 300,
+                'max_tokens': 400,
                 'messages': [{
                     'role': 'user',
                     'content': [
