@@ -659,6 +659,35 @@ p { margin: 0; }
 .mine-tips ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; }
 .mine-tips li { font-size: 13px; line-height: 1.45; color: var(--ink); }
 .mine-tips-text { font-size: 13px; color: var(--ink-soft); line-height: 1.45; }
+/* Outfit feedback: "I'm wearing this", "how was it?", "last time you were cold" */
+.wear-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 10px 12px; }
+.mine-tips + .wear-row { border-top: 1px solid var(--card-border); }
+.wear-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  border: none; border-radius: 999px; padding: 12px 18px; cursor: pointer;
+  background: var(--sunset); color: #3b1d10; font-family: var(--display); font-weight: 800; font-size: 15px;
+  box-shadow: 0 10px 22px -12px rgba(255, 120, 60, 0.8); transition: transform 0.25s var(--spring);
+}
+.wear-btn svg { width: 18px; height: 18px; }
+.wear-btn:active { transform: scale(0.96); }
+.wear-done { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.4; }
+.wear-done svg { width: 18px; height: 18px; flex-shrink: 0; color: #2f9e6e; }
+.wear-undo { border: none; background: none; color: var(--ink-soft); font-size: 13px; font-weight: 700; text-decoration: underline; cursor: pointer; flex-shrink: 0; }
+.memory-note { display: flex; gap: 10px; align-items: flex-start; margin: 8px 6px 4px; padding: 12px 14px; border-radius: 16px;
+  background: linear-gradient(120deg, rgba(255, 209, 102, 0.25), rgba(255, 111, 125, 0.18)); color: var(--ink); font-size: 13.5px; line-height: 1.45; font-weight: 600; }
+.memory-note svg { width: 18px; height: 18px; flex-shrink: 0; color: #e8742f; margin-top: 1px; }
+.fb-card { border-radius: var(--radius-lg); padding: 18px; margin-bottom: 16px; }
+.fb-q { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.35; color: var(--ink); margin-bottom: 14px; }
+.fb-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fb-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 16px; border: 1.5px solid var(--card-border);
+  background: var(--card); color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.25s var(--spring), background 0.2s ease; }
+.fb-opt:hover { background: #fff; }
+.fb-opt:active { transform: scale(0.95); }
+.fb-emoji { font-size: 24px; line-height: 1; }
+.fb-skip { display: block; margin: 12px auto 0; border: none; background: none; color: var(--ink-soft); font-size: 12.5px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.learn-block { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--card-border); }
+.learn-text { margin-bottom: 8px; }
+.learn-reset { border: none; background: none; padding: 0; color: var(--ink-soft); font-size: 12.5px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .reset-chip:active { transform: scale(0.94); }
 .swap-btn {
   position: absolute; top: 10px; right: 10px; z-index: 2;

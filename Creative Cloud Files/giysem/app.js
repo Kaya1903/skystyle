@@ -7,6 +7,7 @@ import { generateOutfit } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile, comfortOffset } from './profile.js';
 import { getSmartTip } from './ai.js';
+import { loadFeedback, saveFeedback, markWorn, unmarkWorn, answerDay, clearLearning, pendingQuestion, learnedOffset, findMemory } from './feedback.js';
 import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
 import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
 import { renderWeekScreen, attachWeekHandlers } from './render_week.js';
@@ -32,6 +33,7 @@ export const state = {
   // Pieces saved before the "who is it for" field belong to the profile's gender
   // (saved on the next wardrobe write).
   wardrobe: loadWardrobe().map(i => (i.gender ? i : { ...i, gender: savedProfile && ['kadin', 'erkek'].includes(savedProfile.gender) ? savedProfile.gender : 'unisex' })),
+  feedback: loadFeedback(), // worn outfits and how they felt (feedback.js)
   wardrobeOnly: (() => { try { return localStorage.getItem(WARDROBE_ONLY_KEY) === '1'; } catch { return false; } })(),
   wardrobeFilter: 'all',
   wardrobeSearch: '',
@@ -527,14 +529,66 @@ export function resetProfile() {
 function computeOutfitFor(dayOffset) {
   if (!state.forecastRaw) return null;
   const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
+  const today = dayOffset === 0 ? dayView.date : buildDayView(state.forecastRaw, 0, state.lang).date;
+  // What we learned from this person's answers on days like this one.
+  const learned = learnedOffset(state.feedback, dayView.hero.feelsLike, dayView.hero.wind, dayView.date);
+  const memory = findMemory(state.feedback, dayView.hero.feelsLike, dayView.date);
   const outfit = generateOutfit(
-    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile),
-      vibe: state.profile ? state.profile.styleVibe : 'casual', seed: dayView.date, kind: dayView.hero.kind, wardrobeOnly: state.wardrobeOnly },
+    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile) + learned,
+      vibe: state.profile ? state.profile.styleVibe : 'casual', seed: dayView.date, kind: dayView.hero.kind, wardrobeOnly: state.wardrobeOnly, memory: memory ? memory.answer : null },
     state.wardrobe,
     dayOffset === 0 ? state.outfitLocks : {}
   );
   const tip = eveningTip(dayView, state.lang);
-  return { dayView, outfit, tip };
+  const worn = dayOffset === 0 ? state.feedback.days[dayView.date] || null : null;
+  const pending = dayOffset === 0 ? pendingQuestion(state.feedback, today) : null;
+  return { dayView, outfit, tip, today, memory, worn, pending };
+}
+
+// ---------------- Outfit feedback (feedback.js) ----------------
+
+// "I'm wearing this today": remember today's weather and outfit, ask later how it went.
+export function wearToday() {
+  const data = computeOutfitFor(0);
+  if (!data) return;
+  const { dayView, outfit } = data;
+  state.feedback = markWorn(state.feedback, {
+    date: dayView.date,
+    city: state.city ? state.city.name : '',
+    feelsLike: dayView.hero.feelsLike,
+    wind: dayView.hero.wind,
+    rain: dayView.maxRainToday,
+    rows: outfit.rows.map(r => ({ slot: r.slotKey, item: r.item, art: r.art, fromWardrobe: r.fromWardrobe })),
+  });
+  saveFeedback(state.feedback);
+  state.quietRender = true;
+  render();
+}
+
+export function unwearToday() {
+  const data = computeOutfitFor(0);
+  if (!data) return;
+  state.feedback = unmarkWorn(state.feedback, data.dayView.date);
+  saveFeedback(state.feedback);
+  state.quietRender = true;
+  render();
+}
+
+// answer: 'cold' | 'ok' | 'warm' | 'skip'
+export function answerFeedback(date, answer) {
+  state.feedback = answerDay(state.feedback, date, answer);
+  saveFeedback(state.feedback);
+  state.quietRender = true;
+  render();
+  if (answer !== 'skip') showToast(t(state.lang, 'fb_thanks_' + answer));
+}
+
+export function resetLearning() {
+  state.feedback = clearLearning();
+  saveFeedback(state.feedback);
+  state.quietRender = true;
+  render();
+  showToast(t(state.lang, 'fb_reset_done'));
 }
 
 function computeWeekView() {
@@ -551,8 +605,10 @@ function computeWeekOutfits() {
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
   return week.map(day => {
     const outfit = generateOutfit(
-      { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile),
-        vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeOnly },
+      { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang,
+        comfort: comfortOffset(state.profile) + learnedOffset(state.feedback, day.feelsLike, day.wind, day.date),
+        vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeOnly,
+        memory: (findMemory(state.feedback, day.feelsLike, day.date) || {}).answer || null },
       state.wardrobe
     );
     const tipKey = [day.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang].join('|');

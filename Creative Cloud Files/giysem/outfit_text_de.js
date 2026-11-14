@@ -471,4 +471,8 @@ export default {
   "not waterproof": "nicht wasserdicht",
   "blocks wind": "hält den Wind ab",
   "{c} pairs well with your {n}": "{c} passt gut zu: {n}",
+  "A thin cardigan or fleece": "Eine dünne Strickjacke oder Fleece",
+  "You were cold in weather like this, so I added one more layer": "Bei so einem Wetter war dir kalt, deshalb kommt eine Schicht dazu",
+  " Add a thin thermal layer underneath.": " Zieh eine dünne Thermoschicht drunter.",
+  " Go for thinner fabrics today.": " Nimm heute dünnere Stoffe.",
 };

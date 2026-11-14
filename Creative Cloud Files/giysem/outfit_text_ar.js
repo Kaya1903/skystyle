@@ -472,4 +472,8 @@ export default {
   "not waterproof": "غير مقاوم للماء",
   "blocks wind": "يصد الريح",
   "{c} pairs well with your {n}": "اللون {c} يتناسق مع {n}",
+  "A thin cardigan or fleece": "كارديغان خفيف أو فليس",
+  "You were cold in weather like this, so I added one more layer": "شعرت بالبرد في طقس كهذا، لذلك أضفت طبقة أخرى",
+  " Add a thin thermal layer underneath.": " البس تحته طبقة حرارية خفيفة.",
+  " Go for thinner fabrics today.": " اختر اليوم أقمشة أخف.",
 };

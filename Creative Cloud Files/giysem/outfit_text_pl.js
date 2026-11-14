@@ -471,4 +471,8 @@ export default {
   "not waterproof": "nie jest wodoodporne",
   "blocks wind": "chroni przed wiatrem",
   "{c} pairs well with your {n}": "kolor {c} dobrze pasuje do: {n}",
+  "A thin cardigan or fleece": "Cienki sweter rozpinany albo polar",
+  "You were cold in weather like this, so I added one more layer": "Przy takiej pogodzie było ci zimno, więc dodaję jeszcze jedną warstwę",
+  " Add a thin thermal layer underneath.": " Załóż pod spód cienką bieliznę termiczną.",
+  " Go for thinner fabrics today.": " Wybierz dziś cieńsze materiały.",
 };

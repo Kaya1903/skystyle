@@ -1,7 +1,8 @@
 import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit } from './app.js';
+import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback } from './app.js';
+import { dayLabel } from './feedback.js';
 import { renderLandmark } from './landmarks.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows } from './visuals.js';
 
@@ -117,7 +118,7 @@ function boardCard(outfit, s) {
     </article>`;
 }
 
-function outfitSection(outfit, kombinLabel, s) {
+function outfitSection(outfit, kombinLabel, s, fb = {}) {
   return `
     <div class="section-head fade-slide" style="animation-delay:280ms">
       <h2 class="section-big">${kombinLabel}</h2>
@@ -130,6 +131,7 @@ function outfitSection(outfit, kombinLabel, s) {
     <div class="outfit-layout">
       <div class="board-col">${boardCard(outfit, s)}</div>
       <div class="glass pieces-card rise-in" style="animation-delay:340ms">
+        ${memoryNote(fb, s)}
         ${outfit.rows.map((row, i) => `
           <article class="piece-row ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''}">
             <div class="piece-art" style="--float-delay:${i * -0.8}s">
@@ -150,9 +152,43 @@ function outfitSection(outfit, kombinLabel, s) {
           </article>
         `).join('')}
         ${tipsList(outfit, s)}
+        ${wearRow(fb, s)}
       </div>
     </div>
   `;
+}
+
+// "Last Tuesday felt like today and you were cold": why today's outfit is warmer/lighter.
+function memoryNote(fb, s) {
+  const m = fb.memory;
+  if (!m) return '';
+  const day = dayLabel(m.date, fb.date, s.lang, t);
+  return `<div class="memory-note">${SPARKLE}<span>${t(s.lang, 'fb_memory_' + m.answer, day, m.feelsLike)}</span></div>`;
+}
+
+// "I'm wearing this today" (only for today's outfit).
+function wearRow(fb, s) {
+  if (!fb.isToday) return '';
+  if (fb.worn) {
+    return `<div class="wear-row is-worn"><span class="wear-done">${icons.check || '✓'}<span>${t(s.lang, 'fb_wearing')}</span></span>
+      <button type="button" class="wear-undo" data-action="unwear">${t(s.lang, 'fb_undo')}</button></div>`;
+  }
+  return `<div class="wear-row"><button type="button" class="wear-btn" data-action="wear">${icons.hanger}<span>${t(s.lang, 'fb_wear')}</span></button></div>`;
+}
+
+// "How was it?" for a day the user wore our outfit.
+function feedbackCard(pending, today, s) {
+  if (!pending) return '';
+  const day = dayLabel(pending.date, today, s.lang, t);
+  const opts = [['cold', '🥶'], ['ok', '👌'], ['warm', '🥵']];
+  return `
+    <section class="glass fb-card rise-in" style="animation-delay:200ms" aria-live="polite">
+      <div class="fb-q">${t(s.lang, 'fb_question', day, pending.feelsLike)}</div>
+      <div class="fb-opts">
+        ${opts.map(([k, e]) => `<button type="button" class="fb-opt" data-fb="${k}" data-fb-date="${pending.date}"><span class="fb-emoji">${e}</span><span>${t(s.lang, 'fb_' + k)}</span></button>`).join('')}
+      </div>
+      <button type="button" class="fb-skip" data-fb="skip" data-fb-date="${pending.date}">${t(s.lang, 'fb_skip')}</button>
+    </section>`;
 }
 
 // Wardrobe-only mode: what to add or watch out for with the user's own clothes.
@@ -210,7 +246,8 @@ export function renderTodayScreen({ dayOffset, state: s, data }) {
   if (!data) {
     return `${brandHeader(s)}<div class="state-msg">${t(s.lang, 'loading_data')}</div>`;
   }
-  const { dayView, outfit, tip } = data;
+  const { dayView, outfit, tip, memory, worn, pending, today } = data;
+  const fb = { memory, worn, isToday: dayOffset === 0, date: dayView.date };
   const kombinLabel = dayOffset === 0 ? t(s.lang, 'kombin_bugun') : t(s.lang, 'kombin_yarin');
   return `
     ${brandHeader(s)}
@@ -222,7 +259,8 @@ export function renderTodayScreen({ dayOffset, state: s, data }) {
           ${genderSelector(s)}
         </div>
       </div>
-      ${outfitSection(outfit, kombinLabel, s)}
+      ${dayOffset === 0 ? feedbackCard(pending, today, s) : ''}
+      ${outfitSection(outfit, kombinLabel, s, fb)}
       ${tipBox(tip, 320 + outfit.rows.length * 90, s, dayOffset)}
       <div class="footer-note">${t(s.lang, 'footer')}</div>
     </div>
@@ -261,6 +299,13 @@ export function attachTodayHandlers(root) {
   if (retryBtn) retryBtn.addEventListener('click', refetchForecast);
   root.querySelectorAll('[data-swap]').forEach(btn => {
     btn.addEventListener('click', () => swapOutfitPiece(btn.dataset.swap));
+  });
+  const wearBtn = root.querySelector('[data-action="wear"]');
+  if (wearBtn) wearBtn.addEventListener('click', wearToday);
+  const unwearBtn = root.querySelector('[data-action="unwear"]');
+  if (unwearBtn) unwearBtn.addEventListener('click', unwearToday);
+  root.querySelectorAll('[data-fb]').forEach(btn => {
+    btn.addEventListener('click', () => answerFeedback(btn.dataset.fbDate, btn.dataset.fb));
   });
   const mineBtn = root.querySelector('[data-action="toggle-mine"]');
   if (mineBtn) mineBtn.addEventListener('click', () => setWardrobeOnly(!state.wardrobeOnly));

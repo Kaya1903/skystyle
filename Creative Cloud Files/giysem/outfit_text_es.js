@@ -471,4 +471,8 @@ export default {
   "not waterproof": "no es impermeable",
   "blocks wind": "corta el viento",
   "{c} pairs well with your {n}": "el {c} combina bien con tu {n}",
+  "A thin cardigan or fleece": "Una chaqueta de punto fina o un forro polar",
+  "You were cold in weather like this, so I added one more layer": "Con un tiempo así pasaste frío, así que he añadido una capa más",
+  " Add a thin thermal layer underneath.": " Ponte una térmica fina debajo.",
+  " Go for thinner fabrics today.": " Hoy elige telas más finas.",
 };

@@ -416,7 +416,7 @@ function coldLevel(temp) {
   return 0;
 }
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false }, allItems = [], locks = {}) {
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false, memory = null }, allItems = [], locks = {}) {
   // Turkish and English have their own wording; every other language runs on
   // the English rules and is translated on the way out (outfit_i18n.js).
   const outLang = lang || 'tr';
@@ -428,8 +428,13 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const X = EXTRAS[language];
   // `comfort` shifts the band for people who run cold (-3) or warm (+3); the
   // temperatures quoted in the reasons stay the real ones.
-  const felt = feelsLike + comfort;
+  const feltWeather = feelsLike + comfort;
+  // A day like this one went badly before (feedback.js): dress for a band colder
+  // (they were cold) or warmer (they were too warm). The label keeps the real weather.
+  const memoryShift = memory === 'cold' ? -4 : memory === 'warm' ? 4 : 0;
+  const felt = feltWeather + memoryShift;
   const bandKey = getBand(felt);
+  const coldWeather = coldLevel(feltWeather);
   const cold = coldLevel(felt);
   const extremeHeat = felt >= 35;
   const I = INTENSITY[language];
@@ -505,9 +510,22 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     else if (cold >= 2) rows.yanina = { item: I.l2_acc[0], reason: () => I.l2_acc[1] };
     else if (extremeHeat) rows.yanina = { item: I.heat_acc[0], reason: () => I.heat_acc[1] };
   }
+  // ---- What this person told us about a day like this (feedback.js) ----
+  // Cold last time: one more layer (a mid layer if there's none, plus a thin
+  // base layer under the top). Too warm last time: drop the extra mid layer.
+  let learnNote = '';
+  if (memory === 'cold' && !['sicak', 'cok_sicak'].includes(bandKey)) {
+    if (!rows.ustune && !onlyMine) rows.ustune = { item: X.learn_mid[0], reason: () => X.learn_mid[1] };
+    // Only suggest a thin base layer if the top doesn't already have one.
+    if (rows.ust && !/termal|thermal|içlik/i.test(rows.ust.item)) learnNote = X.learn_cold_note;
+  } else if (memory === 'warm') {
+    if (rows.ustune && !picks.ustune) delete rows.ustune;
+    learnNote = X.learn_warm_note;
+  }
   const notes = {};
+  if (learnNote && rows.ust) notes.ust = learnNote;
   if (cold >= 1) { notes.alt = I.thermal_legs; notes.ayak = I.wool_socks; }
-  if (cold >= 3) notes.ust = I.l3_layers;
+  if (cold >= 3) notes.ust = (notes.ust || '') + I.l3_layers;
   if (wind >= 50 && COLD_BANDS.includes(bandKey)) notes.dis = I.gale;
 
   const output = [];
@@ -559,7 +577,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, outLang), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
   }
 
-  const labelKey = cold >= 2 ? 'extreme_cold' : cold === 1 ? 'very_cold' : extremeHeat ? 'extreme_hot' : bandKey;
+  const labelKey = coldWeather >= 2 ? 'extreme_cold' : coldWeather === 1 ? 'very_cold' : feltWeather >= 35 ? 'extreme_hot' : getBand(feltWeather);
   return { bandKey, intensity: labelKey, bandLabel: bandLabel(labelKey, outLang), rows: output, tips, wardrobeOnly: onlyMine };
 }
 

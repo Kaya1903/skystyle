@@ -7,8 +7,9 @@ import { itemLook, garmentArt } from './visuals.js';
 import {
   updateProfileGender, updateProfileStyleVibe, saveProfileName, resetProfile, openCitySheet,
   toggleAvatarPicker, setAvatar, setAvatarPhotoFile, removeAvatarPhoto, setComfort,
-  switchTab, loadRecentCities, chooseCity,
+  switchTab, loadRecentCities, chooseCity, resetLearning,
 } from './app.js';
+import { learningSummary } from './feedback.js';
 
 function avatarPicker(s) {
   const profile = s.profile;
@@ -143,6 +144,7 @@ export function renderProfileScreen(s) {
               <span>${t(s.lang, 'comfort_' + c)}</span>
             </button>`).join('')}
         </div>
+        ${learnBlock(s)}
       </section>
 
       ${wardrobeCard(s)}
@@ -153,6 +155,17 @@ export function renderProfileScreen(s) {
       <button data-action="reset-profile" type="button">${t(s.lang, 'logout_reset')}</button>
     </div>
   `;
+}
+
+// What SkyStyle learned from the user's "how was it?" answers (feedback.js).
+function learnBlock(s) {
+  const sum = learningSummary(s.feedback || { days: {} });
+  const text = sum.count ? t(s.lang, 'fb_learn_' + sum.lean, sum.count) : t(s.lang, 'fb_learn_none');
+  return `
+    <div class="learn-block">
+      <p class="profile-hint learn-text">${text}</p>
+      ${sum.count ? `<button type="button" class="learn-reset" data-action="reset-learning">${t(s.lang, 'fb_reset')}</button>` : ''}
+    </div>`;
 }
 
 const COMFORT_ICON = {
@@ -205,6 +218,8 @@ export function attachProfileHandlers(root) {
   root.querySelectorAll('[data-comfort]').forEach(btn => {
     btn.addEventListener('click', () => setComfort(btn.dataset.comfort));
   });
+  const resetLearnBtn = root.querySelector('[data-action="reset-learning"]');
+  if (resetLearnBtn) resetLearnBtn.addEventListener('click', resetLearning);
   const backBtn = root.querySelector('[data-action="go-today"]');
   if (backBtn) backBtn.addEventListener('click', () => switchTab('today'));
   const wardrobeBtn = root.querySelector('[data-action="go-wardrobe"]');
