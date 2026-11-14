@@ -259,63 +259,64 @@ const GARMENTS = {
 // For bottoms and shoes the piece mentioned first wins ("sneakers or boots" -> sneakers).
 const KEYWORDS = {
   ust: [
-    ['hoodie', ['kapüşonlu', 'hoodie', 'con capucha', 'z kapturem']],
-    ['sweater', ['kazak', 'triko', 'balıkçı', 'sweater', 'jumper', 'knit', 'suéter', 'sweter', 'كنزة']],
+    ['hoodie', ['kapüşonlu', 'hoodie', 'con capucha', 'z kapturem', 'kapuzen']],
+    ['sweater', ['kazak', 'triko', 'balıkçı', 'sweater', 'jumper', 'knit', 'suéter', 'sweter', 'كنزة', 'pullover', 'strickpulli', 'rollkragen']],
     ['sweatshirt', ['sweatshirt', 'sweat', 'sudadera', 'bluza']],
     ['polo', ['polo']],
-    ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula', 'قميص']],
-    ['longsleeve', ['uzun kollu', 'termal', 'long sleeve', 'long-sleeve', 'thermal', 'manga larga', 'longsleeve', 'golf']],
-    ['tank', ['atlet', 'askılı', 'tank top', 'camisole', 'strappy', 'tirantes']],
-    ['blouse', ['bluz', 'blouse', 'blusa', 'bluzka', 'بلوزة']],
+    ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula', 'قميص', 'hemd']],
+    ['longsleeve', ['uzun kollu', 'termal', 'long sleeve', 'long-sleeve', 'thermal', 'manga larga', 'longsleeve', 'golf', 'langarm']],
+    ['tank', ['atlet', 'askılı', 'tank top', 'camisole', 'strappy', 'tirantes', 'tanktop', 'trägertop']],
+    ['blouse', ['bluz', 'blouse', 'blusa', 'bluzka', 'بلوزة', 'bluse']],
     ['tee', ['tişört', 't-shirt', 'tshirt', 'tee', 'camiseta', 'koszulka', 'تيشيرت']],
   ],
   ustune: [
     ['hoodie', ['kapüşonlu', 'hoodie', 'con capucha', 'z kapturem']],
     ['fleece', ['polar', 'fleece', 'forro']],
     ['sweatshirt', ['sweatshirt', 'sudadera', 'bluza']],
-    ['vest', ['yelek', 'vest', 'gilet', 'chaleco', 'kamizelka']],
-    ['cardigan', ['hırka', 'cardigan', 'rebeca', 'kardigan', 'سترة']],
+    ['vest', ['yelek', 'vest', 'gilet', 'chaleco', 'kamizelka', 'weste']],
+    ['cardigan', ['hırka', 'cardigan', 'rebeca', 'kardigan', 'سترة', 'strickjacke']],
     ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula']],
   ],
   dis: [
     ['parka', ['parka']],
-    ['puffer', ['şişme', 'puf', 'puffer', 'down', 'kaz tüyü', 'dizüstü', 'knee-length', 'plumífero', 'puchowa']],
+    ['puffer', ['şişme', 'puf', 'puffer', 'down', 'kaz tüyü', 'dizüstü', 'knee-length', 'plumífero', 'puchowa', 'daunen', 'stepp']],
     ['trench', ['trençkot', 'trenchcoat', 'trench', 'gabardina', 'trencz']],
-    ['coat', ['kaban', 'palto', 'coat', 'abrigo', 'płaszcz', 'معطف']],
+    ['coat', ['kaban', 'palto', 'coat', 'abrigo', 'płaszcz', 'معطف', 'mantel']],
     ['bomber', ['bomber']],
     ['blazer', ['blazer', 'americana', 'marynarka', 'takım ceket']],
     ['vest', ['şişme yelek', 'yelek', 'vest', 'gilet', 'chaleco', 'kamizelka']],
-    ['windbreaker', ['yağmurluk', 'rüzgarlık', 'rüzgar geçirmez', 'windbreaker', 'windproof', 'raincoat', 'cortavientos', 'wiatrówka']],
-    ['jacket', ['ceket', 'mont', 'jacket', 'blazer', 'hırka', 'chaqueta', 'kurtka', 'جاكيت']],
+    ['windbreaker', ['yağmurluk', 'rüzgarlık', 'rüzgar geçirmez', 'windbreaker', 'windproof', 'raincoat', 'cortavientos', 'wiatrówka', 'windjacke', 'regenjacke']],
+    ['jacket', ['ceket', 'mont', 'jacket', 'blazer', 'hırka', 'chaqueta', 'kurtka', 'جاكيت', 'jacke']],
   ],
   alt: [
-    ['dress', ['elbise', 'dress', 'vestido', 'sukienka', 'فستان']],
-    ['skirt', ['etek', 'skirt', 'falda', 'spódnica', 'تنورة']],
+    ['dress', ['elbise', 'dress', 'vestido', 'sukienka', 'فستان', 'kleid']],
+    ['skirt', ['etek', 'skirt', 'falda', 'spódnica', 'تنورة', 'rock']],
     ['shorts', ['şort', 'short', 'pantalón corto', 'szorty', 'شورت']],
-    ['leggings', ['tayt', 'legging', 'tights', 'mallas', 'leginsy', 'rajstopy']],
+    ['leggings', ['tayt', 'legging', 'tights', 'mallas', 'leginsy', 'rajstopy', 'strumpfhose']],
     ['jeans', ['kot', 'jean', 'denim', 'vaquero', 'dżinsy', 'جينز']],
-    ['trousers', ['pantolon', 'chino', 'trouser', 'pant', 'eşofman', 'jogger', 'pantalón', 'spodnie', 'بنطال']],
+    ['trousers', ['pantolon', 'chino', 'trouser', 'pant', 'eşofman', 'jogger', 'pantalón', 'spodnie', 'بنطال', 'hose']],
   ],
   ayak: [
-    ['boot', ['bot', 'çizme', 'boot', 'bota', 'kozaki', 'buty zimowe', 'حذاء طويل']],
-    ['sandal', ['sandalet', 'terlik', 'sandal', 'flip', 'chancla', 'sandał', 'صندل']],
+    ['boot', ['bot', 'çizme', 'boot', 'bota', 'kozaki', 'buty zimowe', 'حذاء طويل', 'stiefel']],
+    ['sandal', ['sandalet', 'terlik', 'sandal', 'flip', 'chancla', 'sandał', 'صندل', 'sandale']],
     ['loafer', ['makosen', 'loafer', 'oxford', 'mokasyn', 'mocasín', 'babet']],
-    ['sneaker', ['spor ayakkabı', 'sneaker', 'trainer', 'zapatilla', 'tenis', 'adidasy', 'ayakkabı', 'shoe']],
+    ['sneaker', ['spor ayakkabı', 'sneaker', 'trainer', 'zapatilla', 'tenis', 'adidasy', 'ayakkabı', 'shoe', 'turnschuh', 'schuh']],
   ],
   yanina: [
-    ['sunglasses', ['güneş gözlüğü', 'gözlük', 'sunglasses', 'shades', 'gafas de sol', 'okulary', 'نظارة']],
-    ['umbrella', ['şemsiye', 'umbrella', 'paraguas', 'parasol', 'مظلة']],
-    ['bag', ['çanta', 'bag', 'bolso', 'torba', 'حقيبة']],
-    ['beanie', ['bere', 'beanie', 'gorro', 'czapka']],
-    ['cap', ['şapka', 'kasket', 'cap', 'gorra']],
-    ['scarf', ['atkı', 'şal', 'scarf', 'bufanda', 'szalik', 'وشاح']],
+    ['sunglasses', ['güneş gözlüğü', 'gözlük', 'sunglasses', 'shades', 'gafas de sol', 'okulary', 'نظارة', 'sonnenbrille']],
+    ['umbrella', ['şemsiye', 'umbrella', 'paraguas', 'parasol', 'مظلة', 'schirm']],
+    ['bag', ['çanta', 'bag', 'bolso', 'torba', 'حقيبة', 'tasche']],
+    ['beanie', ['bere', 'beanie', 'gorro', 'czapka', 'mütze']],
+    ['cap', ['şapka', 'kasket', 'cap', 'gorra', 'kappe']],
+    ['scarf', ['atkı', 'şal', 'scarf', 'bufanda', 'szalik', 'وشاح', 'schal']],
   ],
 };
 
 // Picks which drawing to use for a piece: the item's own words first,
 // then how warm it is (1 = thinnest .. 5 = winter).
 export function garmentVariant(category, text = '', warmth = 3) {
-  const lower = String(text || '').toLocaleLowerCase('tr');
+  // "T-shirt" contains "shirt": read it as a tee before matching.
+  const lower = String(text || '').toLocaleLowerCase('tr').replace(/t-?shirt/g, 'tee');
   const byPriority = category === 'ust' || category === 'ustune' || category === 'dis';
   let best = null, bestPos = Infinity;
   for (const [variant, words] of KEYWORDS[category] || []) {
@@ -393,6 +394,26 @@ const LABELS = {
     trousers: 'Trousers', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Skirt', dress: 'Dress',
     sneaker: 'Sneakers', boot: 'Boots', sandal: 'Sandals', loafer: 'Loafers', umbrella: 'Umbrella', bag: 'Bag', beanie: 'Beanie', cap: 'Cap', scarf: 'Scarf',
     shortshirt: 'Short-sleeve shirt', blouse: 'Blouse', parka: 'Parka', wrapcoat: 'Wrap coat', pufferw: 'Long puffer', cropjacket: 'Cropped jacket', blazerw: 'Long blazer', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses' },
+  es: { tee: 'Camiseta', longsleeve: 'Manga larga', sweater: 'Jersey', sweatshirt: 'Sudadera', hoodie: 'Sudadera con capucha', shirt: 'Camisa', polo: 'Polo', tank: 'Camiseta de tirantes',
+    cardigan: 'Chaqueta de punto', fleece: 'Forro polar', vest: 'Chaleco', jacket: 'Chaqueta', puffer: 'Plumífero', coat: 'Abrigo', trench: 'Gabardina', windbreaker: 'Cortavientos', bomber: 'Bomber', blazer: 'Blazer',
+    trousers: 'Pantalón', chinos: 'Chinos', jeans: 'Vaqueros', shorts: 'Pantalón corto', skirt: 'Falda', dress: 'Vestido',
+    sneaker: 'Zapatillas', boot: 'Botas', sandal: 'Sandalias', loafer: 'Mocasines', umbrella: 'Paraguas', bag: 'Bolso', beanie: 'Gorro', cap: 'Gorra', scarf: 'Bufanda',
+    shortshirt: 'Camisa de manga corta', blouse: 'Blusa', parka: 'Parka', wrapcoat: 'Abrigo cruzado', pufferw: 'Plumífero largo', cropjacket: 'Chaqueta corta', blazerw: 'Blazer larga', leggings: 'Mallas', minishorts: 'Shorts de mujer', sunglasses: 'Gafas de sol', catglasses: 'Gafas cat-eye' },
+  pl: { tee: 'T-shirt', longsleeve: 'Długi rękaw', sweater: 'Sweter', sweatshirt: 'Bluza', hoodie: 'Bluza z kapturem', shirt: 'Koszula', polo: 'Polo', tank: 'Koszulka na ramiączkach',
+    cardigan: 'Kardigan', fleece: 'Polar', vest: 'Kamizelka', jacket: 'Kurtka', puffer: 'Kurtka puchowa', coat: 'Płaszcz', trench: 'Trencz', windbreaker: 'Wiatrówka', bomber: 'Bomberka', blazer: 'Marynarka',
+    trousers: 'Spodnie', chinos: 'Chinosy', jeans: 'Dżinsy', shorts: 'Szorty', skirt: 'Spódnica', dress: 'Sukienka',
+    sneaker: 'Sneakersy', boot: 'Kozaki', sandal: 'Sandały', loafer: 'Mokasyny', umbrella: 'Parasol', bag: 'Torba', beanie: 'Czapka', cap: 'Czapka z daszkiem', scarf: 'Szalik',
+    shortshirt: 'Koszula z krótkim rękawem', blouse: 'Bluzka', parka: 'Parka', wrapcoat: 'Płaszcz z paskiem', pufferw: 'Długa puchówka', cropjacket: 'Krótka kurtka', blazerw: 'Długa marynarka', leggings: 'Legginsy', minishorts: 'Szorty damskie', sunglasses: 'Okulary przeciwsłoneczne', catglasses: 'Okulary kocie oko' },
+  ar: { tee: 'تيشيرت', longsleeve: 'أكمام طويلة', sweater: 'كنزة', sweatshirt: 'سويت شيرت', hoodie: 'هودي', shirt: 'قميص', polo: 'بولو', tank: 'قميص بلا أكمام',
+    cardigan: 'كارديغان', fleece: 'فليس', vest: 'صديري', jacket: 'جاكيت', puffer: 'جاكيت منفوخ', coat: 'معطف', trench: 'ترنش كوت', windbreaker: 'جاكيت واقٍ من الريح', bomber: 'بومبر', blazer: 'بليزر',
+    trousers: 'بنطال', chinos: 'تشينو', jeans: 'جينز', shorts: 'شورت', skirt: 'تنورة', dress: 'فستان',
+    sneaker: 'حذاء رياضي', boot: 'بوت', sandal: 'صندل', loafer: 'لوفر', umbrella: 'مظلة', bag: 'حقيبة', beanie: 'قبعة صوف', cap: 'قبعة', scarf: 'وشاح',
+    shortshirt: 'قميص بأكمام قصيرة', blouse: 'بلوزة', parka: 'باركا', wrapcoat: 'معطف بحزام', pufferw: 'معطف منفوخ طويل', cropjacket: 'جاكيت قصير', blazerw: 'بليزر طويل', leggings: 'ليقنز', minishorts: 'شورت نسائي', sunglasses: 'نظارة شمسية', catglasses: 'نظارة عين القطة' },
+  de: { tee: 'T-Shirt', longsleeve: 'Langarmshirt', sweater: 'Pullover', sweatshirt: 'Sweatshirt', hoodie: 'Hoodie', shirt: 'Hemd', polo: 'Poloshirt', tank: 'Tanktop',
+    cardigan: 'Strickjacke', fleece: 'Fleece', vest: 'Weste', jacket: 'Jacke', puffer: 'Daunenjacke', coat: 'Mantel', trench: 'Trenchcoat', windbreaker: 'Windjacke', bomber: 'Bomberjacke', blazer: 'Blazer',
+    trousers: 'Hose', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Rock', dress: 'Kleid',
+    sneaker: 'Sneaker', boot: 'Stiefel', sandal: 'Sandalen', loafer: 'Loafer', umbrella: 'Regenschirm', bag: 'Tasche', beanie: 'Mütze', cap: 'Cap', scarf: 'Schal',
+    shortshirt: 'Kurzarmhemd', blouse: 'Bluse', parka: 'Parka', wrapcoat: 'Wickelmantel', pufferw: 'Lange Daunenjacke', cropjacket: 'Kurze Jacke', blazerw: 'Langer Blazer', leggings: 'Leggings', minishorts: 'Damenshorts', sunglasses: 'Sonnenbrille', catglasses: 'Cat-Eye-Sonnenbrille' },
 };
 export function styleLabel(name, lang) {
   return (LABELS[lang] || (lang === 'tr' ? LABELS.tr : LABELS.en))[name] || name;

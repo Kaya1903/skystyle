@@ -29,10 +29,12 @@ MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-haiku-5-5')
 SITE_PASSWORD = os.environ.get('SITE_PASSWORD')
 ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 
+LANG_NAMES = {'tr': 'Turkish', 'en': 'English', 'es': 'Spanish', 'pl': 'Polish', 'ar': 'Arabic', 'de': 'German'}
+
 ANALYZE_PROMPT = (
     'You are looking at a photo of a single clothing item. Reply with ONLY a compact '
     'JSON object (no prose, no markdown code fences) matching exactly this schema: '
-    '{"name": string (short product name in Turkish, e.g. "Gri örgü kazak"), '
+    '{"name": string (short product name in {lang_name}, e.g. "Grey knit sweater" in English or "Gri örgü kazak" in Turkish), '
     '"category": one of "ust" | "ustune" | "dis" | "alt" | "ayak" | "yanina" '
     '(ust=top, ustune=mid-layer, dis=outerwear, alt=bottom, ayak=shoes, yanina=accessory), '
     '"warmth": integer 1-5 (1=very light/summer fabric, 5=thick winter piece), '
@@ -202,7 +204,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get('Content-Length', 0))
             ctx = json.loads(self.rfile.read(length) or b'{}')
-            lang_name = {'tr': 'Turkish', 'en': 'English', 'es': 'Spanish', 'pl': 'Polish', 'ar': 'Arabic'}.get(ctx.get('lang'), 'Turkish')
+            lang_name = LANG_NAMES.get(ctx.get('lang'), 'Turkish')
             wardrobe_summary = ctx.get('wardrobeSummary') or 'no saved wardrobe items'
             prompt = (
                 f'You are a warm, concise personal stylist writing inside a weather app. '
@@ -256,7 +258,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     'role': 'user',
                     'content': [
                         {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': b64data}},
-                        {'type': 'text', 'text': ANALYZE_PROMPT},
+                        {'type': 'text', 'text': ANALYZE_PROMPT.replace('{lang_name}', LANG_NAMES.get(body.get('lang'), 'Turkish'))},
                     ],
                 }],
             }

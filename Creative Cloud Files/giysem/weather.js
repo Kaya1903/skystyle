@@ -72,6 +72,20 @@ const WMO_TEXT = {
     95: 'عاصفة رعدية', 96: 'عاصفة رعدية مع برد', 99: 'عاصفة رعدية شديدة مع برد',
     default: 'طقس متقلّب',
   },
+  de: {
+    0: 'Klar', 1: 'Überwiegend klar', 2: 'Teilweise bewölkt', 3: 'Bedeckt',
+    45: 'Neblig', 48: 'Neblig, Glätte möglich',
+    51: 'Leichter Nieselregen', 53: 'Nieselregen', 55: 'Leichter Regen',
+    56: 'Nieselregen, Glätte möglich', 57: 'Regen, Glätte möglich',
+    61: 'Leichter Regen', 63: 'Regen', 65: 'Starker Regen',
+    66: 'Regen, Glätte möglich', 67: 'Starker Regen, Glätte möglich',
+    71: 'Leichter Schneefall', 73: 'Schneefall', 75: 'Starker Schneefall',
+    77: 'Leichter Schneefall',
+    80: 'Regenschauer', 81: 'Starke Schauer', 82: 'Heftige Schauer',
+    85: 'Schneeschauer', 86: 'Starke Schneeschauer',
+    95: 'Gewitter', 96: 'Gewitter mit Hagel', 99: 'Schweres Gewitter mit Hagel',
+    default: 'Wechselhaft',
+  },
 };
 
 // Collapses a WMO weather code into the handful of sky "moods" the UI animates.
@@ -159,6 +173,10 @@ function findHourIndex(times, dateStr, hour) {
 const CONDITION_HEURISTIC = {
   tr: { high: 'Yağmur ihtimali yüksek', mid: 'Parçalı bulutlu olabilir', low: 'Açık ve kuru görünüyor' },
   en: { high: 'High chance of rain', mid: 'Could be partly cloudy', low: 'Looks clear and dry' },
+  es: { high: 'Alta probabilidad de lluvia', mid: 'Puede estar parcialmente nublado', low: 'Parece despejado y seco' },
+  pl: { high: 'Duża szansa na deszcz', mid: 'Możliwe częściowe zachmurzenie', low: 'Zapowiada się pogodnie i sucho' },
+  ar: { high: 'احتمال كبير للمطر', mid: 'قد يكون غائمًا جزئيًا', low: 'يبدو صافيًا وجافًا' },
+  de: { high: 'Hohe Regenwahrscheinlichkeit', mid: 'Möglicherweise teilweise bewölkt', low: 'Sieht klar und trocken aus' },
 };
 
 // Builds a normalized view of the forecast for a given day offset (0 = today, 1 = tomorrow)
@@ -248,31 +266,66 @@ export function buildWeekView(raw, lang = 'tr') {
   });
 }
 
+// The evening note under today's outfit, in every language.
+const EVENING = {
+  tr: {
+    none: 'Akşam için ayrı tahmin yok, gündüz havasına göre giyin.',
+    snow: r => `Akşam kar ihtimali %${r}. Kaymaz tabanlı, su geçirmez bot en güvenlisi.`,
+    rain: r => `Akşam yağmur ihtimali %${r}. Yanına küçük bir şemsiye al.`,
+    wind: w => `Akşam rüzgar saatte ${w} km'ye çıkıyor. İnce de olsa rüzgarı kesen bir şey al.`,
+    colder: t => `Akşam hissedilen sıcaklık ${t}° olacak. Çıkarken yanına bir kat daha al.`,
+    calm: 'Akşam hava sakin görünüyor, fazladan bir şeye gerek yok.',
+  },
+  en: {
+    none: 'No separate forecast for tonight, so dress for the daytime weather.',
+    snow: r => `${r}% chance of snow tonight. Waterproof boots with a grippy sole are the safest bet.`,
+    rain: r => `${r}% chance of rain tonight. Take a small umbrella with you.`,
+    wind: w => `Wind picks up to ${w} km/h tonight. Bring something windproof, even a thin one.`,
+    colder: t => `It will feel like ${t}° tonight. Take an extra layer when you head out.`,
+    calm: "Tonight looks calm. You won't need anything extra.",
+  },
+  es: {
+    none: 'No hay un pronóstico aparte para la noche, vístete según el tiempo de día.',
+    snow: r => `Probabilidad de nieve esta noche del ${r} %. Lo más seguro son botas impermeables con buena suela.`,
+    rain: r => `Probabilidad de lluvia esta noche del ${r} %. Llévate un paraguas pequeño.`,
+    wind: w => `Esta noche el viento sube a ${w} km/h. Lleva algo que corte el viento, aunque sea fino.`,
+    colder: t => `Esta noche la sensación será de ${t}°. Llévate una capa más al salir.`,
+    calm: 'La noche se presenta tranquila, no necesitas nada más.',
+  },
+  pl: {
+    none: 'Brak osobnej prognozy na wieczór, ubierz się według pogody w dzień.',
+    snow: r => `Szansa na śnieg wieczorem ${r}%. Najbezpieczniejsze są wodoodporne buty z dobrym bieżnikiem.`,
+    rain: r => `Szansa na deszcz wieczorem ${r}%. Weź ze sobą mały parasol.`,
+    wind: w => `Wieczorem wiatr wzmoże się do ${w} km/h. Weź coś wiatroszczelnego, nawet cienkiego.`,
+    colder: t => `Wieczorem odczuwalnie będzie ${t}°. Weź dodatkową warstwę, gdy wychodzisz.`,
+    calm: 'Wieczór zapowiada się spokojnie, nic więcej nie potrzebujesz.',
+  },
+  ar: {
+    none: 'لا توجد توقعات منفصلة للمساء، البس حسب طقس النهار.',
+    snow: r => `احتمال الثلج مساءً ${r}%. الأكثر أمانًا حذاء مقاوم للماء بنعل ثابت.`,
+    rain: r => `احتمال المطر مساءً ${r}%. خذ معك مظلة صغيرة.`,
+    wind: w => `تشتد الرياح مساءً إلى ${w} كم/س. خذ شيئًا يصد الريح ولو كان خفيفًا.`,
+    colder: t => `ستكون الحرارة المحسوسة مساءً ${t}°. خذ طبقة إضافية عند خروجك.`,
+    calm: 'المساء يبدو هادئًا، لا تحتاج إلى شيء إضافي.',
+  },
+  de: {
+    none: 'Keine eigene Vorhersage für den Abend, zieh dich nach dem Wetter am Tag an.',
+    snow: r => `Schneewahrscheinlichkeit heute Abend ${r} %. Am sichersten sind wasserdichte Stiefel mit griffiger Sohle.`,
+    rain: r => `Regenwahrscheinlichkeit heute Abend ${r} %. Nimm einen kleinen Schirm mit.`,
+    wind: w => `Heute Abend frischt der Wind auf ${w} km/h auf. Nimm etwas Winddichtes mit, auch wenn es dünn ist.`,
+    colder: t => `Heute Abend fühlt es sich wie ${t}° an. Nimm eine Schicht mehr mit, wenn du rausgehst.`,
+    calm: 'Der Abend sieht ruhig aus, du brauchst nichts extra.',
+  },
+};
+
 export function eveningTip(dayView, lang = 'tr') {
+  const E = EVENING[lang] || EVENING.en;
   const eve = dayView.eveningWindow;
   const heroFeels = dayView.hero.feelsLike;
-  if (lang === 'en') {
-    if (!eve) return "No separate forecast for tonight, so dress for the daytime weather.";
-    if (eve.rain >= 50 && eve.feelsLike <= -3) return `${eve.rain}% chance of snow tonight. Waterproof boots with a grippy sole are the safest bet.`;
-    if (eve.rain >= 50) return `${eve.rain}% chance of rain tonight. Take a small umbrella with you.`;
-    if (eve.wind >= 20) return `Wind picks up to ${eve.wind} km/h tonight. Bring something windproof, even a thin one.`;
-    if (heroFeels - eve.feelsLike >= 4) return `It will feel like ${eve.feelsLike}° tonight. Take an extra layer when you head out.`;
-    return "Tonight looks calm. You won't need anything extra.";
-  }
-  if (!eve) {
-    return 'Akşam için ayrı tahmin yok, gündüz havasına göre giyin.';
-  }
-  if (eve.rain >= 50 && eve.feelsLike <= -3) {
-    return `Akşam kar ihtimali %${eve.rain}. Kaymaz tabanlı, su geçirmez bot en güvenlisi.`;
-  }
-  if (eve.rain >= 50) {
-    return `Akşam yağmur ihtimali %${eve.rain}. Yanına küçük bir şemsiye al.`;
-  }
-  if (eve.wind >= 20) {
-    return `Akşam rüzgar saatte ${eve.wind} km'ye çıkıyor. İnce de olsa rüzgarı kesen bir şey al.`;
-  }
-  if (heroFeels - eve.feelsLike >= 4) {
-    return `Akşam hissedilen sıcaklık ${eve.feelsLike}° olacak. Çıkarken yanına bir kat daha al.`;
-  }
-  return 'Akşam hava sakin görünüyor, fazladan bir şeye gerek yok.';
+  if (!eve) return E.none;
+  if (eve.rain >= 50 && eve.feelsLike <= -3) return E.snow(eve.rain);
+  if (eve.rain >= 50) return E.rain(eve.rain);
+  if (eve.wind >= 20) return E.wind(eve.wind);
+  if (heroFeels - eve.feelsLike >= 4) return E.colder(eve.feelsLike);
+  return E.calm;
 }

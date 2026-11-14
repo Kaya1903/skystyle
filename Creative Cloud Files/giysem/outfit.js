@@ -3,6 +3,7 @@ import { garmentVariant, itemLook } from './visuals.js';
 import { VARIANTS, EXTRAS, GENDERED, INTENSITY } from './outfit_variants.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
+import { tx, fillTemplate } from './outfit_i18n.js';
 
 const BAND_KEYS = ['dondurucu', 'soguk', 'serin', 'ilik', 'sicak', 'cok_sicak'];
 const SLOT_ICON = { ust: 'ust', ustune: 'ustune', dis: 'dis', alt: 'alt', ayak: 'ayak', yanina: 'yanina' };
@@ -302,28 +303,28 @@ function applyWind(rows, wind, lang) {
   if (lang === 'en') {
     if (rows.dis) {
       const item = /wind/i.test(rows.dis.item) ? rows.dis.item : rows.dis.item + ', ideally windproof';
-      rows.dis = { item, reason: () => `${wind} km/h wind makes it feel colder than it is. Wear something windproof` };
+      rows.dis = { item, reason: c => `${c.wind} km/h wind makes it feel colder than it is. Wear something windproof` };
     } else {
-      rows.dis = { item: 'A thin windproof jacket', reason: () => `${wind} km/h wind out there. Bring something windproof, even a thin one` };
+      rows.dis = { item: 'A thin windproof jacket', reason: c => `${c.wind} km/h wind out there. Bring something windproof, even a thin one` };
     }
     return;
   }
   if (rows.dis) {
     const item = rows.dis.item.includes('rüzgar') ? rows.dis.item : rows.dis.item + ', tercihen rüzgar geçirmez';
-    rows.dis = { item, reason: () => `Saatte ${wind} km rüzgar var, havayı olduğundan soğuk hissettiriyor. Rüzgar geçirmez bir şey giy` };
+    rows.dis = { item, reason: c => `Saatte ${c.wind} km rüzgar var, havayı olduğundan soğuk hissettiriyor. Rüzgar geçirmez bir şey giy` };
   } else {
-    rows.dis = { item: 'İnce rüzgar geçirmez mont', reason: () => `Saatte ${wind} km rüzgar var. İnce de olsa rüzgarı kesen bir şey giy` };
+    rows.dis = { item: 'İnce rüzgar geçirmez mont', reason: c => `Saatte ${c.wind} km rüzgar var. İnce de olsa rüzgarı kesen bir şey giy` };
   }
 }
 
 function applyRain(rows, bandKey, rainMax, lang) {
   if (lang === 'en') {
-    rows.ayak = { item: RAIN_SHOE.en[bandKey], reason: () => `${rainMax}% chance of rain. Suede and fabric shoes will get soaked, wear waterproof ones` };
-    rows.yanina = { item: 'A small umbrella', reason: () => `${rainMax}% chance of rain. Take a small umbrella with you` };
+    rows.ayak = { item: RAIN_SHOE.en[bandKey], reason: c => `${c.rainMax}% chance of rain. Suede and fabric shoes will get soaked, wear waterproof ones` };
+    rows.yanina = { item: 'A small umbrella', reason: c => `${c.rainMax}% chance of rain. Take a small umbrella with you` };
     return;
   }
-  rows.ayak = { item: RAIN_SHOE.tr[bandKey], reason: () => `Yağmur ihtimali %${rainMax}. Süet ve kumaş ayakkabı ıslanır, su geçirmez bir şey giy` };
-  rows.yanina = { item: 'Küçük bir şemsiye', reason: () => `Yağmur ihtimali %${rainMax}. Yanına küçük bir şemsiye al` };
+  rows.ayak = { item: RAIN_SHOE.tr[bandKey], reason: c => `Yağmur ihtimali %${c.rainMax}. Süet ve kumaş ayakkabı ıslanır, su geçirmez bir şey giy` };
+  rows.yanina = { item: 'Küçük bir şemsiye', reason: c => `Yağmur ihtimali %${c.rainMax}. Yanına küçük bir şemsiye al` };
 }
 
 // Layers the base outfit doesn't suggest for a band but that still make sense
@@ -416,7 +417,14 @@ function coldLevel(temp) {
 }
 
 export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false }, allItems = [], locks = {}) {
-  const language = lang === 'en' ? 'en' : 'tr';
+  // Turkish and English have their own wording; every other language runs on
+  // the English rules and is translated on the way out (outfit_i18n.js).
+  const outLang = lang || 'tr';
+  const language = outLang === 'tr' ? 'tr' : 'en';
+  const L = s => tx(outLang, s);
+  // Reasons are rendered as templates first ({t} feels-like, {w} wind, {r} rain),
+  // so they can be translated whole and the numbers dropped in afterwards.
+  const PH = { feelsLike: '{t}', wind: '{w}', rainMax: '{r}' };
   const X = EXTRAS[language];
   // `comfort` shifts the band for people who run cold (-3) or warm (+3); the
   // temperatures quoted in the reasons stay the real ones.
@@ -461,7 +469,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   for (const k of optional) if (picks[k]) rows[k] = { item: picks[k].name, reason: '' };
   const pickedItems = Object.values(picks);
   // Wardrobe-only: drop every suggested slot; what's missing or off becomes a tip.
-  const tips = onlyMine ? wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language }) : [];
+  const tips = onlyMine ? wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language, L }) : [];
   if (onlyMine) for (const k of SLOT_ORDER) if (!picks[k]) delete rows[k];
 
   // Today's wording for every suggested slot (style + date), avoiding repeats of owned pieces.
@@ -489,7 +497,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
 
   // ---- Extra protection for very cold and very hot days ----
   if (cold >= 2 && rows.dis && !picks.dis) {
-    const windNote = fixed.has('dis') && typeof rows.dis.reason === 'function' ? rows.dis.reason(ctx) : '';
+    const windNote = fixed.has('dis') && typeof rows.dis.reason === 'function' ? rows.dis.reason(PH) : '';
     rows.dis = { item: I.deep_coat[0], reason: () => I.deep_coat[1] + (windNote ? `. ${windNote}` : '') };
   }
   if (!picks.yanina && !rainy && !onlyMine) {
@@ -507,7 +515,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     const r = rows[key];
     if (!r) continue;
     let item = r.item;
-    let reason = typeof r.reason === 'function' ? r.reason(ctx) : r.reason;
+    let reason = typeof r.reason === 'function' ? r.reason(PH) : r.reason;
     let fromWardrobe = false;
     let color = null;
     let patterned = false;
@@ -522,16 +530,16 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
       patterned = match.pattern === 'desenli';
       itemId = match.id;
       options = slotOptionIds(wardrobeItems, key, pickOpts);
-      reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems, BAND_WARMTH[bandKey]);
+      reason = wardrobeReason(match, PH, needsRain, needsWind, key, language, pickedItems, BAND_WARMTH[bandKey], outLang);
       // Bare legs in the cold: remind about tights under the user's own skirt/shorts/dress.
       if (key === 'alt' && ['skirt', 'shorts', 'minishorts', 'dress'].includes(itemLook(match).art)) {
-        if (COLD_BANDS.includes(bandKey)) reason += X.tights_cold;
-        else if (bandKey === 'serin') reason += X.tights_cool;
+        if (COLD_BANDS.includes(bandKey)) reason += L(X.tights_cold);
+        else if (bandKey === 'serin') reason += L(X.tights_cool);
       }
     }
 
     // Skip a note the suggestion already covers (e.g. "...altına termal tayt").
-    if (notes[key] && !(key === 'alt' && /termal|thermal|tayt|tights|leggings/i.test(item + reason)) && !(key === 'ayak' && /yün çorap|wool socks/i.test(item + reason))) reason = (reason && !/[.!?]$/.test(reason) ? reason + '.' : reason) + notes[key];
+    if (notes[key] && !(key === 'alt' && /termal|thermal|tayt|tights|leggings/i.test(item + reason)) && !(key === 'ayak' && /yün çorap|wool socks/i.test(item + reason))) reason = (reason && !/[.!?]$/.test(reason) ? reason + '.' : reason) + (match ? L(notes[key]) : notes[key]);
 
     // Wardrobe pieces draw from their own stored look; suggestions guess from the text.
     let look = match ? itemLook(match) : { art: garmentVariant(key, item, BAND_WARMTH[bandKey]), color: null, color2: null, patternType: 'solid', details: {} };
@@ -544,11 +552,15 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     if (GLASSES.includes(look.art)) look = { ...look, lens: WARM_BANDS.includes(bandKey) && bandKey !== 'ilik' ? 'light' : 'dark' };
     if (match) color = look.color;
     const art = look.art;
-    output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, language), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
+    // Suggestions: translate the finished English/Turkish text, then fill in the numbers.
+    // (A wardrobe row's reason is already in the user's language.)
+    if (!match) { item = L(item); reason = L(reason); }
+    reason = fillTemplate(reason, ctx);
+    output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, outLang), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id) });
   }
 
   const labelKey = cold >= 2 ? 'extreme_cold' : cold === 1 ? 'very_cold' : extremeHeat ? 'extreme_hot' : bandKey;
-  return { bandKey, intensity: labelKey, bandLabel: bandLabel(labelKey, language), rows: output, tips, wardrobeOnly: onlyMine };
+  return { bandKey, intensity: labelKey, bandLabel: bandLabel(labelKey, outLang), rows: output, tips, wardrobeOnly: onlyMine };
 }
 
 // For an accent-colored piece, the other picked piece it goes best with (if any).
@@ -563,16 +575,17 @@ function colorPartner(item, others) {
   return best;
 }
 
-function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked = [], desired = 3) {
+function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked = [], desired = 3, outLang = lang) {
   const partner = colorPartner(item, picked);
   const diff = (item.warmth || 3) - desired;
   const isAcc = slotKey === 'yanina';
   if (lang === 'en') {
-    const bits = [isAcc ? 'Goes with today' : diff < -1 ? `A bit thin for ${ctx.feelsLike}°` : diff > 1 ? `A bit warm for ${ctx.feelsLike}°` : `Right warmth for ${ctx.feelsLike}°`];
-    if (needsRain && slotKey === 'ayak') bits.push(item.rainOk ? 'handles rain' : 'not waterproof');
-    if (needsWind && slotKey === 'dis' && item.windproof) bits.push('blocks wind');
-    if (partner) bits.push(`${colorName(item.color, 'en').toLowerCase()} pairs well with your ${partner.name}`);
-    return bits.join(', ') + '.';
+    const L = s => tx(outLang, s);
+    const bits = [L(isAcc ? 'Goes with today' : diff < -1 ? 'A bit thin for {t}°' : diff > 1 ? 'A bit warm for {t}°' : 'Right warmth for {t}°')];
+    if (needsRain && slotKey === 'ayak') bits.push(L(item.rainOk ? 'handles rain' : 'not waterproof'));
+    if (needsWind && slotKey === 'dis' && item.windproof) bits.push(L('blocks wind'));
+    if (partner) bits.push(L('{c} pairs well with your {n}').replace('{c}', colorName(item.color, outLang).toLocaleLowerCase(outLang)).replace('{n}', partner.name));
+    return bits.join(L(', ')) + '.';
   }
   const bits = [isAcc ? 'Bugüne uygun' : diff < -1 ? `Hissedilen ${ctx.feelsLike}° için biraz ince` : diff > 1 ? `Hissedilen ${ctx.feelsLike}° için biraz kalın` : `Hissedilen ${ctx.feelsLike}° için kalınlığı tam`];
   if (needsRain && slotKey === 'ayak') bits.push(item.rainOk ? 'yağmura dayanıklı' : 'su geçirmez değil');
@@ -620,8 +633,9 @@ const TIP_TEXT = {
   },
 };
 
-function wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language }) {
-  const T = TIP_TEXT[language] || TIP_TEXT.tr;
+function wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language, L = s => s }) {
+  const T0 = TIP_TEXT[language] || TIP_TEXT.tr;
+  const T = Object.fromEntries(Object.entries(T0).map(([k, v]) => [k, L(v)]));
   const desired = BAND_WARMTH[bandKey];
   const w = it => (it ? it.warmth || 3 : 0);
   const tips = [];
@@ -647,4 +661,28 @@ function wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language }) 
   if (bandKey === 'dondurucu' && !picks.yanina) tips.push(T.cold_acc);
   if (!tips.length) tips.push(T.all_good);
   return tips;
+}
+
+// Every English sentence the engine can show, as templates. The language check
+// (tests/check_outfits.html) uses this to make sure each one is translated.
+export function englishTemplates() {
+  const PH = { feelsLike: '{t}', wind: '{w}', rainMax: '{r}' };
+  const out = new Set();
+  const add = v => { if (typeof v === 'string' && v.trim()) out.add(v); };
+  const reasonOf = r => (typeof r === 'function' ? r(PH) : r);
+  for (const band of Object.values(BASE.en)) for (const g of Object.values(band)) for (const slot of Object.values(g)) { add(slot.item); add(reasonOf(slot.reason)); }
+  for (const band of Object.values(VARIANTS.en)) for (const list of Object.values(band)) for (const [, item, reason] of list) { add(item); add(reason); }
+  for (const g of Object.values(GENDERED.en)) for (const band of Object.values(g)) for (const list of Object.values(band)) for (const [, item, reason] of list) { add(item); add(reason); }
+  for (const v of Object.values(EXTRAS.en)) (Array.isArray(v) ? v : [v]).forEach(add);
+  for (const v of Object.values(INTENSITY.en)) (Array.isArray(v) ? v : [v]).forEach(add);
+  Object.values(RAIN_SHOE.en).forEach(add);
+  Object.values(TIP_TEXT.en).forEach(add);
+  // Weather rules and wardrobe reasons (built in code).
+  const rows = { dis: { item: 'x' } };
+  applyWind(rows, 0, 'en'); add(reasonOf(rows.dis.reason));
+  const rows2 = {}; applyWind(rows2, 0, 'en'); add(rows2.dis.item); add(reasonOf(rows2.dis.reason));
+  const rows3 = {}; applyRain(rows3, 'serin', 0, 'en'); add(reasonOf(rows3.ayak.reason)); add(rows3.yanina.item); add(reasonOf(rows3.yanina.reason));
+  [', ideally windproof', 'Goes with today', 'A bit thin for {t}°', 'A bit warm for {t}°', 'Right warmth for {t}°',
+    'handles rain', 'not waterproof', 'blocks wind', '{c} pairs well with your {n}'].forEach(add);
+  return [...out];
 }

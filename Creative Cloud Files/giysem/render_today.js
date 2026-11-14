@@ -5,8 +5,8 @@ import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchFor
 import { renderLandmark } from './landmarks.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows } from './visuals.js';
 
-// Turkish writes the percent sign first (%20); other languages after (20%).
-const pct = (n, lang) => (lang === 'tr' ? `%${n}` : `${n}%`);
+// Turkish writes the percent sign first (%20); German and Spanish leave a space (20 %); others 20%.
+const pct = (n, lang) => (lang === 'tr' ? `%${n}` : lang === 'de' || lang === 'es' ? `${n} %` : `${n}%`);
 
 function cityRow(s) {
   const city = s.city;

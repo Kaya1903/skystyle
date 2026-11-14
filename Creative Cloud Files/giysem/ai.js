@@ -1,8 +1,8 @@
-export async function analyzePhoto(dataUrl) {
+export async function analyzePhoto(dataUrl, lang = 'tr') {
   const res = await fetch('/api/analyze-photo', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: dataUrl }),
+    body: JSON.stringify({ image: dataUrl, lang }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

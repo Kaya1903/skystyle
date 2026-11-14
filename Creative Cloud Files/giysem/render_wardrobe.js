@@ -373,7 +373,7 @@ export function attachEditorHandlers(root) {
       rerenderEditor(root);
       const colorsPromise = photoColors(dataUrl);
       try {
-        const [suggestion, measured] = await Promise.all([analyzePhoto(dataUrl), colorsPromise]);
+        const [suggestion, measured] = await Promise.all([analyzePhoto(dataUrl, state.lang), colorsPromise]);
         // Bail out if the user switched items or closed the sheet while we were waiting.
         if (draftItem !== itemAtSelection) return;
         if (CATEGORIES.includes(suggestion.category)) draftItem.category = suggestion.category;

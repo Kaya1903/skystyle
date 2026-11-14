@@ -30,6 +30,7 @@ const COLOR_NAMES = {
   es: { siyah: 'Negro', beyaz: 'Blanco', gri: 'Gris', lacivert: 'Azul marino', bej: 'Beige', kahve: 'Marrón', denim: 'Denim', haki: 'Caqui', yesil: 'Verde', mavi: 'Azul', kirmizi: 'Rojo', bordo: 'Burdeos', pembe: 'Rosa', mor: 'Morado', sari: 'Amarillo', turuncu: 'Naranja' },
   pl: { siyah: 'Czarny', beyaz: 'Biały', gri: 'Szary', lacivert: 'Granatowy', bej: 'Beżowy', kahve: 'Brązowy', denim: 'Denim', haki: 'Khaki', yesil: 'Zielony', mavi: 'Niebieski', kirmizi: 'Czerwony', bordo: 'Bordowy', pembe: 'Różowy', mor: 'Fioletowy', sari: 'Żółty', turuncu: 'Pomarańczowy' },
   ar: { siyah: 'أسود', beyaz: 'أبيض', gri: 'رمادي', lacivert: 'كحلي', bej: 'بيج', kahve: 'بني', denim: 'دنيم', haki: 'كاكي', yesil: 'أخضر', mavi: 'أزرق', kirmizi: 'أحمر', bordo: 'عنابي', pembe: 'وردي', mor: 'بنفسجي', sari: 'أصفر', turuncu: 'برتقالي' },
+  de: { siyah: 'Schwarz', beyaz: 'Weiß', gri: 'Grau', lacivert: 'Marineblau', bej: 'Beige', kahve: 'Braun', denim: 'Denim', haki: 'Khaki', yesil: 'Grün', mavi: 'Blau', kirmizi: 'Rot', bordo: 'Bordeaux', pembe: 'Rosa', mor: 'Lila', sari: 'Gelb', turuncu: 'Orange' },
 };
 
 export function colorName(key, lang) {
