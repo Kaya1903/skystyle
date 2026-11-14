@@ -145,6 +145,8 @@ function ensureDraft(state) {
       art: null,
       details: {},
       photo: null,
+      // New pieces default to the gender the user is looking at.
+      gender: ['kadin', 'erkek'].includes(state.gender) ? state.gender : 'unisex',
       __new: true,
     };
     draftAiState = null;
@@ -194,6 +196,13 @@ export function renderEditorSheet(state) {
                 <span>${catLabel(cat, lang)}</span>
               </button>
             `).join('')}
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">${t(lang, 'field_for')}</label>
+          <div class="chip-row pattern-row">
+            ${['unisex', 'kadin', 'erkek'].map(g => `<button type="button" class="chip ${(item.gender || 'unisex') === g ? 'active' : ''}" data-item-gender="${g}">${t(lang, 'gender_' + g)}</button>`).join('')}
           </div>
         </div>
 
@@ -284,6 +293,13 @@ export function attachEditorHandlers(root) {
     btn.addEventListener('click', () => {
       draftItem.category = btn.dataset.cat;
       if (!(STYLE_OPTIONS[draftItem.category] || []).includes(draftItem.art)) draftItem.art = null;
+      rerenderEditor(root);
+    });
+  });
+
+  root.querySelectorAll('[data-item-gender]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      draftItem.gender = btn.dataset.itemGender;
       rerenderEditor(root);
     });
   });
@@ -436,6 +452,7 @@ function applySuggestion(item, sug, measured) {
   if (typeof sug.rainOk === 'boolean') item.rainOk = sug.rainOk;
   if (typeof sug.windproof === 'boolean') item.windproof = sug.windproof;
   if (sug.name && !item.name.trim()) item.name = sug.name;
+  if (['unisex', 'kadin', 'erkek'].includes(sug.gender)) item.gender = sug.gender;
   if ((STYLE_OPTIONS[item.category] || []).includes(sug.style)) item.art = sug.style;
   else if (!(STYLE_OPTIONS[item.category] || []).includes(item.art)) item.art = null;
   if (PATTERN_TYPES.includes(sug.patternType)) item.patternType = sug.patternType;

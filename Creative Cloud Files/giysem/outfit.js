@@ -336,8 +336,38 @@ const WARM_BANDS = ['ilik', 'sicak', 'cok_sicak'];
 
 // Suggested pieces are drawn in a women's or men's cut when a gender is chosen.
 const GENDER_ART = {
-  kadin: { shirt: 'blouse', shortshirt: 'blouse', shorts: 'minishorts', sunglasses: 'catglasses' },
-  erkek: { blouse: 'shirt', minishorts: 'shorts', catglasses: 'sunglasses', leggings: 'trousers' },
+  kadin: { shirt: 'blouse', shortshirt: 'blouse', shorts: 'minishorts', sunglasses: 'catglasses',
+    coat: 'wrapcoat', puffer: 'pufferw', parka: 'pufferw', jacket: 'cropjacket', blazer: 'blazerw' },
+  erkek: { blouse: 'shirt', minishorts: 'shorts', catglasses: 'sunglasses', leggings: 'trousers',
+    wrapcoat: 'coat', pufferw: 'puffer', cropjacket: 'jacket', blazerw: 'blazer' },
+};
+// Suggested pieces get colors typical for each wardrobe, rotating by day.
+const GENDER_PALETTE = {
+  kadin: {
+    wrapcoat: ['#c8a27a', '#7a2e3b', '#efe6da', '#9c6b5a'], pufferw: ['#efe6da', '#c9a9a6', '#2f3e5e', '#8b5a3c'],
+    cropjacket: ['#d8b4a0', '#f0e2d0', '#6b4a7a', '#2b2b33'], blazerw: ['#e9dccb', '#2b2b33', '#b7473b'],
+    trench: ['#cdb07c', '#efe6da'], bomber: ['#c9a9a6', '#4e5a3a'], windbreaker: ['#c9a9a6', '#2f8f8a'],
+    sweater: ['#e8c4c4', '#efe6da', '#b9a3c9', '#c94f4f'], cardigan: ['#e8d5c4', '#f2c6cf', '#b9a3c9'],
+    fleece: ['#efe6da', '#c9a9a6'], hoodie: ['#c9a9a6', '#b9a3c9', '#efe6da'], sweatshirt: ['#e8c4c4', '#c8d6e8'],
+    longsleeve: ['#f3e6e8', '#e6ddcb'], tee: ['#f6efe6', '#f4d6dc'], tank: ['#f6efe6', '#f4d6dc'],
+    blouse: ['#f4d6dc', '#f6efe6', '#cfe0ee'], dress: ['#7a2e3b', '#2b2b33', '#b9a3c9', '#e79bb3'], skirt: ['#6b4a7a', '#c8a27a', '#2b2b33'],
+    trousers: ['#efe6da', '#2b2b33', '#c8a27a'], chinos: ['#e9dccb', '#c8b48f'], jeans: ['#8fb3d9', '#3f6496'],
+    leggings: ['#2b2b33', '#4a3a4a'], minishorts: ['#8fb3d9', '#efe6da'],
+    boot: ['#6b4a32', '#2b2b33', '#c8a27a'], sneaker: ['#f4f2ee', '#f2c6cf'], loafer: ['#7a2e3b', '#2b2b33'], sandal: ['#c8a27a', '#e9dccb'],
+    beanie: ['#efe6da', '#c9a9a6', '#c94f4f'], scarf: ['#c9a9a6', '#efe6da', '#7a2e3b'],
+  },
+  erkek: {
+    coat: ['#2f3e5e', '#3a3f4b', '#4e5a3a', '#6b4a32'], puffer: ['#23262d', '#2f3e5e', '#4e5a3a'], parka: ['#4e5a3a', '#2f3e5e', '#23262d'],
+    jacket: ['#3f5f86', '#3a3f4b', '#6b4a32'], blazer: ['#2f3e5e', '#3a3f4b', '#6b5a48'], trench: ['#b89a68', '#3a3f4b'],
+    bomber: ['#4e5a3a', '#23262d'], windbreaker: ['#2f3e5e', '#2f8f8a'],
+    sweater: ['#2f3e5e', '#6b6f73', '#4e5a3a', '#7a2e3b'], cardigan: ['#6b6f73', '#3a3f4b'], fleece: ['#4e5a3a', '#3a3f4b'],
+    hoodie: ['#5b6b7d', '#3a3f4b', '#4e5a3a'], sweatshirt: ['#8a9bb0', '#6b6f73'], longsleeve: ['#dfe3e8', '#3a3f4b'],
+    shirt: ['#d7e6f5', '#f2f2f2', '#9fb4c9'], shortshirt: ['#dbe8f2', '#e9dccb', '#4e5a3a'], polo: ['#2f3e5e', '#2f6f5e', '#f2f2f2'],
+    tee: ['#f2f2f2', '#2f3e5e', '#6b6f73'], tank: ['#f2f2f2', '#3a3f4b'],
+    trousers: ['#2f3e5e', '#3a3f4b', '#6b6f73'], chinos: ['#c8b48f', '#4e5a3a'], jeans: ['#3f6496', '#2a3a5a'], shorts: ['#c8b48f', '#2f3e5e', '#4e5a3a'],
+    boot: ['#6b4a32', '#23262d'], sneaker: ['#f4f2ee', '#3a3f4b'], loafer: ['#4a3426', '#23262d'], sandal: ['#6b4a32'],
+    beanie: ['#3a3f4b', '#4e5a3a', '#2f3e5e'], scarf: ['#3a3f4b', '#6b6f73'],
+  },
 };
 const GLASSES = ['sunglasses', 'catglasses'];
 
@@ -364,8 +394,8 @@ function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, a
   if (!pool.length) pool = pool0.filter(o => o.vibe === 'casual');
   if (!pool.length) pool = pool0;
   // Women's and men's picks lean on their own pieces: gendered options count
-  // twice, so the two lists rarely land on the same neutral suggestion.
-  if (genderKey !== 'unisex') pool = pool.flatMap(o => (o.gendered ? [o, o] : [o]));
+  // three times, so the two lists rarely land on the same neutral suggestion.
+  if (genderKey !== 'unisex') pool = pool.flatMap(o => (o.gendered ? [o, o, o] : [o]));
   // The pick walks forward one step per day and one step per 2°, so -1° and
   // -23° (same band) or two neighbouring days don't give the same outfit.
   const dayNum = Math.floor(Date.parse(seed) / 86400000);
@@ -385,7 +415,7 @@ function coldLevel(temp) {
   return 0;
 }
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null }, wardrobeItems = [], locks = {}) {
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false }, allItems = [], locks = {}) {
   const language = lang === 'en' ? 'en' : 'tr';
   const X = EXTRAS[language];
   // `comfort` shifts the band for people who run cold (-3) or warm (+3); the
@@ -397,6 +427,10 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const I = INTENSITY[language];
   const genderKey = ['unisex', 'kadin', 'erkek'].includes(gender) ? gender : 'unisex';
   const rows = clone(BASE[language][bandKey][genderKey]);
+  // Only pieces meant for this gender (or for anyone) are used from the wardrobe.
+  const wardrobeItems = genderKey === 'unisex' ? allItems
+    : allItems.filter(i => !i.gender || i.gender === 'unisex' || i.gender === genderKey);
+  const onlyMine = wardrobeOnly && wardrobeItems.length > 0;
 
   // Below -3° precipitation falls as snow: snow boots instead of an umbrella.
   const snowFall = rainMax >= 50 && feelsLike <= -3;
@@ -421,11 +455,14 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const ctx = { feelsLike, wind, rainMax };
   const needsRain = rainy || snowy;
   const needsWind = wind >= 20;
-  const pickOpts = { bandKey, needsRain, needsWind, allowArts: { yanina: accKinds || ['__none__'] } };
+  const pickOpts = { bandKey, needsRain, needsWind, allowArts: { yanina: accKinds || ['__none__'] }, relaxed: onlyMine };
   const optional = (OPTIONAL_SLOTS[bandKey] || []).filter(k => !rows[k]);
   const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k] || optional.includes(k)), pickOpts, locks);
   for (const k of optional) if (picks[k]) rows[k] = { item: picks[k].name, reason: '' };
   const pickedItems = Object.values(picks);
+  // Wardrobe-only: drop every suggested slot; what's missing or off becomes a tip.
+  const tips = onlyMine ? wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language }) : [];
+  if (onlyMine) for (const k of SLOT_ORDER) if (!picks[k]) delete rows[k];
 
   // Today's wording for every suggested slot (style + date), avoiding repeats of owned pieces.
   const ownedUpperArts = UPPER.filter(k => picks[k]).map(k => itemLook(picks[k]).art);
@@ -447,7 +484,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   if (rows.ustune && !picks.ustune) {
     const midArt = garmentVariant('ustune', rows.ustune.item, BAND_WARMTH[bandKey]);
     if (ownedUpperArts.includes(midArt)) delete rows.ustune;
-    else if (bandKey === 'dondurucu' && picks.dis && (picks.dis.warmth || 3) >= 5) rows.ustune = { item: X.soft_mid[0], reason: () => X.soft_mid[1] };
+    else if (bandKey === 'dondurucu' && picks.dis && (picks.dis.warmth || 3) >= 5) { const sm = X['soft_mid_' + genderKey] || X.soft_mid; rows.ustune = { item: sm[0], reason: () => sm[1] }; }
   }
 
   // ---- Extra protection for very cold and very hot days ----
@@ -455,7 +492,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     const windNote = fixed.has('dis') && typeof rows.dis.reason === 'function' ? rows.dis.reason(ctx) : '';
     rows.dis = { item: I.deep_coat[0], reason: () => I.deep_coat[1] + (windNote ? `. ${windNote}` : '') };
   }
-  if (!picks.yanina && !rainy) {
+  if (!picks.yanina && !rainy && !onlyMine) {
     if (cold >= 3) rows.yanina = { item: I.l3_acc[0], reason: () => I.l3_acc[1] };
     else if (cold >= 2) rows.yanina = { item: I.l2_acc[0], reason: () => I.l2_acc[1] };
     else if (extremeHeat) rows.yanina = { item: I.heat_acc[0], reason: () => I.heat_acc[1] };
@@ -485,7 +522,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
       patterned = match.pattern === 'desenli';
       itemId = match.id;
       options = slotOptionIds(wardrobeItems, key, pickOpts);
-      reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems);
+      reason = wardrobeReason(match, ctx, needsRain, needsWind, key, language, pickedItems, BAND_WARMTH[bandKey]);
       // Bare legs in the cold: remind about tights under the user's own skirt/shorts/dress.
       if (key === 'alt' && ['skirt', 'shorts', 'minishorts', 'dress'].includes(itemLook(match).art)) {
         if (COLD_BANDS.includes(bandKey)) reason += X.tights_cold;
@@ -499,6 +536,10 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     // Wardrobe pieces draw from their own stored look; suggestions guess from the text.
     let look = match ? itemLook(match) : { art: garmentVariant(key, item, BAND_WARMTH[bandKey]), color: null, color2: null, patternType: 'solid', details: {} };
     if (!match && GENDER_ART[genderKey] && GENDER_ART[genderKey][look.art]) look.art = GENDER_ART[genderKey][look.art];
+    if (!match && GENDER_PALETTE[genderKey] && GENDER_PALETTE[genderKey][look.art]) {
+      const pal = GENDER_PALETTE[genderKey][look.art];
+      look.color = pal[hashStr(`${seed}|${key}|${look.art}`) % pal.length];
+    }
     // Glasses follow the weather: light frame and warm tint in the heat, dark otherwise.
     if (GLASSES.includes(look.art)) look = { ...look, lens: WARM_BANDS.includes(bandKey) && bandKey !== 'ilik' ? 'light' : 'dark' };
     if (match) color = look.color;
@@ -507,7 +548,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   }
 
   const labelKey = cold >= 2 ? 'extreme_cold' : cold === 1 ? 'very_cold' : extremeHeat ? 'extreme_hot' : bandKey;
-  return { bandKey, intensity: labelKey, bandLabel: bandLabel(labelKey, language), rows: output };
+  return { bandKey, intensity: labelKey, bandLabel: bandLabel(labelKey, language), rows: output, tips, wardrobeOnly: onlyMine };
 }
 
 // For an accent-colored piece, the other picked piece it goes best with (if any).
@@ -522,18 +563,88 @@ function colorPartner(item, others) {
   return best;
 }
 
-function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked = []) {
+function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked = [], desired = 3) {
   const partner = colorPartner(item, picked);
+  const diff = (item.warmth || 3) - desired;
+  const isAcc = slotKey === 'yanina';
   if (lang === 'en') {
-    const bits = [`right warmth for ${ctx.feelsLike}° feels-like`];
-    if (needsRain && slotKey === 'ayak' && item.rainOk) bits.push('handles rain');
+    const bits = [isAcc ? 'Goes with today' : diff < -1 ? `A bit thin for ${ctx.feelsLike}°` : diff > 1 ? `A bit warm for ${ctx.feelsLike}°` : `Right warmth for ${ctx.feelsLike}°`];
+    if (needsRain && slotKey === 'ayak') bits.push(item.rainOk ? 'handles rain' : 'not waterproof');
     if (needsWind && slotKey === 'dis' && item.windproof) bits.push('blocks wind');
     if (partner) bits.push(`${colorName(item.color, 'en').toLowerCase()} pairs well with your ${partner.name}`);
     return bits.join(', ') + '.';
   }
-  const bits = [`Hissedilen ${ctx.feelsLike}° için kalınlığı tam`];
-  if (needsRain && slotKey === 'ayak' && item.rainOk) bits.push('yağmura dayanıklı');
+  const bits = [isAcc ? 'Bugüne uygun' : diff < -1 ? `Hissedilen ${ctx.feelsLike}° için biraz ince` : diff > 1 ? `Hissedilen ${ctx.feelsLike}° için biraz kalın` : `Hissedilen ${ctx.feelsLike}° için kalınlığı tam`];
+  if (needsRain && slotKey === 'ayak') bits.push(item.rainOk ? 'yağmura dayanıklı' : 'su geçirmez değil');
   if (needsWind && slotKey === 'dis' && item.windproof) bits.push('rüzgar geçirmiyor');
   if (partner) bits.push(`${colorName(item.color, 'tr').toLocaleLowerCase('tr')} rengi ${partner.name} ile iyi gider`);
   return bits.join(', ') + '.';
+}
+
+// Advice for an outfit made only from the user's own clothes: what to add,
+// what may be too warm, what won't handle the weather.
+const TIP_TEXT = {
+  tr: {
+    add_layer: 'Bu hava için üstün ince kalıyor. Üstüne bir hırka ya da kalın bir kat daha al.',
+    add_coat: 'Dolabında bu soğuğa uygun bir mont yok. Dışarıda uzun kalacaksan kalın bir mont şart.',
+    add_mid: 'Montunun altına bir hırka ya da polar eklersen daha sıcak olur.',
+    thin_top: '{n} bu soğuk için ince. Altına termal ya da üstüne bir kazak giy.',
+    thin_bottom: 'Altın bu hava için ince. Altına tayt ya da termal giyebilirsin.',
+    no_bottom: 'Dolabında bu havaya uygun bir alt yok.',
+    no_shoe: 'Dolabında bu havaya uygun bir ayakkabı yok.',
+    thin_shoe: 'Ayakkabın bu soğuk için ince, kalın çorap giy.',
+    open_shoe: '{n} bu soğukta olmaz, kapalı bir ayakkabı ya da bot giy.',
+    too_warm: '{n} bugün için kalın, terletebilir. Daha ince bir şey varsa onu seç.',
+    wet_shoe: '{n} su geçirmez değil, yağmurda ıslanabilir.',
+    wind: '{n} rüzgarı kesmiyor, altına bir kat daha al.',
+    umbrella: 'Yağmur bekleniyor, yanına bir şemsiye al.',
+    cold_acc: 'Bere, atkı ve eldiven de al.',
+    all_good: 'Dolabındakiler bu havaya çok uygun, ek bir şeye gerek yok.',
+  },
+  en: {
+    add_layer: 'Your top is thin for this weather. Add a cardigan or another warm layer on top.',
+    add_coat: "There's no coat in your wardrobe for this cold. If you'll be out long, you need a warm one.",
+    add_mid: "A cardigan or fleece under your coat would keep you warmer.",
+    thin_top: '{n} is thin for this cold. Wear thermals under it or a sweater over it.',
+    thin_bottom: 'Your bottoms are thin for this weather. Wear leggings or thermals underneath.',
+    no_bottom: 'Nothing in your wardrobe fits as bottoms for this weather.',
+    no_shoe: 'No shoes in your wardrobe fit this weather.',
+    thin_shoe: 'Your shoes are light for this cold, wear thick socks.',
+    open_shoe: "{n} won't work in this cold, wear closed shoes or boots.",
+    too_warm: '{n} is warm for today and may make you sweat. Pick something thinner if you have it.',
+    wet_shoe: "{n} isn't waterproof and may get wet in the rain.",
+    wind: "{n} doesn't block the wind, add a layer underneath.",
+    umbrella: 'Rain is expected, take an umbrella.',
+    cold_acc: 'Take a beanie, scarf and gloves too.',
+    all_good: 'Your clothes suit this weather well, nothing else needed.',
+  },
+};
+
+function wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language }) {
+  const T = TIP_TEXT[language] || TIP_TEXT.tr;
+  const desired = BAND_WARMTH[bandKey];
+  const w = it => (it ? it.warmth || 3 : 0);
+  const tips = [];
+  const cold = COLD_BANDS.includes(bandKey);
+  const uppers = UPPER.map(k => picks[k]).filter(Boolean);
+  const warmestUpper = Math.max(0, ...uppers.map(w));
+  if (cold && rows.dis && !picks.dis) tips.push(T.add_coat);
+  else if (uppers.length && warmestUpper < desired - 1) tips.push(T.add_layer);
+  else if (cold && picks.dis && !picks.ustune && w(picks.dis) < desired) tips.push(T.add_mid);
+  if (cold && picks.ust && !picks.ustune && w(picks.ust) < desired - 2 && warmestUpper >= desired - 1) tips.push(T.thin_top.replace('{n}', picks.ust.name));
+  if (rows.alt && !picks.alt) tips.push(T.no_bottom);
+  else if (picks.alt && w(picks.alt) < desired - 1) tips.push(T.thin_bottom);
+  if (rows.ayak && !picks.ayak) tips.push(T.no_shoe);
+  else if (picks.ayak && (cold || bandKey === 'serin') && itemLook(picks.ayak).art === 'sandal') tips.push(T.open_shoe.replace('{n}', picks.ayak.name));
+  else if (picks.ayak && cold && w(picks.ayak) < desired - 1) tips.push(T.thin_shoe);
+  for (const k of SLOT_ORDER) {
+    const it = picks[k];
+    if (it && k !== 'yanina' && w(it) > desired + 1) tips.push(T.too_warm.replace('{n}', it.name));
+  }
+  if (needsRain && picks.ayak && !picks.ayak.rainOk) tips.push(T.wet_shoe.replace('{n}', picks.ayak.name));
+  if (needsWind && !WARM_BANDS.includes(bandKey) && picks.dis && !picks.dis.windproof) tips.push(T.wind.replace('{n}', picks.dis.name));
+  if (needsRain && rows.yanina && !picks.yanina && bandKey !== 'dondurucu') tips.push(T.umbrella);
+  if (bandKey === 'dondurucu' && !picks.yanina) tips.push(T.cold_acc);
+  if (!tips.length) tips.push(T.all_good);
+  return tips;
 }

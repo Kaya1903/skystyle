@@ -15,7 +15,8 @@ const DEFAULT_GARMENT_COLOR = {
   sweatshirt: '#8a9bb0', hoodie: '#5b6b7d', polo: '#2f6f5e', tank: '#f2f2f2',
   vest: '#2f3e5e', bomber: '#4e5a3a', blazer: '#3a3f4b',
   bag: '#8b5a3c', beanie: '#c94f4f', cap: '#2f3e5e', scarf: '#b7473b',
-  blouse: '#f4d6dc', shortshirt: '#dbe8f2', leggings: '#2b2b33', minishorts: '#8fb3d9', sunglasses: '#23262d', catglasses: '#5a2433',
+  blouse: '#f4d6dc', shortshirt: '#dbe8f2',
+  wrapcoat: '#c8a27a', pufferw: '#efe6da', cropjacket: '#d8b4a0', blazerw: '#e9dccb', parka: '#4e5a3a', leggings: '#2b2b33', minishorts: '#8fb3d9', sunglasses: '#23262d', catglasses: '#5a2433',
 };
 
 // What each wardrobe category draws when nothing more specific is known.
@@ -49,6 +50,7 @@ let uid = 0;
 const LONG_TOP = 'M40 20 L20 30 L10 88 Q10 91 13 91 H23 Q26 91 26 88 L33 50 V102 Q33 105 36 105 H84 Q87 105 87 102 V50 L94 88 Q94 91 97 91 H107 Q110 91 110 88 L100 30 L80 20 C76 28 69 32 60 32 C51 32 44 28 40 20 Z';
 const LONG_COAT = 'M42 15 L21 26 L11 96 Q11 99 14 99 H26 Q29 99 29 96 L33 56 V112 Q33 115 36 115 H84 Q87 115 87 112 V56 L91 96 Q91 99 94 99 H106 Q109 99 109 96 L99 26 L78 15 C74 22 67 25 60 25 C53 25 46 22 42 15 Z';
 const SHORT_JACKET = 'M42 15 L21 26 L11 96 Q11 99 14 99 H26 Q29 99 29 96 L33 56 V100 Q33 103 36 103 H84 Q87 103 87 100 V56 L91 96 Q91 99 94 99 H106 Q109 99 109 96 L99 26 L78 15 C74 22 67 25 60 25 C53 25 46 22 42 15 Z';
+const WOMEN_COAT = 'M44 15 L24 26 L14 94 Q14 97 17 97 H28 Q31 97 31 94 L36 56 L40 66 Q34 90 30 114 Q30 117 33 117 H87 Q90 117 90 114 Q86 90 80 66 L84 56 L89 94 Q89 97 92 97 H103 Q106 97 106 94 L96 26 L76 15 C72 22 66 25 60 25 C54 25 48 22 44 15 Z';
 const SOLE = '<path d="M11 86 H111 V93 Q111 99 105 99 H17 Q11 99 11 93 Z" fill="{L}" stroke="{D}" stroke-width="2"/>';
 
 // Each drawing: main silhouette path + detail markup using {D} (darker) / {L} (lighter).
@@ -107,6 +109,33 @@ const GARMENTS = {
   trench: {
     body: LONG_COAT,
     detail: '<path d="M42 15 L48 46 L56 38 L60 25 Z M78 15 L72 46 L64 38 L60 25 Z" fill="{D}" opacity=".4"/><path d="M33 66 H87 V74 H33 Z" fill="{D}" opacity=".55"/><rect x="55" y="64.5" width="10" height="11" rx="1.5" fill="none" stroke="{L}" stroke-width="2"/><path d="M60 38 V115" stroke="{D}" stroke-width="2"/><circle cx="52" cy="52" r="2.2" fill="{D}"/><circle cx="68" cy="52" r="2.2" fill="{D}"/><circle cx="52" cy="88" r="2.2" fill="{D}"/><circle cx="68" cy="88" r="2.2" fill="{D}"/>',
+  },
+  // Women's long wrap coat: nipped waist, tie belt, wide lapels, flared hem.
+  wrapcoat: {
+    body: WOMEN_COAT,
+    detail: '<path d="M44 15 L52 44 L46 48 L60 66 L60 25 Z M76 15 L68 44 L74 48 L60 66 L60 25 Z" fill="{D}" opacity=".4"/><path d="M60 66 L69 116" stroke="{D}" stroke-width="2"/><path d="M39.5 61 Q60 65 80.5 61 L81.5 69 Q60 73 38.5 69 Z" fill="{D}" opacity=".65"/><path d="M63 67 Q61 76 57 86 M66 67 Q68 76 72 84" fill="none" stroke="{D}" stroke-width="3" stroke-linecap="round" opacity=".75"/><path d="M15 88 H30 M90 88 H105" stroke="{D}" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>',
+  },
+  // Women's long puffer: cinched waist, fur-trimmed hood.
+  pufferw: {
+    back: 'M42 22 C38 0 82 0 78 22 Z',
+    body: WOMEN_COAT,
+    detail: '<path d="M40 22 C36 2 84 2 80 22" fill="none" stroke="{L}" stroke-width="7" stroke-linecap="round" stroke-dasharray="1.5 5"/><path d="M60 25 V116" stroke="{D}" stroke-width="2.5"/><path d="M37 40 Q60 45 83 40 M38 52 Q60 57 82 52 M37 82 Q60 87 83 82 M34 98 Q60 103 86 98" fill="none" stroke="{D}" stroke-width="2.2" opacity=".5"/><path d="M39.5 62 Q60 66 80.5 62 L81 68 Q60 72 39 68 Z" fill="{D}" opacity=".6"/><rect x="55" y="62" width="10" height="8" rx="1.5" fill="none" stroke="{L}" stroke-width="2"/><path d="M22 46 L33 48 M19 68 L31 70 M98 48 L87 46 M101 70 L89 68" stroke="{D}" stroke-width="2" opacity=".45"/>',
+  },
+  // Women's cropped jacket: fitted, ends at the waist, off-centre zip, wide collar.
+  cropjacket: {
+    body: 'M44 15 L24 26 L14 94 Q14 97 17 97 H28 Q31 97 31 94 L36 54 V78 Q36 81 39 81 H81 Q84 81 84 78 V54 L89 94 Q89 97 92 97 H103 Q106 97 106 94 L96 26 L76 15 C72 22 66 25 60 25 C54 25 48 22 44 15 Z',
+    detail: '<path d="M44 15 L50 36 L60 28 Z M76 15 L68 42 L62 29 Z" fill="{D}" opacity=".45"/><path d="M62 29 L69 81" stroke="{D}" stroke-width="2.2"/><rect x="65.4" y="34" width="3.4" height="7" rx="1" fill="{L}" stroke="{D}" stroke-width="1"/><path d="M40 62 L50 58 M80 54 L74 56" stroke="{D}" stroke-width="2.4" stroke-linecap="round"/><path d="M36 74 H84 V81 H36 Z" fill="{D}" opacity=".3"/><path d="M15 88 H30 M90 88 H105" stroke="{D}" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>',
+  },
+  // Women's longline blazer: one button at a nipped waist, deep lapels.
+  blazerw: {
+    body: 'M44 15 L24 26 L14 94 Q14 97 17 97 H28 Q31 97 31 94 L36 56 L39 68 Q36 88 34 106 Q34 109 37 109 H83 Q86 109 86 106 Q84 88 81 68 L84 56 L89 94 Q89 97 92 97 H103 Q106 97 106 94 L96 26 L76 15 C72 22 66 25 60 25 C54 25 48 22 44 15 Z',
+    detail: '<path d="M44 15 L52 40 L47 44 L60 70 L60 25 Z M76 15 L68 40 L73 44 L60 70 L60 25 Z" fill="{D}" opacity=".4"/><path d="M60 74 L58 109" stroke="{D}" stroke-width="1.6" opacity=".6"/><circle cx="60" cy="74" r="2.8" fill="{D}"/><path d="M40 90 H52 M68 90 H80" stroke="{D}" stroke-width="3" stroke-linecap="round" opacity=".6"/><path d="M15 88 H30 M90 88 H105" stroke="{D}" stroke-width="2" stroke-linecap="round" opacity=".45"/>',
+  },
+  // Men's parka: long and boxy, fur-trimmed hood, storm flap, four flap pockets, drawcord waist.
+  parka: {
+    back: 'M42 20 C36 -2 84 -2 78 20 Z',
+    body: LONG_COAT,
+    detail: '<path d="M42 20 C40 2 80 2 78 20" fill="none" stroke="{L}" stroke-width="6" stroke-linecap="round" stroke-dasharray="1.5 5"/><path d="M57 25 H63 V115 H57 Z" fill="{D}" opacity=".35"/><circle cx="60" cy="40" r="1.6" fill="{L}"/><circle cx="60" cy="60" r="1.6" fill="{L}"/><circle cx="60" cy="80" r="1.6" fill="{L}"/><circle cx="60" cy="100" r="1.6" fill="{L}"/><path d="M38 44 H52 V58 H38 Z M68 44 H82 V58 H68 Z M37 84 H53 V102 H37 Z M67 84 H83 V102 H67 Z" fill="none" stroke="{D}" stroke-width="1.8"/><path d="M38 44 H52 V49 H38 Z M68 44 H82 V49 H68 Z M37 84 H53 V90 H37 Z M67 84 H83 V90 H67 Z" fill="{D}" opacity=".35"/><path d="M33 72 H87" stroke="{D}" stroke-width="2" stroke-dasharray="4 3"/>',
   },
   windbreaker: {
     body: SHORT_JACKET,
@@ -249,9 +278,10 @@ const KEYWORDS = {
     ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula']],
   ],
   dis: [
+    ['parka', ['parka']],
     ['puffer', ['şişme', 'puf', 'puffer', 'down', 'kaz tüyü', 'dizüstü', 'knee-length', 'plumífero', 'puchowa']],
     ['trench', ['trençkot', 'trenchcoat', 'trench', 'gabardina', 'trencz']],
-    ['coat', ['kaban', 'palto', 'parka', 'coat', 'abrigo', 'płaszcz', 'معطف']],
+    ['coat', ['kaban', 'palto', 'coat', 'abrigo', 'płaszcz', 'معطف']],
     ['bomber', ['bomber']],
     ['blazer', ['blazer', 'americana', 'marynarka', 'takım ceket']],
     ['vest', ['şişme yelek', 'yelek', 'vest', 'gilet', 'chaleco', 'kamizelka']],
@@ -318,7 +348,7 @@ export function garmentVariant(category, text = '', warmth = 3) {
 export const STYLE_OPTIONS = {
   ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'shortshirt', 'blouse', 'polo', 'tank'],
   ustune: ['cardigan', 'fleece', 'hoodie', 'sweatshirt', 'vest', 'shirt'],
-  dis: ['jacket', 'puffer', 'coat', 'trench', 'windbreaker', 'bomber', 'blazer', 'vest'],
+  dis: ['jacket', 'puffer', 'coat', 'trench', 'windbreaker', 'bomber', 'blazer', 'vest', 'parka', 'wrapcoat', 'pufferw', 'cropjacket', 'blazerw'],
   alt: ['trousers', 'chinos', 'jeans', 'leggings', 'shorts', 'minishorts', 'skirt', 'dress'],
   ayak: ['sneaker', 'boot', 'sandal', 'loafer'],
   yanina: ['umbrella', 'bag', 'beanie', 'cap', 'scarf', 'sunglasses', 'catglasses'],
@@ -345,6 +375,11 @@ const ZONES = {
   puffer: { neck: 25, shoulder: 15, bottom: 114, chest: [72, 54], pocket: 'patch', hasHood: true },
   coat: { neck: 40, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch' },
   trench: { neck: 38, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch' },
+  parka: { neck: 25, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch', hasHood: true },
+  wrapcoat: { neck: 50, shoulder: 15, bottom: 116, chest: [74, 50], pocket: 'patch', open: true },
+  pufferw: { neck: 25, shoulder: 15, bottom: 116, chest: [72, 48], pocket: 'patch', hasHood: true },
+  cropjacket: { neck: 30, shoulder: 15, bottom: 80, chest: [74, 46], pocket: 'patch' },
+  blazerw: { neck: 70, shoulder: 15, bottom: 108, chest: [74, 50], pocket: 'patch', open: true },
 };
 
 const LABELS = {
@@ -352,12 +387,12 @@ const LABELS = {
     cardigan: 'Hırka', fleece: 'Polar', vest: 'Yelek', jacket: 'Ceket', puffer: 'Şişme mont', coat: 'Kaban', trench: 'Trençkot', windbreaker: 'Rüzgarlık', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Pantolon', chinos: 'Chino', jeans: 'Kot', shorts: 'Şort', skirt: 'Etek', dress: 'Elbise',
     sneaker: 'Spor ayakkabı', boot: 'Bot', sandal: 'Sandalet', loafer: 'Makosen', umbrella: 'Şemsiye', bag: 'Çanta', beanie: 'Bere', cap: 'Şapka', scarf: 'Atkı',
-    shortshirt: 'Kısa kollu gömlek', blouse: 'Bluz', leggings: 'Tayt', minishorts: 'Kadın şortu', sunglasses: 'Güneş gözlüğü', catglasses: 'Kedi göz gözlük' },
+    shortshirt: 'Kısa kollu gömlek', blouse: 'Bluz', parka: 'Parka', wrapcoat: 'Kuşaklı kaban', pufferw: 'Uzun şişme mont', cropjacket: 'Kısa ceket', blazerw: 'Uzun blazer', leggings: 'Tayt', minishorts: 'Kadın şortu', sunglasses: 'Güneş gözlüğü', catglasses: 'Kedi göz gözlük' },
   en: { tee: 'T-shirt', longsleeve: 'Long sleeve', sweater: 'Sweater', sweatshirt: 'Sweatshirt', hoodie: 'Hoodie', shirt: 'Shirt', polo: 'Polo', tank: 'Tank top',
     cardigan: 'Cardigan', fleece: 'Fleece', vest: 'Vest', jacket: 'Jacket', puffer: 'Puffer', coat: 'Coat', trench: 'Trench coat', windbreaker: 'Windbreaker', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Trousers', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Skirt', dress: 'Dress',
     sneaker: 'Sneakers', boot: 'Boots', sandal: 'Sandals', loafer: 'Loafers', umbrella: 'Umbrella', bag: 'Bag', beanie: 'Beanie', cap: 'Cap', scarf: 'Scarf',
-    shortshirt: 'Short-sleeve shirt', blouse: 'Blouse', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses' },
+    shortshirt: 'Short-sleeve shirt', blouse: 'Blouse', parka: 'Parka', wrapcoat: 'Wrap coat', pufferw: 'Long puffer', cropjacket: 'Cropped jacket', blazerw: 'Long blazer', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses' },
 };
 export function styleLabel(name, lang) {
   return (LABELS[lang] || (lang === 'tr' ? LABELS.tr : LABELS.en))[name] || name;
@@ -462,9 +497,11 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
 const WAIST_TOP = { trousers: 14, chinos: 14, jeans: 14, leggings: 14, shorts: 26, minishorts: 24, skirt: 24 };
 // Bottom of the sole and horizontal middle of the shoe, per shoe drawing.
 const SHOE = {
-  sneaker: { sole: 99, mid: 61 }, boot: { sole: 103, mid: 64 },
-  sandal: { sole: 100, mid: 60 }, loafer: { sole: 99, mid: 61 },
+  sneaker: { sole: 99, mid: 61, top: 47 }, boot: { sole: 103, mid: 64, top: 20 },
+  sandal: { sole: 100, mid: 60, top: 62 }, loafer: { sole: 99, mid: 61, top: 63 },
 };
+// Lowest point of short bottoms inside their own drawing.
+const SHORT_HEM = { shorts: 89, minishorts: 70, skirt: 100, dress: 108 };
 const FIG = { s: 1.3, w: 220, y0: 10, waistInTop: 92, legLen: 93, legL: 41, legR: 79 };
 
 function placed(kind, look, x, y, scale) {
@@ -496,18 +533,29 @@ export function outfitFigure(parts) {
   const feetY = waistY + legLen * s;
   const layers = [];
 
-  // Without trousers there are no legs to draw, so bring the feet up a little
-  // instead of leaving shoes floating far below shorts, skirts and dresses.
-  const longBottom = parts.bottom && !['shorts', 'minishorts', 'skirt', 'dress'].includes(parts.bottom.art);
-  const footY = longBottom ? feetY : feetY - 20 * s;
+  // Trousers reach the feet, so shoes stand at the hem. With shorts, skirts,
+  // dresses (or no bottom at all) the shoes sit a short, fixed gap below the
+  // lowest hem in the drawing, so they never float far away from the outfit.
+  const longBottom = parts.bottom && !(parts.bottom.art in SHORT_HEM);
+  const sh = s * 0.5;
+  let soleY;
+  const meta = parts.feet ? (SHOE[parts.feet.art] || SHOE.sneaker) : SHOE.sneaker;
+  if (longBottom) {
+    soleY = feetY + 24 * s;
+  } else {
+    let hem = y0 + 104 * s;
+    if (parts.bottom) {
+      const art = parts.bottom.art;
+      hem = art === 'dress' ? y0 + (8 + SHORT_HEM.dress) * s : waistY + (SHORT_HEM[art] - (WAIST_TOP[art] ?? 14)) * s;
+    }
+    for (const up of [parts.outer, parts.inner]) {
+      if (up && ZONES[up.art]) hem = Math.max(hem, y0 + ZONES[up.art].bottom * s);
+    }
+    soleY = hem + 12 * s + (meta.sole - meta.top) * sh;
+  }
 
   // 1. Shoes, under the trouser hems. Both face right; the far one sits a little higher.
   if (parts.feet) {
-    const meta = SHOE[parts.feet.art] || SHOE.sneaker;
-    const sh = s * 0.5;
-    // Feet stand just below the hem so the whole shoe shows; a boot's shaft
-    // still tucks up under the trousers.
-    const soleY = footY + 24 * s;
     [[legL, -4 * s], [legR, 0]].forEach(([leg, lift]) => {
       const x = boxX + leg * s - meta.mid * sh;
       layers.push(placed(parts.feet.art, parts.feet, x, soleY - meta.sole * sh + lift, sh));
@@ -543,7 +591,7 @@ export function outfitFigure(parts) {
     else layers.push(`<g transform="rotate(10 ${w - 30} ${waistY})">${placed(a, parts.acc, w - 66, waistY - 52, 0.6)}</g>`);
   }
 
-  const height = Math.ceil(footY + 28 * s);
+  const height = Math.ceil(Math.max(soleY + 6, y0 + 120 * s));
   return `<svg class="figure" viewBox="0 0 ${w} ${height}" aria-hidden="true">${layers.join('')}</svg>`;
 }
 

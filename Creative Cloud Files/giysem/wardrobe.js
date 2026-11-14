@@ -228,7 +228,9 @@ const COLOR_WEIGHT = 0.7;
 // Viable wardrobe pieces for one slot, best weather fit first.
 // `allowArts` limits a slot to certain kinds of piece (e.g. only an umbrella in
 // the accessory slot on a rainy day, only a beanie or scarf when it's freezing).
-function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts }, limit = MAX_CANDIDATES_PER_SLOT) {
+// `relaxed` (wardrobe-only mode): any thickness is allowed and rain/wind only
+// lower the score, so the user always gets an outfit from their own clothes.
+function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed }, limit = MAX_CANDIDATES_PER_SLOT) {
   const desired = BAND_WARMTH[bandKey];
   const kinds = allowArts && allowArts[category];
   const isAcc = category === 'yanina';
@@ -237,9 +239,11 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
     .filter(i => !kinds || kinds.includes(itemLook(i).art))
     // require a close warmth match to avoid nonsensical picks (e.g. a sweatshirt for a heatwave);
     // accessories are chosen by kind instead
-    .filter(i => isAcc || Math.abs((i.warmth || 3) - desired) <= 1)
-    .filter(i => !(needsRain && category === 'ayak' && !i.rainOk))
-    .filter(i => !(needsWind && category === 'dis' && !i.windproof))
+    .filter(i => relaxed || isAcc || Math.abs((i.warmth || 3) - desired) <= 1)
+    // Even from the user's own clothes, a coat or extra layer that's far too warm is left out.
+    .filter(i => !relaxed || !['dis', 'ustune'].includes(category) || (i.warmth || 3) - desired <= 1)
+    .filter(i => relaxed || !(needsRain && category === 'ayak' && !i.rainOk))
+    .filter(i => relaxed || !(needsWind && category === 'dis' && !i.windproof))
     .map(i => {
       let score = isAcc ? 3 : 3 - Math.abs((i.warmth || 3) - desired);
       if (needsRain && category !== 'yanina') score += i.rainOk ? 2 : -3;
@@ -253,18 +257,18 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
 
 // Every wardrobe piece that suits this slot today, best weather fit first.
 // The swap button cycles through these.
-export function slotOptionIds(items, category, { bandKey, needsRain, needsWind, allowArts }) {
-  return slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts }, Infinity).map(c => c.item.id);
+export function slotOptionIds(items, category, { bandKey, needsRain, needsWind, allowArts, relaxed }) {
+  return slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed }, Infinity).map(c => c.item.id);
 }
 
 // Picks one wardrobe piece per slot (where a viable one exists) so that the
 // whole outfit fits the weather AND its colors/patterns work together.
 // `locks` pins a slot to a specific item id (from the swap button); the other
 // slots are then re-picked to go with it. Returns { [category]: item }.
-export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind, allowArts }, locks = {}) {
+export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind, allowArts, relaxed }, locks = {}) {
   const slots = categories
     .map(category => {
-      const opts = { category, bandKey, needsRain, needsWind, allowArts };
+      const opts = { category, bandKey, needsRain, needsWind, allowArts, relaxed };
       if (locks[category]) {
         const locked = slotCandidates(items, opts, Infinity).filter(c => c.item.id === locks[category]);
         if (locked.length) return { category, cands: locked };

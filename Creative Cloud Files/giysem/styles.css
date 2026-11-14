@@ -642,6 +642,23 @@ p { margin: 0; }
   transition: background 0.2s ease, transform 0.25s var(--spring);
 }
 .reset-chip:hover { background: #fff; }
+/* "Only my wardrobe" switch and its tips */
+.section-actions { flex-wrap: wrap; justify-content: flex-end; }
+.mine-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.16); color: var(--on-sky, #fff);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  font-size: 12px; font-weight: 700; padding: 7px 12px 7px 10px; border-radius: 999px; cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.25s var(--spring);
+}
+.mine-toggle svg { width: 13px; height: 13px; }
+.mine-toggle.on { background: var(--sunset); border-color: transparent; color: #fff; box-shadow: 0 8px 18px -8px rgba(255, 120, 60, 0.7); }
+.mine-toggle:active { transform: scale(0.94); }
+.mine-tips { padding: 14px 12px 12px; }
+.mine-tips ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+.mine-tips li { font-size: 13px; line-height: 1.45; color: var(--ink); }
+.mine-tips-text { font-size: 13px; color: var(--ink-soft); line-height: 1.45; }
 .reset-chip:active { transform: scale(0.94); }
 .swap-btn {
   position: absolute; top: 10px; right: 10px; z-index: 2;

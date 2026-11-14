@@ -855,6 +855,8 @@ export const EXTRAS = {
     tights_cold: ' Altına kalın tayt giy.',
     tights_cool: ' Altına ince tayt iyi gider.',
     soft_mid: ['İnce polar ya da hırka (isteğe bağlı)', 'Montun zaten çok sıcak, üşürsen araya ince bir kat ekle'],
+    soft_mid_kadin: ['İnce örgü hırka (isteğe bağlı)', 'Montun zaten çok sıcak, üşürsen altına ince bir hırka giy'],
+    soft_mid_erkek: ['İnce fermuarlı polar (isteğe bağlı)', 'Montun zaten çok sıcak, üşürsen altına ince bir polar giy'],
   },
   en: {
     cold_acc: ['Beanie, scarf and gloves', 'Most of your heat escapes from your head, neck and hands'],
@@ -866,5 +868,7 @@ export const EXTRAS = {
     tights_cold: ' Wear thick tights underneath.',
     tights_cool: ' Thin tights work well underneath.',
     soft_mid: ['Thin fleece or cardigan (optional)', 'Your coat is already very warm, add a thin layer only if you feel cold'],
+    soft_mid_kadin: ['Thin knit cardigan (optional)', 'Your coat is already very warm, add a thin cardigan only if you feel cold'],
+    soft_mid_erkek: ['Thin zip-up fleece (optional)', 'Your coat is already very warm, add a thin fleece only if you feel cold'],
   },
 };

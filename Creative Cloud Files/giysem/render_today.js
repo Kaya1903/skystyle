@@ -1,7 +1,7 @@
 import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { state, switchTab, setGender, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit } from './app.js';
+import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit } from './app.js';
 import { renderLandmark } from './landmarks.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows } from './visuals.js';
 
@@ -119,6 +119,7 @@ function outfitSection(outfit, kombinLabel, s) {
     <div class="section-head fade-slide" style="animation-delay:280ms">
       <h2 class="section-big">${kombinLabel}</h2>
       <div class="section-actions">
+        ${s.wardrobe && s.wardrobe.length ? `<button class="mine-toggle ${s.wardrobeOnly ? 'on' : ''}" data-action="toggle-mine" aria-pressed="${s.wardrobeOnly ? 'true' : 'false'}">${icons.hanger}<span>${t(s.lang, 'only_mine')}</span></button>` : ''}
         ${Object.keys(s.outfitLocks || {}).length ? `<button class="reset-chip" data-action="reset-outfit">${t(s.lang, 'reset_outfit')}</button>` : ''}
         <span class="band-chip">${outfit.bandLabel}</span>
       </div>
@@ -129,7 +130,7 @@ function outfitSection(outfit, kombinLabel, s) {
         ${outfit.rows.map((row, i) => `
           <article class="piece-row ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''}">
             <div class="piece-art" style="--float-delay:${i * -0.8}s">
-              ${garmentArt(row.art, row.color, row.look, 'flat')}
+              ${garmentArt(row.art, row.color || (row.look && row.look.color), row.look, 'flat')}
             </div>
             <div class="piece-body">
               <div class="look-slot">
@@ -145,9 +146,21 @@ function outfitSection(outfit, kombinLabel, s) {
               </button>` : ''}
           </article>
         `).join('')}
+        ${tipsList(outfit, s)}
       </div>
     </div>
   `;
+}
+
+// Wardrobe-only mode: what to add or watch out for with the user's own clothes.
+function tipsList(outfit, s) {
+  if (s.wardrobeOnly && !outfit.wardrobeOnly) return `<div class="mine-tips"><div class="mine-tips-text">${t(s.lang, 'only_mine_empty')}</div></div>`;
+  if (!outfit.wardrobeOnly || !outfit.tips || !outfit.tips.length) return '';
+  return `
+    <div class="mine-tips">
+      <div class="look-slot"><span>${t(s.lang, 'tips_title')}</span></div>
+      <ul>${outfit.tips.map(x => `<li>${x}</li>`).join('')}</ul>
+    </div>`;
 }
 
 function tipBox(tip, delay, s, dayOffset) {
@@ -246,6 +259,8 @@ export function attachTodayHandlers(root) {
   root.querySelectorAll('[data-swap]').forEach(btn => {
     btn.addEventListener('click', () => swapOutfitPiece(btn.dataset.swap));
   });
+  const mineBtn = root.querySelector('[data-action="toggle-mine"]');
+  if (mineBtn) mineBtn.addEventListener('click', () => setWardrobeOnly(!state.wardrobeOnly));
   const resetBtn = root.querySelector('[data-action="reset-outfit"]');
   if (resetBtn) resetBtn.addEventListener('click', resetOutfit);
   animateCounts(root);

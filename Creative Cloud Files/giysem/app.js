@@ -16,6 +16,7 @@ import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboa
 
 const CITY_KEY = 'giysem_city_v1';
 const LANG_KEY = 'giysem_lang_v1';
+const WARDROBE_ONLY_KEY = 'giysem_wardrobe_only_v1';
 const FALLBACK_CITY = 'Warsaw';
 
 const savedProfile = loadProfile();
@@ -28,7 +29,10 @@ export const state = {
   forecastRaw: null,
   loading: true,
   error: null,
-  wardrobe: loadWardrobe(),
+  // Pieces saved before the "who is it for" field belong to the profile's gender
+  // (saved on the next wardrobe write).
+  wardrobe: loadWardrobe().map(i => (i.gender ? i : { ...i, gender: savedProfile && ['kadin', 'erkek'].includes(savedProfile.gender) ? savedProfile.gender : 'unisex' })),
+  wardrobeOnly: (() => { try { return localStorage.getItem(WARDROBE_ONLY_KEY) === '1'; } catch { return false; } })(),
   wardrobeFilter: 'all',
   wardrobeSearch: '',
   citySheetOpen: false,
@@ -215,6 +219,15 @@ async function useFallbackCity() {
 export function switchTab(tab) {
   if (state.activeTab === tab) return;
   state.activeTab = tab;
+  render();
+}
+
+// Today's outfit made only from the user's own clothes (with tips), or the usual mix.
+export function setWardrobeOnly(on) {
+  state.wardrobeOnly = !!on;
+  state.outfitLocks = {};
+  try { localStorage.setItem(WARDROBE_ONLY_KEY, on ? '1' : '0'); } catch { /* private mode */ }
+  state.quietRender = true;
   render();
 }
 
@@ -516,7 +529,7 @@ function computeOutfitFor(dayOffset) {
   const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
   const outfit = generateOutfit(
     { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile),
-      vibe: state.profile ? state.profile.styleVibe : 'casual', seed: dayView.date, kind: dayView.hero.kind },
+      vibe: state.profile ? state.profile.styleVibe : 'casual', seed: dayView.date, kind: dayView.hero.kind, wardrobeOnly: state.wardrobeOnly },
     state.wardrobe,
     dayOffset === 0 ? state.outfitLocks : {}
   );
@@ -539,7 +552,7 @@ function computeWeekOutfits() {
   return week.map(day => {
     const outfit = generateOutfit(
       { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile),
-        vibe: styleVibe, seed: day.date, kind: day.kind },
+        vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeOnly },
       state.wardrobe
     );
     const tipKey = [day.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
