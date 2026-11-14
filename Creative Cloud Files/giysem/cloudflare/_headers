@@ -1,0 +1,4 @@
+# Make browsers revalidate app files on every visit (cheap 304s), so a new
+# deploy never mixes cached old JS modules with new ones (same as server.py).
+/*
+  Cache-Control: no-cache
