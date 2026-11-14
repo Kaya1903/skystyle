@@ -46,26 +46,8 @@ function build() {
   flashEl = root.querySelector('.sky-flash');
   buildStars(root.querySelector('.sky-stars'));
   window.addEventListener('resize', resize);
-  // Depth: clouds drift a little with the pointer and with scrolling.
-  if (!reduceMotion.matches) {
-    let tx = 0, ty = 0, cx = 0, cy = 0, sy = 0, parallaxRaf = 0;
-    const tick = () => {
-      cx += (tx - cx) * 0.06; cy += (ty - cy) * 0.06;
-      root.style.setProperty('--px', cx.toFixed(3));
-      root.style.setProperty('--py', cy.toFixed(3));
-      root.style.setProperty('--sy', sy.toFixed(1) + 'px');
-      parallaxRaf = Math.abs(tx - cx) + Math.abs(ty - cy) > 0.002 ? requestAnimationFrame(tick) : 0;
-    };
-    const kick = () => { if (!parallaxRaf) parallaxRaf = requestAnimationFrame(tick); };
-    window.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse') return;
-      tx = e.clientX / window.innerWidth - 0.5; ty = e.clientY / window.innerHeight - 0.5; kick();
-    }, { passive: true });
-    document.addEventListener('scroll', e => {
-      const el = e.target === document ? document.scrollingElement : e.target;
-      sy = -Math.min(60, (el.scrollTop || 0) * 0.08); kick();
-    }, { passive: true, capture: true });
-  }
+  // (A pointer/scroll parallax used to live here. It forced every glass panel
+  // to re-blur the sky on each mouse move, which made the app stutter.)
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop(); else start();
   });

@@ -150,9 +150,7 @@ p { margin: 0; }
 }
 
 /* Clouds — each one is three blurred puffs drifting across at its own pace. */
-.sky-clouds { position: absolute; inset: -40px; opacity: var(--clouds-vis); transition: opacity 1.6s ease;
-  transform: translate3d(calc(var(--px, 0) * -28px), calc(var(--py, 0) * -14px + var(--sy, 0px)), 0); will-change: transform; }
-.sky-sun, .sky-moon { translate: calc(var(--px, 0) * -10px) calc(var(--py, 0) * -6px + var(--sy, 0px) * 0.5); }
+.sky-clouds { position: absolute; inset: 0; opacity: var(--clouds-vis); transition: opacity 1.6s ease; }
 .cloud {
   position: absolute; left: 0; width: 360px; height: 120px;
   opacity: var(--cloud-op);
@@ -1506,3 +1504,18 @@ p { margin: 0; }
   .board.bump .figure, .dice-btn.spin .dice, .adjust-tile.active .tile-emoji { animation: none; }
   .confetti { display: none; }
 }
+
+/* ---------- Performance ----------
+   The cards are 74-92% opaque, so a heavy backdrop blur adds little to the
+   look but costs a lot: every frame anything moves behind a card (clouds,
+   rain, the sun), each card re-blurs it. Keep the glass, at a lighter cost. */
+.glass { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.bottom-nav { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.onboard-profile, .onboard-location { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+/* Thumbnails stay still (many of them floating at once kept the page busy);
+   the main figure still floats, without a per-frame drop shadow. */
+.piece-art .garment, .piece-row.swapped .garment { animation: none; filter: none; }
+.piece-row.swapped .garment { animation: swap-in 0.7s var(--spring) both; animation-delay: calc(var(--stag, 0) * 70ms); }
+.week-piece .garment { animation: none; }
+.board .figure, .board.bump .figure { filter: none; }
+.board.bump .figure { animation: board-bump 0.6s var(--spring), float 7s ease-in-out infinite 0.6s; }
