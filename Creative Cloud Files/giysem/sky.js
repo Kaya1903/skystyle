@@ -14,6 +14,15 @@ let mode = null; // null | 'rain' | 'snow' | 'storm'
 let raf = 0;
 let lastTs = 0;
 let nextFlash = 0;
+// Scene extras drawn on the same canvas: birds (clear days), shooting stars
+// (clear nights), wind streaks and leaves (windy days).
+let scene = { kind: 'clear', isDay: true, wind: 0 };
+let birds = [];
+let stars = [];
+let streaks = [];
+let leaves = [];
+let nextBirds = 0;
+let nextStar = 0;
 
 function build() {
   root = document.getElementById('sky');
@@ -35,6 +44,26 @@ function build() {
   flashEl = root.querySelector('.sky-flash');
   buildStars(root.querySelector('.sky-stars'));
   window.addEventListener('resize', resize);
+  // Depth: clouds drift a little with the pointer and with scrolling.
+  if (!reduceMotion.matches) {
+    let tx = 0, ty = 0, cx = 0, cy = 0, sy = 0, parallaxRaf = 0;
+    const tick = () => {
+      cx += (tx - cx) * 0.06; cy += (ty - cy) * 0.06;
+      root.style.setProperty('--px', cx.toFixed(3));
+      root.style.setProperty('--py', cy.toFixed(3));
+      root.style.setProperty('--sy', sy.toFixed(1) + 'px');
+      parallaxRaf = Math.abs(tx - cx) + Math.abs(ty - cy) > 0.002 ? requestAnimationFrame(tick) : 0;
+    };
+    const kick = () => { if (!parallaxRaf) parallaxRaf = requestAnimationFrame(tick); };
+    window.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      tx = e.clientX / window.innerWidth - 0.5; ty = e.clientY / window.innerHeight - 0.5; kick();
+    }, { passive: true });
+    document.addEventListener('scroll', e => {
+      const el = e.target === document ? document.scrollingElement : e.target;
+      sy = -Math.min(60, (el.scrollTop || 0) * 0.08); kick();
+    }, { passive: true, capture: true });
+  }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop(); else start();
   });
@@ -85,12 +114,113 @@ function seedParticles() {
   }
 }
 
+function calmSky() {
+  return scene.kind === 'clear' || scene.kind === 'partly';
+}
+
+function windy() {
+  return scene.wind >= 20 && scene.kind !== 'snow';
+}
+
+function spawnBirds(w, h) {
+  const n = 3 + Math.floor(Math.random() * 4);
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  const y = h * (0.08 + Math.random() * 0.25);
+  const speed = 45 + Math.random() * 30;
+  const size = 7 + Math.random() * 4;
+  for (let i = 0; i < n; i++) {
+    birds.push({
+      x: dir > 0 ? -40 - i * 26 - Math.random() * 12 : w + 40 + i * 26 + Math.random() * 12,
+      y: y + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * 9 + Math.random() * 4,
+      vx: speed * dir, size, flap: Math.random() * Math.PI * 2, flapSpeed: 7 + Math.random() * 3,
+    });
+  }
+}
+
+function drawExtras(ts, dt, w, h) {
+  // Birds: a loose V that flaps across a clear daytime sky now and then.
+  if (calmSky() && scene.isDay && !windy()) {
+    if (ts > nextBirds) { spawnBirds(w, h); nextBirds = ts + 14000 + Math.random() * 16000; }
+  }
+  if (birds.length) {
+    ctx.strokeStyle = scene.isDay ? 'rgba(30,40,70,0.55)' : 'rgba(220,230,255,0.4)';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (const b of birds) {
+      b.x += b.vx * dt;
+      b.flap += b.flapSpeed * dt;
+      const lift = Math.sin(b.flap) * b.size * 0.55;
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.size, b.y - lift);
+      ctx.quadraticCurveTo(b.x - b.size * 0.4, b.y - b.size * 0.25, b.x, b.y);
+      ctx.quadraticCurveTo(b.x + b.size * 0.4, b.y - b.size * 0.25, b.x + b.size, b.y - lift);
+      ctx.stroke();
+    }
+    birds = birds.filter(b => b.x > -120 && b.x < w + 120);
+  }
+
+  // Shooting stars on clear nights.
+  if (calmSky() && !scene.isDay && ts > nextStar) {
+    nextStar = ts + 6000 + Math.random() * 9000;
+    const x = w * (0.15 + Math.random() * 0.7), y = h * (0.04 + Math.random() * 0.25);
+    const ang = (Math.random() < 0.5 ? 1 : -1) * (0.35 + Math.random() * 0.3);
+    stars.push({ x, y, vx: Math.cos(ang) * 620 * (ang > 0 ? 1 : -1), vy: Math.abs(Math.sin(ang)) * 620, life: 0, max: 0.8 + Math.random() * 0.4 });
+  }
+  for (const st of stars) {
+    st.life += dt;
+    st.x += st.vx * dt; st.y += st.vy * dt;
+    const k = 1 - st.life / st.max;
+    const tail = 0.09;
+    const g = ctx.createLinearGradient(st.x, st.y, st.x - st.vx * tail, st.y - st.vy * tail);
+    g.addColorStop(0, `rgba(255,255,255,${0.9 * k})`);
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(st.x, st.y); ctx.lineTo(st.x - st.vx * tail, st.y - st.vy * tail); ctx.stroke();
+  }
+  stars = stars.filter(st => st.life < st.max);
+
+  // Wind: long, thin streaks sliding across, and a few leaves tumbling by.
+  if (windy()) {
+    const strength = Math.min(1, (scene.wind - 15) / 35);
+    if (Math.random() < dt * (1.5 + strength * 4)) {
+      streaks.push({ x: -260, y: h * (0.08 + Math.random() * 0.8), len: 120 + Math.random() * 180, vx: 650 + Math.random() * 450 + strength * 400, a: 0.2 + Math.random() * 0.22, wave: Math.random() * 6 });
+    }
+    if (scene.kind !== 'rain' && scene.kind !== 'storm' && leaves.length < 6 && Math.random() < dt * (0.25 + strength * 0.6)) {
+      const hue = [28, 36, 18, 45][Math.floor(Math.random() * 4)];
+      leaves.push({ x: -30, y: h * (0.3 + Math.random() * 0.6), vx: 220 + Math.random() * 220, vy: -20 + Math.random() * 40, rot: Math.random() * 6, vr: 3 + Math.random() * 5, size: 8 + Math.random() * 5, color: `hsla(${hue},70%,${48 + Math.random() * 12}%,0.85)`, sway: Math.random() * 6 });
+    }
+  }
+  if (streaks.length) {
+    ctx.lineCap = 'round'; ctx.lineWidth = 1.7;
+    for (const sk of streaks) {
+      sk.x += sk.vx * dt;
+      sk.wave += dt * 2;
+      ctx.strokeStyle = `rgba(255,255,255,${sk.a})`;
+      ctx.beginPath();
+      ctx.moveTo(sk.x, sk.y);
+      ctx.bezierCurveTo(sk.x + sk.len * 0.33, sk.y + Math.sin(sk.wave) * 6, sk.x + sk.len * 0.66, sk.y - Math.sin(sk.wave) * 6, sk.x + sk.len, sk.y);
+      ctx.stroke();
+    }
+    streaks = streaks.filter(sk => sk.x < w + 40);
+  }
+  for (const lf of leaves) {
+    lf.sway += dt * 2.2;
+    lf.x += lf.vx * dt; lf.y += (lf.vy + Math.sin(lf.sway) * 40) * dt; lf.rot += lf.vr * dt;
+    ctx.save(); ctx.translate(lf.x, lf.y); ctx.rotate(lf.rot);
+    ctx.fillStyle = lf.color;
+    ctx.beginPath(); ctx.ellipse(0, 0, lf.size, lf.size * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  leaves = leaves.filter(lf => lf.x < w + 40 && lf.y > -40 && lf.y < h + 40);
+}
+
 function frame(ts) {
   raf = requestAnimationFrame(frame);
   const dt = Math.min(0.05, (ts - (lastTs || ts)) / 1000);
   lastTs = ts;
   const w = window.innerWidth, h = window.innerHeight;
   ctx.clearRect(0, 0, w, h);
+  drawExtras(ts, dt, w, h);
   if (mode === 'snow') {
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     for (const p of particles) {
@@ -128,9 +258,11 @@ function frame(ts) {
 }
 
 function start() {
-  if (raf || !mode || reduceMotion.matches || document.hidden) return;
+  if (raf || reduceMotion.matches || document.hidden) return;
   lastTs = 0;
   nextFlash = performance.now() + 1500;
+  nextBirds = performance.now() + 2500;
+  nextStar = performance.now() + 2000;
   raf = requestAnimationFrame(frame);
 }
 
@@ -140,11 +272,14 @@ function stop() {
 }
 
 // kind: clear | partly | cloudy | fog | rain | snow | storm
-export function setSky({ kind = 'clear', isDay = true } = {}) {
+export function setSky({ kind = 'clear', isDay = true, wind = 0 } = {}) {
   if (!root && !build()) return;
+  scene = { kind, isDay, wind };
+  start();
   const key = `${kind}|${isDay}`;
   if (key === current) return;
   current = key;
+  birds = []; stars = []; streaks = []; leaves = [];
   root.className = `sky k-${kind} ${isDay ? 'is-day' : 'is-night'}`;
   document.documentElement.dataset.sky = kind;
   document.documentElement.dataset.daytime = isDay ? 'day' : 'night';

@@ -150,7 +150,9 @@ p { margin: 0; }
 }
 
 /* Clouds — each one is three blurred puffs drifting across at its own pace. */
-.sky-clouds { position: absolute; inset: 0; opacity: var(--clouds-vis); transition: opacity 1.6s ease; }
+.sky-clouds { position: absolute; inset: -40px; opacity: var(--clouds-vis); transition: opacity 1.6s ease;
+  transform: translate3d(calc(var(--px, 0) * -28px), calc(var(--py, 0) * -14px + var(--sy, 0px)), 0); will-change: transform; }
+.sky-sun, .sky-moon { translate: calc(var(--px, 0) * -10px) calc(var(--py, 0) * -6px + var(--sy, 0px) * 0.5); }
 .cloud {
   position: absolute; left: 0; width: 360px; height: 120px;
   opacity: var(--cloud-op);
@@ -300,6 +302,26 @@ p { margin: 0; }
   transition: background 0.2s ease, transform 0.2s var(--spring);
 }
 .lang-menu-btn:hover { background: rgba(255, 255, 255, 0.32); }
+.sound-btn { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.38); background: rgba(255, 255, 255, 0.2); color: var(--on-sky, #fff); cursor: pointer;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: background 0.2s ease, transform 0.25s var(--spring); flex-shrink: 0; }
+.sound-btn:hover { background: rgba(255, 255, 255, 0.32); }
+.sound-btn:active { transform: scale(0.9); }
+.sound-btn svg { width: 18px; height: 18px; }
+.sound-btn:not(.on) { opacity: 0.75; }
+.sound-menu { position: relative; }
+.sound-panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: 230px; padding: 14px;
+  background: var(--glass-strong); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border); border-radius: 18px; box-shadow: var(--shadow); color: var(--ink);
+  animation: popIn 0.3s var(--spring) both; transform-origin: top right; }
+[dir="rtl"] .sound-panel { right: auto; left: 0; transform-origin: top left; }
+.sound-panel-title { font-family: var(--display); font-weight: 800; font-size: 14px; margin-bottom: 10px; }
+.sound-row { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 12px; }
+.sound-row input[type="range"] { width: 100%; accent-color: #ff8a4c; cursor: pointer; }
+.sound-panel.muted .sound-row { opacity: 0.45; }
+.sound-mute { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 9px 12px; border-radius: 999px;
+  border: 1px solid var(--card-border); background: var(--card); color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; }
+.sound-mute svg { width: 16px; height: 16px; }
 .lang-menu-btn svg { width: 11px; height: 11px; transform: rotate(90deg); transition: transform 0.25s ease; flex-shrink: 0; }
 .lang-menu-btn.open svg { transform: rotate(-90deg); }
 .lang-menu-btn:active { transform: scale(0.94); }
@@ -585,8 +607,8 @@ p { margin: 0; }
 .piece-body .look-item { font-size: 17px; margin-bottom: 3px; }
 .piece-body .look-reason { font-size: 12.5px; }
 .piece-row .swap-btn { position: static; align-self: center; }
-.piece-row.swapped .garment { animation: swap-in 0.7s var(--spring), float 6s ease-in-out infinite 0.7s; }
-.piece-row.swapped .piece-body { animation: fadeSlideIn 0.5s var(--ease-out) both; }
+.piece-row.swapped .garment { animation: swap-in 0.7s var(--spring) both, float 6s ease-in-out infinite; animation-delay: calc(var(--stag, 0) * 70ms), calc(var(--stag, 0) * 70ms + 0.7s); }
+.piece-row.swapped .piece-body { animation: fadeSlideIn 0.5s var(--ease-out) both; animation-delay: calc(var(--stag, 0) * 70ms + 40ms); }
 @media (hover: hover) {
   .piece-row:hover .garment { transform: scale(1.12) rotate(-4deg); }
 }
@@ -1461,4 +1483,25 @@ p { margin: 0; }
 @media (min-width: 1180px) {
   .wardrobe-grid { grid-template-columns: repeat(4, 1fr); }
   .look-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ---------- Playful motion: board bump, dice spin, confetti ---------- */
+.board.bump .figure { animation: board-bump 0.6s var(--spring), float 7s ease-in-out infinite 0.6s; }
+@keyframes board-bump { 0% { transform: scale(0.94) translateY(6px); } 60% { transform: scale(1.02) translateY(-3px); } 100% { transform: none; } }
+.dice-btn.spin .dice { animation: dice-spin 0.6s var(--spring); }
+@keyframes dice-spin { 0% { transform: rotate(0) scale(1); } 40% { transform: rotate(200deg) scale(1.25); } 100% { transform: rotate(360deg) scale(1); } }
+.wear-row { position: relative; }
+.confetti { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.confetti i { position: absolute; left: -4px; top: -3px; width: 8px; height: 6px; border-radius: 2px; background: var(--c); opacity: 0;
+  animation: confetti-burst 0.9s cubic-bezier(0.15, 0.7, 0.3, 1) forwards; }
+@keyframes confetti-burst {
+  0% { opacity: 1; transform: rotate(var(--a)) translateX(0) rotate(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) translateY(14px) rotate(var(--r)); }
+}
+.adjust-tile.active .tile-emoji { animation: tile-pop 0.35s var(--spring); }
+@keyframes tile-pop { 0% { transform: scale(0.7); } 60% { transform: scale(1.2); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .board.bump .figure, .dice-btn.spin .dice, .adjust-tile.active .tile-emoji { animation: none; }
+  .confetti { display: none; }
 }

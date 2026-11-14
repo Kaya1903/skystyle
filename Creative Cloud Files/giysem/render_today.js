@@ -115,7 +115,7 @@ function boardCard(outfit, s) {
   return `
     <article class="glass look-card board-card rise-in" style="animation-delay:300ms" aria-label="${t(s.lang, 'board_title')}">
       <div class="look-slot board-title"><span>${t(s.lang, 'board_title')}</span></div>
-      <div class="board">${figure}</div>
+      <div class="board ${s.swappedSlot ? 'bump' : ''}">${figure}</div>
     </article>`;
 }
 
@@ -134,7 +134,7 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
       <div class="glass pieces-card rise-in" style="animation-delay:340ms">
         ${memoryNote(fb, s)}
         ${outfit.rows.map((row, i) => `
-          <article class="piece-row ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey ? 'swapped' : ''}">
+          <article class="piece-row ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey || s.swappedSlot === 'all' ? 'swapped' : ''}" style="--stag:${s.swappedSlot === 'all' ? i : 0}">
             <div class="piece-art" style="--float-delay:${i * -0.8}s">
               ${garmentArt(row.art, row.color || (row.look && row.look.color), row.look, 'flat')}
             </div>
@@ -175,13 +175,16 @@ function memoryNote(fb, s) {
 function wearRow(fb, s) {
   if (!fb.isToday) return '';
   if (fb.worn) {
-    return `<div class="wear-row is-worn"><span class="wear-done">${icons.check || '✓'}<span>${t(s.lang, 'fb_wearing')}</span></span>
+    // A small confetti burst right after "I'm wearing this".
+    const confetti = s.celebrate ? `<div class="confetti" aria-hidden="true">${Array.from({ length: 16 }, (_, i) => `<i style="--a:${(i * 360 / 16 + (i % 3) * 7).toFixed(0)}deg;--d:${48 + (i % 4) * 14}px;--c:${CONFETTI[i % CONFETTI.length]};--r:${(i * 47) % 360}deg"></i>`).join('')}</div>` : '';
+    return `<div class="wear-row is-worn">${confetti}<span class="wear-done">${icons.check || '✓'}<span>${t(s.lang, 'fb_wearing')}</span></span>
       <button type="button" class="wear-undo" data-action="unwear">${t(s.lang, 'fb_undo')}</button></div>`;
   }
   return `<div class="wear-row"><button type="button" class="wear-btn" data-action="wear">${icons.hanger}<span>${t(s.lang, 'fb_wear')}</span></button></div>`;
 }
 
 // "Not feeling it? Change it": a new outfit, quick options, or a typed request.
+const CONFETTI = ['#ffd166', '#ff9f5a', '#ff6f7d', '#3e8fee', '#2f9e6e', '#b9a3c9'];
 const SEND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>';
 const QUICK = [['warmer', '🧥'], ['lighter', '👕'], ['dark', '🌑'], ['bright', '🌈'], ['elegant', '✨'], ['casual', '🛋️'], ['sporty', '🏃'], ['shoes', '👟']];
 function quickActive(kind, a) {
@@ -201,7 +204,7 @@ function adjustPanel(fb, s) {
   return `
     <div class="adjust open">
       <div class="adjust-head">
-        <button type="button" class="dice-btn" data-action="reroll"><span class="dice">🎲</span><span>${t(s.lang, 'adj_dice')}</span></button>
+        <button type="button" class="dice-btn ${s.diceSpin ? 'spin' : ''}" data-action="reroll"><span class="dice">🎲</span><span>${t(s.lang, 'adj_dice')}</span></button>
         <button type="button" class="adjust-close" data-action="toggle-adjust" aria-label="${t(s.lang, 'cancel')}">✕</button>
       </div>
       <div class="adjust-grid">

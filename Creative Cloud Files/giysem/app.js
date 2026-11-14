@@ -1,5 +1,6 @@
 import { colorName, isValidColor } from './colors.js';
 import { setSky } from './sky.js';
+import { unlockSound, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
 import { skyKind } from './weather.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe } from './wardrobe.js';
@@ -67,6 +68,7 @@ export const state = {
   weekTips: {},
   weekTipStatus: {},
   langMenuOpen: false,
+  soundPanelOpen: false, // the volume panel under the 🔊 button
   outfitLocks: {},     // { slotKey: itemId } pinned by the swap button (today only)
   swappedSlot: null,   // slot whose card should play the swap animation on the next render
   quietRender: false,  // skip entrance animations for in-place updates (swap, gender)
@@ -97,6 +99,20 @@ export function setLang(lang) {
 
 export function toggleLangMenu() {
   state.langMenuOpen = !state.langMenuOpen;
+  render();
+}
+
+export function toggleSoundPanel() {
+  state.soundPanelOpen = !state.soundPanelOpen;
+  state.langMenuOpen = false;
+  state.quietRender = true;
+  render();
+}
+
+export function closeSoundPanel() {
+  if (!state.soundPanelOpen) return;
+  state.soundPanelOpen = false;
+  state.quietRender = true;
   render();
 }
 
@@ -238,6 +254,13 @@ export function setWardrobeOnly(on) {
   render();
 }
 
+export function toggleSound() {
+  setSoundOn(!isSoundOn());
+  if (isSoundOn()) playToggle(true);
+  state.quietRender = true;
+  render();
+}
+
 export function setGender(g) {
   if (state.gender === g) return;
   state.gender = g;
@@ -290,6 +313,8 @@ export function toggleAdjustPanel() {
 
 // 🎲 A whole new outfit for the same weather.
 export function rerollOutfit() {
+  state.swappedSlot = 'all';
+  state.diceSpin = true;
   changeAdjust(a => ({ ...a, reroll: a.reroll + 1, reply: null }));
 }
 
@@ -301,6 +326,7 @@ export function swapSuggestedPiece(slot) {
 
 // Quick options: warmer, lighter, dark, bright, elegant, casual, sporty, shoes.
 export function quickAdjust(kind) {
+  state.swappedSlot = kind === 'shoes' ? 'ayak' : 'all';
   changeAdjust(a => {
     const next = { ...a, reply: null };
     // Tapping an active option again turns it off.
@@ -329,6 +355,7 @@ export async function askAdjust(text) {
       rows: data.outfit.rows.map(r => ({ slot: r.slotKey, item: r.item, kind: r.art })),
     });
     state.adjustBusy = false;
+    state.swappedSlot = 'all';
     changeAdjust(a => {
       const next = { ...a, reply: typeof res.reply === 'string' ? res.reply.slice(0, 240) : null };
       const w = Number(res.warmth);
@@ -665,6 +692,7 @@ export function wearToday() {
     rows: outfit.rows.map(r => ({ slot: r.slotKey, item: r.item, art: r.art, fromWardrobe: r.fromWardrobe })),
   });
   saveFeedback(state.feedback);
+  state.celebrate = true;
   state.quietRender = true;
   render();
 }
@@ -876,14 +904,16 @@ function currentSky() {
     const hour = parseInt(String(cur.time || '').split('T')[1] || '12', 10);
     isDay = hour >= 7 && hour < 19 ? 1 : 0;
   }
-  return { kind: skyKind(cur.weather_code), isDay: isDay !== 0 };
+  return { kind: skyKind(cur.weather_code), isDay: isDay !== 0, wind: Math.round(cur.wind_speed_10m || 0) };
 }
 
 let lastViewKey = null;
 
 export function render() {
   navEl.style.display = state.screen === 'onboarding' ? 'none' : '';
-  setSky(currentSky());
+  const sky = currentSky();
+  setSky(sky);
+  setAmbient({ kind: sky.kind, isDay: sky.isDay, wind: sky.wind || 0 });
   screenEl.dataset.tab = state.screen === 'onboarding' ? 'onboarding' : state.activeTab;
 
   // Entrance animations only play when the view itself changes (tab, screen,
@@ -939,7 +969,10 @@ export function render() {
     }
   });
 
+  // One-shot animations (piece swap, dice spin, confetti) only play on the render that asked for them.
   state.swappedSlot = null;
+  state.diceSpin = false;
+  state.celebrate = false;
   renderOverlays();
 }
 
@@ -961,6 +994,22 @@ function renderOverlays() {
   });
 }
 
+// Sounds: audio may only start after the first touch; then a soft tap for
+// buttons, and its own sound for the dice, "I'm wearing this", options and tabs.
+document.addEventListener('pointerdown', unlockSound, { capture: true });
+document.addEventListener('keydown', unlockSound, { capture: true });
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('button, [role="button"], a');
+  if (!el || el.disabled) return;
+  const action = el.dataset.action;
+  if (action === 'toggle-sound' || action === 'toggle-sound-panel') return;
+  if (action === 'reroll' || el.dataset.swapSuggest || el.dataset.swap) playDice();
+  else if (action === 'wear' || el.dataset.fb) playChime();
+  else if (el.dataset.adjust) playToggle(!el.classList.contains('active'));
+  else if (el.classList.contains('nav-btn')) playWhoosh();
+  else playTap();
+}, { capture: true });
+
 navEl.addEventListener('click', (e) => {
   const btn = e.target.closest('.nav-btn');
   if (btn) switchTab(btn.dataset.tab);
@@ -968,6 +1017,7 @@ navEl.addEventListener('click', (e) => {
 
 document.addEventListener('click', (e) => {
   if (!e.target.closest('[data-lang-menu]')) closeLangMenu();
+  if (!e.target.closest('[data-sound-menu]')) closeSoundPanel();
 });
 
 if (state.screen === 'app') {
