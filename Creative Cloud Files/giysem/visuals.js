@@ -496,10 +496,15 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
 // Where the waistband starts inside each bottom drawing.
 const WAIST_TOP = { trousers: 14, chinos: 14, jeans: 14, leggings: 14, shorts: 26, minishorts: 24, skirt: 24 };
 // Bottom of the sole and horizontal middle of the shoe, per shoe drawing.
+// `ankle` is where the leg enters the shoe (side view): the shoe is placed so
+// this point sits under the middle of the trouser leg. A boot's shaft then
+// hides behind the leg instead of sticking out of it, and the toe points forward.
 const SHOE = {
-  sneaker: { sole: 99, mid: 61, top: 47 }, boot: { sole: 103, mid: 64, top: 20 },
-  sandal: { sole: 100, mid: 60, top: 62 }, loafer: { sole: 99, mid: 61, top: 63 },
+  sneaker: { sole: 99, ankle: 36, top: 47 }, boot: { sole: 103, ankle: 42.5, top: 20 },
+  sandal: { sole: 100, ankle: 40, top: 62 }, loafer: { sole: 99, ankle: 44, top: 63 },
 };
+// Middle of each leg (x) for bottoms whose legs aren't the standard trouser width.
+const LEG_X = { leggings: [46, 74] };
 // Lowest point of short bottoms inside their own drawing.
 const SHORT_HEM = { shorts: 89, minishorts: 70, skirt: 100, dress: 108 };
 const FIG = { s: 1.3, w: 220, y0: 10, waistInTop: 92, legLen: 93, legL: 41, legR: 79 };
@@ -556,8 +561,9 @@ export function outfitFigure(parts) {
 
   // 1. Shoes, under the trouser hems. Both face right; the far one sits a little higher.
   if (parts.feet) {
-    [[legL, -4 * s], [legR, 0]].forEach(([leg, lift]) => {
-      const x = boxX + leg * s - meta.mid * sh;
+    const [lx, rx] = (parts.bottom && LEG_X[parts.bottom.art]) || [legL, legR];
+    [[lx, -4 * s], [rx, 0]].forEach(([leg, lift]) => {
+      const x = boxX + leg * s - meta.ankle * sh;
       layers.push(placed(parts.feet.art, parts.feet, x, soleY - meta.sole * sh + lift, sh));
     });
   }
