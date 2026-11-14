@@ -11,7 +11,7 @@ import { getSmartTip, askOutfitChange } from './ai.js';
 import { loadFeedback, saveFeedback, markWorn, unmarkWorn, answerDay, clearLearning, pendingQuestion, learnedOffset, findMemory } from './feedback.js';
 import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
 import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
-import { renderWeekScreen, attachWeekHandlers } from './render_week.js';
+import { renderWeekScreen, attachWeekHandlers, updateWeekTipRow } from './render_week.js';
 import { renderProfileScreen, attachProfileHandlers } from './render_profile.js';
 import { renderCitySheet, attachCitySheetHandlers } from './render_city.js';
 import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboarding.js';
@@ -863,10 +863,11 @@ function ensureWeekTips(weekOutfits) {
       state.weekTips[tipKey] = tip;
       state.weekTipStatus[tipKey] = 'done';
       rememberWeekTip(tipKey, tip);
-      render();
+      // Only that day's row changes; the week view isn't rebuilt for each tip.
+      if (state.activeTab === 'week') updateWeekTipRow(screenEl, tipKey, tip, state.lang);
     }).catch(() => {
       state.weekTipStatus[tipKey] = 'failed';
-      render();
+      if (state.activeTab === 'week') updateWeekTipRow(screenEl, tipKey, null, state.lang);
     });
   });
 }

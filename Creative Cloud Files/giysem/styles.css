@@ -1211,8 +1211,9 @@ p { margin: 0; }
 @keyframes fadeSlideIn { to { opacity: 1; transform: none; } }
 .pop-in { opacity: 0; transform: scale(0.6) translateY(20px); animation: popIn 0.9s var(--spring) forwards; }
 @keyframes popIn { to { opacity: 1; transform: none; } }
-.rise-in { opacity: 0; transform: translateY(40px) scale(0.94); filter: blur(6px); animation: riseIn 0.85s var(--spring) forwards; }
-@keyframes riseIn { to { opacity: 1; transform: none; filter: blur(0); } }
+/* No blur in the entrance: animating a blur on many cards at once is slow on phones. */
+.rise-in { opacity: 0; transform: translateY(40px) scale(0.94); animation: riseIn 0.85s var(--spring) forwards; }
+@keyframes riseIn { to { opacity: 1; transform: none; } }
 .screen-enter { animation: screenFade 0.45s var(--ease-out) forwards; }
 @keyframes screenFade { from { opacity: 0.4; } to { opacity: 1; } }
 

@@ -23,6 +23,8 @@ let streaks = [];
 let leaves = [];
 let nextBirds = 0;
 let nextStar = 0;
+let dirty = false;     // something is on the canvas that needs clearing
+let wakeTimer = 0;    // idle: wake up when the next bird/star is due
 
 function build() {
   root = document.getElementById('sky');
@@ -215,11 +217,28 @@ function drawExtras(ts, dt, w, h) {
 }
 
 function frame(ts) {
+  const w = window.innerWidth, h = window.innerHeight;
+  // Nothing to animate right now (no rain/snow, no birds or stars in flight,
+  // no wind): leave the canvas alone so the glass panels don't keep
+  // re-blurring the sky, and sleep until the next bird or star is due.
+  const busy = mode || windy() || birds.length || stars.length || streaks.length || leaves.length
+    || (calmSky() && ts >= (scene.isDay ? nextBirds : nextStar));
+  if (!busy) {
+    if (dirty) { ctx.clearRect(0, 0, w, h); dirty = false; }
+    raf = 0;
+    lastTs = 0;
+    if (calmSky()) {
+      const due = (scene.isDay ? nextBirds : nextStar) - performance.now();
+      clearTimeout(wakeTimer);
+      wakeTimer = setTimeout(start, Math.max(100, due));
+    }
+    return;
+  }
   raf = requestAnimationFrame(frame);
   const dt = Math.min(0.05, (ts - (lastTs || ts)) / 1000);
   lastTs = ts;
-  const w = window.innerWidth, h = window.innerHeight;
   ctx.clearRect(0, 0, w, h);
+  dirty = true;
   drawExtras(ts, dt, w, h);
   if (mode === 'snow') {
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
@@ -259,16 +278,16 @@ function frame(ts) {
 
 function start() {
   if (raf || reduceMotion.matches || document.hidden) return;
+  clearTimeout(wakeTimer);
   lastTs = 0;
   nextFlash = performance.now() + 1500;
-  nextBirds = performance.now() + 2500;
-  nextStar = performance.now() + 2000;
   raf = requestAnimationFrame(frame);
 }
 
 function stop() {
   if (raf) cancelAnimationFrame(raf);
   raf = 0;
+  clearTimeout(wakeTimer);
 }
 
 // kind: clear | partly | cloudy | fog | rain | snow | storm
@@ -280,6 +299,8 @@ export function setSky({ kind = 'clear', isDay = true, wind = 0 } = {}) {
   if (key === current) return;
   current = key;
   birds = []; stars = []; streaks = []; leaves = [];
+  nextBirds = performance.now() + 2500;
+  nextStar = performance.now() + 2000;
   root.className = `sky k-${kind} ${isDay ? 'is-day' : 'is-night'}`;
   document.documentElement.dataset.sky = kind;
   document.documentElement.dataset.daytime = isDay ? 'day' : 'night';

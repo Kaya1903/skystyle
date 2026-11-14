@@ -9,7 +9,7 @@ function headlinePiece(outfit) {
   return outfit.rows.find(r => r.slotKey === 'dis') || outfit.rows[0];
 }
 
-function weekDayRow({ day, outfit, tip, tipLoading }, index, s, range) {
+function weekDayRow({ day, outfit, tip, tipLoading, tipKey }, index, s, range) {
   const d = new Date(day.date + 'T00:00:00');
   const weekdayName = index === 0 ? t(s.lang, 'week_today') : t(s.lang, 'weekdays')[d.getDay()];
   const piece = headlinePiece(outfit);
@@ -18,7 +18,7 @@ function weekDayRow({ day, outfit, tip, tipLoading }, index, s, range) {
   const left = ((day.feelsMin - range.min) / span) * 100;
   const width = Math.max(6, ((day.feelsMax - day.feelsMin) / span) * 100);
   return `
-    <article class="glass week-row rise-in" style="animation-delay:${80 + index * 70}ms">
+    <article class="glass week-row rise-in" style="animation-delay:${80 + index * 70}ms" data-tip-key="${escapeAttr(tipKey)}">
       <div class="week-row-day">
         <span class="week-day-name">${weekdayName}</span>
         <span class="week-day-num">${d.getDate()}</span>
@@ -36,11 +36,35 @@ function weekDayRow({ day, outfit, tip, tipLoading }, index, s, range) {
           </span>
           <span class="week-temp-max">${day.feelsMax}°</span>
         </div>
-        <div class="week-row-tip">${tipLoading ? `<span class="btn-spinner btn-spinner-dark"></span>` : ''}${text}</div>
+        <div class="week-row-tip" data-fallback="${escapeAttr(piece.item)}">${tipLoading ? `<span class="btn-spinner btn-spinner-dark"></span>` : ''}${escapeHtml(text)}</div>
       </div>
       <div class="week-piece">${garmentArt(piece.art, piece.color || (piece.look && piece.look.color), piece.look)}</div>
     </article>
   `;
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+function escapeAttr(str) {
+  return escapeHtml(str).replace(/"/g, '&quot;');
+}
+
+// A day's AI tip arrived: update just that row instead of rebuilding the week
+// (eight tips arrive one by one on the first visit). Returns false if the row isn't on screen.
+export function updateWeekTipRow(root, tipKey, tip, lang) {
+  const row = [...root.querySelectorAll('[data-tip-key]')].find(el => el.dataset.tipKey === tipKey);
+  if (!row) return false;
+  const tipEl = row.querySelector('.week-row-tip');
+  if (tipEl) tipEl.textContent = tip || tipEl.dataset.fallback || '';
+  const cond = row.querySelector('.week-row-condition');
+  if (tip && cond && !cond.querySelector('.smart-tip-badge')) {
+    const badge = document.createElement('span');
+    badge.className = 'smart-tip-badge';
+    badge.textContent = t(lang, 'smart_tip_badge');
+    cond.appendChild(badge);
+  }
+  return true;
 }
 
 export function renderWeekScreen(s) {
