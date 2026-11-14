@@ -55,7 +55,7 @@ ANALYZE_PROMPT = (
     'hoodie, jeans, sneakers, beanie; when unsure use unisex), '
     '"style": the closest drawing for this item; it must match the category: '
     'ust -> tee | longsleeve | sweater | sweatshirt | hoodie | shirt | shortshirt | blouse | polo | tank; '
-    'ustune -> cardigan | fleece | hoodie | sweatshirt | vest | shirt; '
+    'ustune -> cardigan | sweater | fleece | hoodie | sweatshirt | vest | shirt; '
     'dis -> jacket | puffer | coat | trench | windbreaker | bomber | blazer | vest | parka | wrapcoat | pufferw | cropjacket | blazerw '
     '(wrapcoat = belted women\'s coat, pufferw = long cinched women\'s puffer, cropjacket = short fitted women\'s jacket, blazerw = long women\'s blazer); '
     'alt -> trousers | chinos | jeans | leggings | shorts | minishorts | skirt | dress; '

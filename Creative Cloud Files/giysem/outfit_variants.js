@@ -843,6 +843,53 @@ export const INTENSITY = {
   },
 };
 
+// Tops written as two layers in one line ("thermal under a sweater") are split
+// into the base layer (ust) and the warm layer (ustune), so an outfit never
+// lists a sweater and a cardigan together. combo -> [base layer, warm layer]
+export const LAYER_SPLIT = {
+  tr: {
+    'İnce termal içlik, üzerine kalın örgü kazak': ['İnce termal içlik', 'Kalın örgü kazak'],
+    'İnce termal içlik, üzerine kalın triko kazak': ['İnce termal içlik', 'Kalın triko kazak'],
+    'Kalın kumaşlı düz tişört, üstüne kalın örgü kazak': ['Kalın kumaşlı düz tişört', 'Kalın örgü kazak'],
+    'Kalın kumaşlı düz tişört, üstüne kalın triko kazak': ['Kalın kumaşlı düz tişört', 'Kalın triko kazak'],
+    'Termal içlik, üstüne kalın balıkçı yaka kazak': ['Termal içlik', 'Kalın balıkçı yaka kazak'],
+    'İnce termal içlik, üstüne yün ya da kaşmir kazak': ['İnce termal içlik', 'Yün ya da kaşmir kazak'],
+    'Termal spor içlik, üstüne kalın sweatshirt': ['Termal spor içlik', 'Kalın sweatshirt'],
+    'Termal içlik, üstüne renkli kalın örgü kazak': ['Termal içlik', 'Renkli kalın örgü kazak'],
+    'Uzun kollu tişört, üstüne kalın sweatshirt': ['Uzun kollu tişört', 'Kalın sweatshirt'],
+    'Gömlek, üstüne ince yün kazak': ['Gömlek', 'İnce yün kazak'],
+    'Uzun kollu spor tişört, üstüne kapüşonlu': ['Uzun kollu spor tişört', 'Kapüşonlu sweatshirt'],
+    'Termal içlik, üstüne uzun balıkçı yaka triko': ['Termal içlik', 'Uzun balıkçı yaka triko'],
+    'İnce termal içlik, üstüne kaşmir kazak': ['İnce termal içlik', 'Kaşmir kazak'],
+    'Termal üst, üstüne kalın kapüşonlu': ['Termal üst', 'Kalın kapüşonlu sweatshirt'],
+    'Termal içlik, üstüne renkli desenli triko': ['Termal içlik', 'Renkli desenli triko'],
+    'Termal içlik, üstüne merinos yün kazak': ['Termal içlik', 'Merinos yün kazak'],
+    'Termal spor içlik, üstüne polar sweatshirt': ['Termal spor içlik', 'Polar sweatshirt'],
+    'Termal içlik, üstüne renkli kalın kazak': ['Termal içlik', 'Renkli kalın kazak'],
+    'Oxford gömlek, üstüne V yaka kazak': ['Oxford gömlek', 'V yaka kazak'],
+  },
+  en: {
+    'Thin thermal base layer, thick knit sweater on top': ['Thin thermal base layer', 'Thick knit sweater'],
+    'Thick, plain t-shirt with a heavy knit sweater on top': ['Thick, plain t-shirt', 'Heavy knit sweater'],
+    'Thermal base layer under a thick turtleneck': ['Thermal base layer', 'Thick turtleneck'],
+    'Thin thermal layer under a wool or cashmere sweater': ['Thin thermal base layer', 'Wool or cashmere sweater'],
+    'Thermal sports layer under a thick sweatshirt': ['Thermal sports layer', 'Thick sweatshirt'],
+    'Thermal layer under a bright chunky knit': ['Thermal base layer', 'Bright chunky knit'],
+    'Long-sleeve tee under a thick sweatshirt': ['Long-sleeve tee', 'Thick sweatshirt'],
+    'Shirt under a thin wool sweater': ['Shirt', 'Thin wool sweater'],
+    'Long-sleeve sports top under a hoodie': ['Long-sleeve sports top', 'Hoodie'],
+    'Thermal layer under a long turtleneck knit': ['Thermal base layer', 'Long turtleneck knit'],
+    'Thin thermal layer under a cashmere sweater': ['Thin thermal base layer', 'Cashmere sweater'],
+    'Thermal top under a thick hoodie': ['Thermal base layer', 'Thick hoodie'],
+    'Thermal layer under a colorful patterned knit': ['Thermal base layer', 'Colorful patterned knit'],
+    'Thermal layer under a thick turtleneck': ['Thermal base layer', 'Thick turtleneck'],
+    'Thermal layer under a merino sweater': ['Thermal base layer', 'Merino sweater'],
+    'Thermal sports layer under a fleece sweatshirt': ['Thermal sports layer', 'Fleece sweatshirt'],
+    'Thermal layer under a bright chunky sweater': ['Thermal base layer', 'Bright chunky sweater'],
+    'Oxford shirt under a V-neck sweater': ['Oxford shirt', 'V-neck sweater'],
+  },
+};
+
 // Condition-driven extras (accessories, snow shoes, layer softening).
 export const EXTRAS = {
   tr: {
@@ -859,6 +906,8 @@ export const EXTRAS = {
     rain_shoes_mild: ['Su geçirmez, kapalı hafif ayakkabı', 'Su geçirmez spor ayakkabı', 'Yağmur çizmesi'],
     rain_shoes_hot: ['Su geçirmez, kapalı hafif ayakkabı (sandalet bugün ıslanır)', 'Su geçirmez spor ayakkabı', 'Yağmur çizmesi'],
     snow_shoes: ['Kaymaz tabanlı, su geçirmez bot', 'Kaymaz tabanlı kar botu'],
+    base_thermal: ['İnce termal içlik', 'Hissedilen {t}°. En alta ince bir termal giy, ısıyı içeride tutar'],
+    base_plain_reason: 'Hissedilen {t}°. Kazağın altına rahat, düz bir kat',
     learn_mid: ['İnce bir hırka ya da polar', 'Böyle bir havada üşümüştün, bir kat daha ekledim'],
     learn_cold_note: ' Altına ince bir içlik ekle.',
     learn_warm_note: ' Bugün daha ince kumaşlar seç.',
@@ -879,6 +928,8 @@ export const EXTRAS = {
     rain_shoes_mild: ['Waterproof, light closed shoes', 'Waterproof sneakers', 'Rubber rain boots'],
     rain_shoes_hot: ['Waterproof, light closed shoes (sandals will get soaked today)', 'Waterproof sneakers', 'Rubber rain boots'],
     snow_shoes: ['Non-slip, waterproof boots', 'Snow boots with a grippy sole'],
+    base_thermal: ['Thin thermal base layer', 'Feels like {t}°. Start with a thin thermal, it keeps the warmth in'],
+    base_plain_reason: 'Feels like {t}°. A plain, comfortable layer under your sweater',
     learn_mid: ['A thin cardigan or fleece', 'You were cold in weather like this, so I added one more layer'],
     learn_cold_note: ' Add a thin thermal layer underneath.',
     learn_warm_note: ' Go for thinner fabrics today.',

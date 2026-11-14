@@ -303,8 +303,9 @@ export function swapSuggestedPiece(slot) {
 export function quickAdjust(kind) {
   changeAdjust(a => {
     const next = { ...a, reply: null };
-    if (kind === 'warmer') next.warmth = Math.min(2, a.warmth + 1);
-    else if (kind === 'lighter') next.warmth = Math.max(-2, a.warmth - 1);
+    // Tapping an active option again turns it off.
+    if (kind === 'warmer') next.warmth = a.warmth > 0 ? 0 : 1;
+    else if (kind === 'lighter') next.warmth = a.warmth < 0 ? 0 : -1;
     else if (ADJUST_TONES.includes(kind)) next.tone = a.tone === kind ? null : kind;
     else if (ADJUST_STYLES.includes(kind)) next.vibe = a.vibe === kind ? null : kind;
     else if (kind === 'shoes') next.slotRolls = { ...a.slotRolls, ayak: (a.slotRolls.ayak || 0) + 1 };

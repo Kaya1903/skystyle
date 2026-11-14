@@ -1,6 +1,6 @@
 import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH } from './wardrobe.js';
 import { garmentVariant, itemLook, garmentDefaultColor, shade } from './visuals.js';
-import { VARIANTS, EXTRAS, GENDERED, INTENSITY } from './outfit_variants.js';
+import { VARIANTS, EXTRAS, GENDERED, INTENSITY, LAYER_SPLIT } from './outfit_variants.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
 import { tx, fillTemplate } from './outfit_i18n.js';
@@ -332,6 +332,8 @@ function applyRain(rows, bandKey, rainMax, lang) {
 // (a vest at 6°, a light jacket at 18°), so default suggestions stay simple.
 const OPTIONAL_SLOTS = { soguk: ['ustune'], ilik: ['dis'] };
 const UPPER = ['ust', 'ustune', 'dis'];
+// Warm layers: one of these per outfit.
+const MID_ARTS = ['sweater', 'sweatshirt', 'hoodie', 'fleece', 'cardigan'];
 const COLD_BANDS = ['dondurucu', 'soguk'];
 const WARM_BANDS = ['ilik', 'sicak', 'cok_sicak'];
 
@@ -553,6 +555,28 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     rows.dis.swappable = swappable;
   }
 
+  // ---- Layers: one base layer (ust) and at most one warm layer (ustune) ----
+  // "Thermal under a sweater" becomes two rows; a sweater top never gets a
+  // cardigan on top of it (on freezing days the sweater moves up a layer and a
+  // thin thermal goes underneath instead).
+  const isMid = (slot, item) => MID_ARTS.includes(garmentVariant(slot, item, BAND_WARMTH[bandKey]));
+  const split = rows.ust && !picks.ust ? (LAYER_SPLIT[language] || {})[rows.ust.item] : null;
+  if (split) {
+    const { reason: comboReason, swappable } = rows.ust;
+    const thermal = /termal|thermal|içlik/i.test(split[0]);
+    rows.ust = { item: split[0], reason: () => (thermal ? X.base_thermal[1] : X.base_plain_reason), swappable };
+    if (!picks.ustune) rows.ustune = { item: split[1], reason: comboReason, stripLead: true, swappable };
+  } else if (rows.ust && !picks.ust && rows.ustune && !picks.ustune && isMid('ust', rows.ust.item)) {
+    if (bandKey === 'dondurucu') {
+      rows.ustune = { ...rows.ust, stripLead: true };
+      rows.ust = { item: X.base_thermal[0], reason: () => X.base_thermal[1], swappable: rows.ustune.swappable };
+    } else {
+      delete rows.ustune;
+    }
+  }
+  // An owned sweater/hoodie as the top already is the warm layer.
+  if (picks.ust && rows.ustune && !picks.ustune && MID_ARTS.includes(itemLook(picks.ust).art)) delete rows.ustune;
+
   // ---- Keep suggestions consistent with what the user is actually wearing ----
   const ownBottom = picks.alt ? itemLook(picks.alt).art : null;
   // A dress is a whole look: no suggested top over it when it's warm, and in
@@ -584,7 +608,15 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   // base layer under the top). Too warm last time: drop the extra mid layer.
   let learnNote = '';
   if (memory === 'cold' && !['sicak', 'cok_sicak'].includes(bandKey)) {
-    if (!rows.ustune && !onlyMine) rows.ustune = { item: X.learn_mid[0], reason: () => X.learn_mid[1] };
+    if (!rows.ustune && !onlyMine) {
+      if (rows.ust && !picks.ust && isMid('ust', rows.ust.item)) {
+        // The top is already a sweater: the extra layer goes underneath it.
+        rows.ustune = { ...rows.ust, stripLead: true };
+        rows.ust = { item: X.base_thermal[0], reason: () => X.base_thermal[1], swappable: rows.ustune.swappable };
+      } else if (!(picks.ust && MID_ARTS.includes(itemLook(picks.ust).art))) {
+        rows.ustune = { item: X.learn_mid[0], reason: () => X.learn_mid[1] };
+      }
+    }
     // Only suggest a thin base layer if the top doesn't already have one.
     if (rows.ust && !/termal|thermal|içlik/i.test(rows.ust.item)) learnNote = X.learn_cold_note;
   } else if (memory === 'warm') {
@@ -642,6 +674,9 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     // Suggestions: translate the finished English/Turkish text, then fill in the numbers.
     // (A wardrobe row's reason is already in the user's language.)
     if (!match) { item = L(item); reason = L(reason); }
+    // A warm layer split off a combined top keeps its reason without the
+    // "Feels like {t}°." opening (that stays on the first row).
+    if (r.stripLead) reason = reason.replace(/^[^.]*\{t\}°\.\s*/, '');
     reason = fillTemplate(reason, ctx);
     output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, outLang), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id), swappable: !match && !!r.swappable });
   }
@@ -763,6 +798,7 @@ export function englishTemplates() {
   for (const v of Object.values(EXTRAS.en)) (Array.isArray(v) ? v : [v]).forEach(add);
   for (const v of Object.values(INTENSITY.en)) (Array.isArray(v) ? v : [v]).forEach(add);
   Object.values(RAIN_SHOE.en).forEach(add);
+  Object.values(LAYER_SPLIT.en).forEach(pair => pair.forEach(add));
   Object.values(TIP_TEXT.en).forEach(add);
   // Weather rules and wardrobe reasons (built in code).
   const rows = { dis: { item: 'x' } };
@@ -773,3 +809,4 @@ export function englishTemplates() {
     'handles rain', 'not waterproof', 'blocks wind', '{c} pairs well with your {n}'].forEach(add);
   return [...out];
 }
+

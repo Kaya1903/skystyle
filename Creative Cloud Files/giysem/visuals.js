@@ -280,6 +280,7 @@ const KEYWORDS = {
     ['sweatshirt', ['sweatshirt', 'sudadera', 'bluza']],
     ['vest', ['yelek', 'vest', 'gilet', 'chaleco', 'kamizelka', 'weste']],
     ['cardigan', ['hırka', 'cardigan', 'rebeca', 'kardigan', 'سترة', 'strickjacke']],
+    ['sweater', ['kazak', 'triko', 'balıkçı', 'sweater', 'jumper', 'knit', 'turtleneck', 'suéter', 'sweter', 'كنزة', 'pullover']],
     ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula']],
   ],
   dis: [
@@ -353,7 +354,7 @@ export function garmentVariant(category, text = '', warmth = 3) {
 // Which drawings make sense for each wardrobe category (the editor's style picker).
 export const STYLE_OPTIONS = {
   ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'shortshirt', 'blouse', 'polo', 'tank'],
-  ustune: ['cardigan', 'fleece', 'hoodie', 'sweatshirt', 'vest', 'shirt'],
+  ustune: ['cardigan', 'sweater', 'fleece', 'hoodie', 'sweatshirt', 'vest', 'shirt'],
   dis: ['jacket', 'puffer', 'coat', 'trench', 'windbreaker', 'bomber', 'blazer', 'vest', 'parka', 'wrapcoat', 'pufferw', 'cropjacket', 'blazerw'],
   alt: ['trousers', 'chinos', 'jeans', 'leggings', 'shorts', 'minishorts', 'skirt', 'dress'],
   ayak: ['sneaker', 'boot', 'sandal', 'loafer'],
@@ -552,8 +553,9 @@ export function figurePartsFromRows(rows) {
   while (uppers.length > 1 && !uppers[0].fromWardrobe && uppers.slice(1).some(r => r.fromWardrobe)) uppers = uppers.slice(1);
   const outer = uppers[0] || null;
   const inner = uppers.length > 1 ? uppers[uppers.length - 1] : null;
+  const mid = uppers.length > 2 ? uppers[1] : null;
   const look = r => (r ? r.look : null);
-  return { outer: look(outer), inner: look(inner), bottom: look(bottom), feet: look(by('ayak')), acc: look(by('yanina')) };
+  return { outer: look(outer), mid: look(mid), inner: look(inner), bottom: look(bottom), feet: look(by('ayak')), acc: look(by('yanina')) };
 }
 
 // parts: { outer, inner, bottom, feet, acc } - each a look ({ art, color, ... }) or null.
@@ -605,14 +607,33 @@ export function outfitFigure(parts) {
     }
   }
 
-  // 3. Upper body: inner layer first, outer layer on top, same frame.
-  // The inner layer is drawn 4% smaller so its sleeves and hem never poke out
-  // past the outer layer's edges as thin slivers.
-  if (parts.inner) {
-    const k = 0.96;
-    layers.push(placed(parts.inner.art, parts.inner, boxX + 60 * s * (1 - k), y0 + 20 * s * (1 - k), s * k));
+  // 3. Upper body. The outer layer is drawn worn open: the layers underneath
+  // show through the front opening, each one inside the next (a coat open over
+  // a sweater open over a base layer), so no layer disappears from the picture.
+  if (parts.outer) {
+    layers.push(placed(parts.outer.art, parts.outer, boxX, y0, s));
+    const inside = [parts.mid, parts.inner].filter(Boolean);
+    if (inside.length) {
+      const bottom = (ZONES[parts.outer.art] && ZONES[parts.outer.art].bottom) || 104;
+      const X = x => (boxX + x * s).toFixed(1);
+      const Y = y => (y0 + y * s).toFixed(1);
+      // Opening wedges in the outer layer's frame: narrow at the neck, wider at the hem.
+      const wedge = (top, bot) => `M${X(60 - top)} ${Y(21)} L${X(60 + top)} ${Y(21)} L${X(60 + bot)} ${Y(bottom)} L${X(60 - bot)} ${Y(bottom)} Z`;
+      const shapes = inside.length === 2 ? [wedge(9, 19), wedge(4.5, 10)] : [wedge(7, 16)];
+      inside.forEach((look, i) => {
+        const id = `fo${++uid}`;
+        const k = 0.96 - i * 0.03;
+        layers.push(`<clipPath id="${id}"><path d="${shapes[i]}"/></clipPath><g clip-path="url(#${id})">${placed(look.art, look, boxX + 60 * s * (1 - k), y0 + 20 * s * (1 - k), s * k)}</g>`);
+      });
+      // The open front's edges, in the outer layer's own dark tone.
+      const fill = parts.outer.color || garmentDefaultColor(parts.outer.art);
+      const edge = shade(fill, isLight(fill) ? -0.32 : -0.38);
+      const [t0, b0] = inside.length === 2 ? [9, 19] : [7, 16];
+      layers.push(`<path d="M${X(60 - t0)} ${Y(21)} L${X(60 - b0)} ${Y(bottom)} M${X(60 + t0)} ${Y(21)} L${X(60 + b0)} ${Y(bottom)}" stroke="${edge}" stroke-width="${(2.5 * s).toFixed(1)}" stroke-linecap="round" fill="none"/>`);
+    }
+  } else if (parts.inner) {
+    layers.push(placed(parts.inner.art, parts.inner, boxX, y0, s));
   }
-  if (parts.outer) layers.push(placed(parts.outer.art, parts.outer, boxX, y0, s));
 
   // 4. Accessories: carried items at the right hand, hats in the corner, scarf at the neck.
   if (parts.acc) {
