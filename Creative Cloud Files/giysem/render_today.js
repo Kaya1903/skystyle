@@ -5,6 +5,9 @@ import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchFor
 import { renderLandmark } from './landmarks.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows } from './visuals.js';
 
+// Turkish writes the percent sign first (%20); other languages after (20%).
+const pct = (n, lang) => (lang === 'tr' ? `%${n}` : `${n}%`);
+
 function cityRow(s) {
   const city = s.city;
   const label = city ? (city.admin && city.admin !== city.name ? `${city.name}, ${city.admin}` : city.name) : t(s.lang, 'no_city');
@@ -36,7 +39,7 @@ function heroSection(dayView, s) {
         <div class="hero-condition fade-slide" style="animation-delay:260ms"><strong>${h.condition}</strong></div>
         <div class="hero-stats fade-slide" style="animation-delay:320ms">
           <span class="stat-pill">${icons.wind}<b>${h.wind}</b> ${t(s.lang, 'unit_kmh')}</span>
-          <span class="stat-pill">${icons.drop}<b>%${h.rain}</b></span>
+          <span class="stat-pill">${icons.drop}<b>${pct(h.rain, s.lang)}</b></span>
         </div>
       </div>
       ${renderLandmark(s.city)}
@@ -83,7 +86,7 @@ function daypartCard(parts, s) {
             ${p ? `<span class="daypart-dot" style="background:${tempColor(p.feelsLike)}"></span>` : ''}
             <span class="daypart-temp">${p ? p.feelsLike + '°' : '?'}</span>
             <span class="daypart-time">${time}</span>
-            ${p ? `<span class="daypart-sub">${icons.wind}${p.wind} · ${icons.drop}%${p.rain}</span>` : ''}
+            ${p ? `<span class="daypart-sub">${icons.wind}${p.wind} · ${icons.drop}${pct(p.rain, s.lang)}</span>` : ''}
           </div>
         `).join('')}
       </div>
