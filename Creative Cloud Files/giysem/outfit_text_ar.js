@@ -476,4 +476,10 @@ export default {
   "You were cold in weather like this, so I added one more layer": "شعرت بالبرد في طقس كهذا، لذلك أضفت طبقة أخرى",
   " Add a thin thermal layer underneath.": " البس تحته طبقة حرارية خفيفة.",
   " Go for thinner fabrics today.": " اختر اليوم أقمشة أخف.",
+  "Waterproof leather boots": "بوت جلد مقاوم للماء",
+  "Rubber rain boots with warm socks": "جزمة مطر مطاطية مع جوارب دافئة",
+  "Waterproof sneakers": "حذاء رياضي مقاوم للماء",
+  "Rubber rain boots": "جزمة مطر مطاطية",
+  "Snow boots with a grippy sole": "حذاء ثلج بنعل ثابت",
+  "Waterproof, thick-soled sneakers": "حذاء رياضي مقاوم للماء بنعل سميك",
 };

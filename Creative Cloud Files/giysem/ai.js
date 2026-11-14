@@ -24,3 +24,18 @@ export async function getSmartTip(context) {
   const data = await res.json();
   return data.tip;
 }
+
+// Turns a typed request about today's outfit into changes the app understands
+// ({ warmth, tone, vibe, change, avoid, reply }).
+export async function askOutfitChange(context) {
+  const res = await fetch('/api/adjust-outfit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(context),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Outfit change request failed');
+  }
+  return res.json();
+}

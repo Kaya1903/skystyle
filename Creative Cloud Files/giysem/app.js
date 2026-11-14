@@ -6,7 +6,7 @@ import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, init
 import { generateOutfit } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile, comfortOffset } from './profile.js';
-import { getSmartTip } from './ai.js';
+import { getSmartTip, askOutfitChange } from './ai.js';
 import { loadFeedback, saveFeedback, markWorn, unmarkWorn, answerDay, clearLearning, pendingQuestion, learnedOffset, findMemory } from './feedback.js';
 import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
 import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
@@ -18,6 +18,7 @@ import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboa
 const CITY_KEY = 'giysem_city_v1';
 const LANG_KEY = 'giysem_lang_v1';
 const WARDROBE_ONLY_KEY = 'giysem_wardrobe_only_v1';
+const ADJUST_KEY = 'giysem_adjust_v1'; // today's changes to the suggested outfit
 const FALLBACK_CITY = 'Warsaw';
 
 const savedProfile = loadProfile();
@@ -34,6 +35,10 @@ export const state = {
   // (saved on the next wardrobe write).
   wardrobe: loadWardrobe().map(i => (i.gender ? i : { ...i, gender: savedProfile && ['kadin', 'erkek'].includes(savedProfile.gender) ? savedProfile.gender : 'unisex' })),
   feedback: loadFeedback(), // worn outfits and how they felt (feedback.js)
+  // Today's changes to the suggested outfit: { date, reroll, slotRolls, avoid, tone, vibe, warmth, reply }.
+  adjust: (() => { try { return JSON.parse(localStorage.getItem(ADJUST_KEY) || 'null'); } catch { return null; } })(),
+  adjustOpen: false,   // the "change it" panel is expanded
+  adjustBusy: false,   // waiting for the AI to read a typed request
   wardrobeOnly: (() => { try { return localStorage.getItem(WARDROBE_ONLY_KEY) === '1'; } catch { return false; } })(),
   wardrobeFilter: 'all',
   wardrobeSearch: '',
@@ -253,8 +258,102 @@ export function swapOutfitPiece(slotKey) {
   render();
 }
 
+// ---------------- Changing today's suggested outfit ----------------
+
+const ADJUST_STYLES = ['casual', 'elegant', 'sporty', 'minimal', 'bold'];
+const ADJUST_TONES = ['dark', 'bright', 'light'];
+const ADJUST_SLOTS = ['ust', 'ustune', 'dis', 'alt', 'ayak', 'yanina'];
+
+function todayDate() {
+  return state.forecastRaw ? buildDayView(state.forecastRaw, 0, state.lang).date : null;
+}
+
+function todaysAdjust(date = todayDate()) {
+  return state.adjust && state.adjust.date === date ? state.adjust : null;
+}
+
+function changeAdjust(update) {
+  const date = todayDate();
+  if (!date) return;
+  const cur = todaysAdjust(date) || { date, reroll: 0, slotRolls: {}, avoid: [], tone: null, vibe: null, warmth: 0, reply: null };
+  state.adjust = update({ ...cur, slotRolls: { ...cur.slotRolls }, avoid: [...cur.avoid] });
+  try { localStorage.setItem(ADJUST_KEY, JSON.stringify(state.adjust)); } catch { /* private mode */ }
+  state.quietRender = true;
+  render();
+}
+
+export function toggleAdjustPanel() {
+  state.adjustOpen = !state.adjustOpen;
+  state.quietRender = true;
+  render();
+}
+
+// 🎲 A whole new outfit for the same weather.
+export function rerollOutfit() {
+  changeAdjust(a => ({ ...a, reroll: a.reroll + 1, reply: null }));
+}
+
+// Swap just one suggested piece.
+export function swapSuggestedPiece(slot) {
+  state.swappedSlot = slot;
+  changeAdjust(a => ({ ...a, slotRolls: { ...a.slotRolls, [slot]: (a.slotRolls[slot] || 0) + 1 }, reply: null }));
+}
+
+// Quick options: warmer, lighter, dark, bright, elegant, casual, sporty, shoes.
+export function quickAdjust(kind) {
+  changeAdjust(a => {
+    const next = { ...a, reply: null };
+    if (kind === 'warmer') next.warmth = Math.min(2, a.warmth + 1);
+    else if (kind === 'lighter') next.warmth = Math.max(-2, a.warmth - 1);
+    else if (ADJUST_TONES.includes(kind)) next.tone = a.tone === kind ? null : kind;
+    else if (ADJUST_STYLES.includes(kind)) next.vibe = a.vibe === kind ? null : kind;
+    else if (kind === 'shoes') next.slotRolls = { ...a.slotRolls, ayak: (a.slotRolls.ayak || 0) + 1 };
+    return next;
+  });
+}
+
+// A typed request ("no boots today"): the AI turns it into the same kinds of
+// changes as the quick options, so the outfit still follows the weather rules.
+export async function askAdjust(text) {
+  const data = computeOutfitFor(0);
+  if (!data || !text || !text.trim() || state.adjustBusy) return;
+  state.adjustBusy = true;
+  state.quietRender = true;
+  render();
+  try {
+    const res = await askOutfitChange({
+      lang: state.lang,
+      text: text.trim().slice(0, 300),
+      feelsLike: data.dayView.hero.feelsLike,
+      rows: data.outfit.rows.map(r => ({ slot: r.slotKey, item: r.item, kind: r.art })),
+    });
+    state.adjustBusy = false;
+    changeAdjust(a => {
+      const next = { ...a, reply: typeof res.reply === 'string' ? res.reply.slice(0, 240) : null };
+      const w = Number(res.warmth);
+      if (w === 1 || w === -1) next.warmth = Math.max(-2, Math.min(2, a.warmth + w));
+      if (ADJUST_TONES.includes(res.tone)) next.tone = res.tone;
+      if (ADJUST_STYLES.includes(res.vibe)) next.vibe = res.vibe;
+      const avoid = (Array.isArray(res.avoid) ? res.avoid : []).filter(x => typeof x === 'string' && /^[a-z]{2,12}$/.test(x));
+      next.avoid = [...new Set([...a.avoid, ...avoid])];
+      const change = new Set((Array.isArray(res.change) ? res.change : []).filter(x => ADJUST_SLOTS.includes(x)));
+      // A piece they don't want changes right away, whatever slot it's in.
+      data.outfit.rows.forEach(r => { if (avoid.includes(r.art)) change.add(r.slotKey); });
+      change.forEach(slot => { next.slotRolls[slot] = (next.slotRolls[slot] || 0) + 1; });
+      return next;
+    });
+  } catch (err) {
+    state.adjustBusy = false;
+    state.quietRender = true;
+    render();
+    showToast(t(state.lang, 'adj_failed'));
+  }
+}
+
 export function resetOutfit() {
   state.outfitLocks = {};
+  state.adjust = null;
+  try { localStorage.removeItem(ADJUST_KEY); } catch { /* private mode */ }
   state.swappedSlot = null;
   state.quietRender = true;
   render();
@@ -533,16 +632,20 @@ function computeOutfitFor(dayOffset) {
   // What we learned from this person's answers on days like this one.
   const learned = learnedOffset(state.feedback, dayView.hero.feelsLike, dayView.hero.wind, dayView.date);
   const memory = findMemory(state.feedback, dayView.hero.feelsLike, dayView.date);
+  // The user's own changes apply to today's outfit only. "Warmer" = dress for 3° colder.
+  const adjust = dayOffset === 0 ? todaysAdjust(dayView.date) : null;
   const outfit = generateOutfit(
-    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang, comfort: comfortOffset(state.profile) + learned,
-      vibe: state.profile ? state.profile.styleVibe : 'casual', seed: dayView.date, kind: dayView.hero.kind, wardrobeOnly: state.wardrobeOnly, memory: memory ? memory.answer : null },
+    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang,
+      comfort: comfortOffset(state.profile) + learned, shift: -3 * (adjust ? adjust.warmth : 0),
+      vibe: (adjust && adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'), seed: dayView.date, kind: dayView.hero.kind,
+      wardrobeOnly: state.wardrobeOnly, memory: memory ? memory.answer : null, adjust },
     state.wardrobe,
     dayOffset === 0 ? state.outfitLocks : {}
   );
   const tip = eveningTip(dayView, state.lang);
   const worn = dayOffset === 0 ? state.feedback.days[dayView.date] || null : null;
   const pending = dayOffset === 0 ? pendingQuestion(state.feedback, today) : null;
-  return { dayView, outfit, tip, today, memory, worn, pending };
+  return { dayView, outfit, tip, today, memory, worn, pending, adjust };
 }
 
 // ---------------- Outfit feedback (feedback.js) ----------------

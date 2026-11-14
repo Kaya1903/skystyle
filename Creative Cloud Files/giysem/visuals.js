@@ -21,6 +21,11 @@ const DEFAULT_GARMENT_COLOR = {
 
 // What each wardrobe category draws when nothing more specific is known.
 const LIGHT_FRAME = { sunglasses: '#e6d6b8', catglasses: '#f1c3cd' };
+// The color a drawing gets when nothing else is known about it.
+export function garmentDefaultColor(art) {
+  return (art === 'sunglasses' || art === 'catglasses' ? null : DEFAULT_GARMENT_COLOR[art]) || DEFAULT_GARMENT_COLOR[CATEGORY_DEFAULT[art]] || '#9aa4b2';
+}
+
 const CATEGORY_DEFAULT = { ust: 'tee', ustune: 'cardigan', dis: 'jacket', alt: 'trousers', ayak: 'sneaker', yanina: 'umbrella' };
 
 function clamp(n) { return Math.max(0, Math.min(255, Math.round(n))); }

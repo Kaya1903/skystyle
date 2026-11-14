@@ -475,4 +475,10 @@ export default {
   "You were cold in weather like this, so I added one more layer": "Przy takiej pogodzie było ci zimno, więc dodaję jeszcze jedną warstwę",
   " Add a thin thermal layer underneath.": " Załóż pod spód cienką bieliznę termiczną.",
   " Go for thinner fabrics today.": " Wybierz dziś cieńsze materiały.",
+  "Waterproof leather boots": "Wodoodporne skórzane buty",
+  "Rubber rain boots with warm socks": "Kalosze z ciepłymi skarpetami",
+  "Waterproof sneakers": "Wodoodporne sneakersy",
+  "Rubber rain boots": "Kalosze",
+  "Snow boots with a grippy sole": "Śniegowce z antypoślizgową podeszwą",
+  "Waterproof, thick-soled sneakers": "Wodoodporne sneakersy na grubej podeszwie",
 };

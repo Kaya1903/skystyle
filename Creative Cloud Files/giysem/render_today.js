@@ -1,7 +1,8 @@
 import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback } from './app.js';
+import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
+  toggleAdjustPanel, rerollOutfit, swapSuggestedPiece, quickAdjust, askAdjust } from './app.js';
 import { dayLabel } from './feedback.js';
 import { renderLandmark } from './landmarks.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows } from './visuals.js';
@@ -124,7 +125,7 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
       <h2 class="section-big">${kombinLabel}</h2>
       <div class="section-actions">
         ${s.wardrobe && s.wardrobe.length ? `<button class="mine-toggle ${s.wardrobeOnly ? 'on' : ''}" data-action="toggle-mine" aria-pressed="${s.wardrobeOnly ? 'true' : 'false'}">${icons.hanger}<span>${t(s.lang, 'only_mine')}</span></button>` : ''}
-        ${Object.keys(s.outfitLocks || {}).length ? `<button class="reset-chip" data-action="reset-outfit">${t(s.lang, 'reset_outfit')}</button>` : ''}
+        ${Object.keys(s.outfitLocks || {}).length || fb.adjust ? `<button class="reset-chip" data-action="reset-outfit">${t(s.lang, 'reset_outfit')}</button>` : ''}
         <span class="band-chip">${outfit.bandLabel}</span>
       </div>
     </div>
@@ -148,11 +149,15 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
             ${row.options && row.options.length > 1 ? `
               <button class="swap-btn" data-swap="${row.slotKey}" aria-label="${t(s.lang, 'swap_piece')}: ${row.label}">
                 ${icons.swap}<span>${row.options.indexOf(row.itemId) + 1}/${row.options.length}</span>
+              </button>` : row.swappable && fb.isToday ? `
+              <button class="swap-btn swap-suggest" data-swap-suggest="${row.slotKey}" aria-label="${t(s.lang, 'swap_piece')}: ${row.label}" title="${t(s.lang, 'swap_piece')}">
+                ${icons.swap}
               </button>` : ''}
           </article>
         `).join('')}
         ${tipsList(outfit, s)}
         ${wearRow(fb, s)}
+        ${adjustPanel(fb, s)}
       </div>
     </div>
   `;
@@ -174,6 +179,43 @@ function wearRow(fb, s) {
       <button type="button" class="wear-undo" data-action="unwear">${t(s.lang, 'fb_undo')}</button></div>`;
   }
   return `<div class="wear-row"><button type="button" class="wear-btn" data-action="wear">${icons.hanger}<span>${t(s.lang, 'fb_wear')}</span></button></div>`;
+}
+
+// "Not feeling it? Change it": a new outfit, quick options, or a typed request.
+const SEND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>';
+const QUICK = [['warmer', '🧥'], ['lighter', '👕'], ['dark', '🌑'], ['bright', '🌈'], ['elegant', '✨'], ['casual', '🛋️'], ['sporty', '🏃'], ['shoes', '👟']];
+function quickActive(kind, a) {
+  if (!a) return false;
+  if (kind === 'warmer') return a.warmth > 0;
+  if (kind === 'lighter') return a.warmth < 0;
+  if (kind === 'dark' || kind === 'bright') return a.tone === kind;
+  if (['elegant', 'casual', 'sporty'].includes(kind)) return a.vibe === kind;
+  return false;
+}
+function adjustPanel(fb, s) {
+  if (!fb.isToday) return '';
+  if (!s.adjustOpen) {
+    return `<div class="adjust"><button type="button" class="adjust-toggle" data-action="toggle-adjust">🎲 <span>${t(s.lang, 'adj_toggle')}</span></button></div>`;
+  }
+  const a = fb.adjust;
+  return `
+    <div class="adjust open">
+      <div class="adjust-head">
+        <button type="button" class="dice-btn" data-action="reroll"><span class="dice">🎲</span><span>${t(s.lang, 'adj_dice')}</span></button>
+        <button type="button" class="adjust-close" data-action="toggle-adjust" aria-label="${t(s.lang, 'cancel')}">✕</button>
+      </div>
+      <div class="adjust-grid">
+        ${QUICK.map(([k, e]) => `<button type="button" class="adjust-tile ${quickActive(k, a) ? 'active' : ''}" data-adjust="${k}" aria-pressed="${quickActive(k, a)}"><span class="tile-emoji">${e}</span><span class="tile-label">${t(s.lang, 'adj_' + k)}</span></button>`).join('')}
+      </div>
+      <form class="adjust-ask" data-action="ask-adjust">
+        <input id="adjust-input" type="text" maxlength="300" autocomplete="off" placeholder="${escapeHtml(t(s.lang, 'adj_ask_placeholder'))}" aria-label="${escapeHtml(t(s.lang, 'adj_ask_placeholder'))}" ${s.adjustBusy ? 'disabled' : ''} />
+        <button type="submit" class="adjust-send" aria-label="${t(s.lang, 'adj_send')}" ${s.adjustBusy ? 'disabled' : ''}>${s.adjustBusy ? '<span class="btn-spinner btn-spinner-dark"></span>' : SEND_ICON}</button>
+      </form>
+      ${s.adjustBusy ? `<div class="adjust-reply">${t(s.lang, 'adj_thinking')}</div>` : a && a.reply ? `<div class="adjust-reply">${SPARKLE}<span>${escapeHtml(a.reply)}</span></div>` : ''}
+    </div>`;
+}
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
 // "How was it?" for a day the user wore our outfit.
@@ -246,8 +288,8 @@ export function renderTodayScreen({ dayOffset, state: s, data }) {
   if (!data) {
     return `${brandHeader(s)}<div class="state-msg">${t(s.lang, 'loading_data')}</div>`;
   }
-  const { dayView, outfit, tip, memory, worn, pending, today } = data;
-  const fb = { memory, worn, isToday: dayOffset === 0, date: dayView.date };
+  const { dayView, outfit, tip, memory, worn, pending, today, adjust } = data;
+  const fb = { memory, worn, isToday: dayOffset === 0, date: dayView.date, adjust };
   const kombinLabel = dayOffset === 0 ? t(s.lang, 'kombin_bugun') : t(s.lang, 'kombin_yarin');
   return `
     ${brandHeader(s)}
@@ -299,6 +341,21 @@ export function attachTodayHandlers(root) {
   if (retryBtn) retryBtn.addEventListener('click', refetchForecast);
   root.querySelectorAll('[data-swap]').forEach(btn => {
     btn.addEventListener('click', () => swapOutfitPiece(btn.dataset.swap));
+  });
+  root.querySelectorAll('[data-action="toggle-adjust"]').forEach(b => b.addEventListener('click', toggleAdjustPanel));
+  const rerollBtn = root.querySelector('[data-action="reroll"]');
+  if (rerollBtn) rerollBtn.addEventListener('click', rerollOutfit);
+  root.querySelectorAll('[data-swap-suggest]').forEach(btn => {
+    btn.addEventListener('click', () => swapSuggestedPiece(btn.dataset.swapSuggest));
+  });
+  root.querySelectorAll('[data-adjust]').forEach(btn => {
+    btn.addEventListener('click', () => quickAdjust(btn.dataset.adjust));
+  });
+  const askForm = root.querySelector('[data-action="ask-adjust"]');
+  if (askForm) askForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = askForm.querySelector('#adjust-input');
+    askAdjust(input ? input.value : '');
   });
   const wearBtn = root.querySelector('[data-action="wear"]');
   if (wearBtn) wearBtn.addEventListener('click', wearToday);
