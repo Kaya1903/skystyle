@@ -115,6 +115,13 @@ function checkApiKey(env) {
   return null;
 }
 
+// A tip is one short paragraph. If a reply ever arrives with a draft and a
+// corrected version, keep only the last paragraph.
+function lastParagraph(text) {
+  const parts = text.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : text.trim();
+}
+
 const clip = (v, n) => String(v === undefined || v === null ? '' : v).slice(0, n);
 
 // Today's outfit as one line: "ust: White linen shirt; alt: Beige chinos; ...".
@@ -138,15 +145,16 @@ async function styleTip(ctx, env) {
     `their wardrobe: ${clip(ctx.wardrobeSummary || 'no saved wardrobe items', 600)}. ` +
     (outfit ? `The outfit the app suggests: ${outfit}. Your tip must fit this outfit and never contradict it. ` : '') +
     'Good tips: a styling trick for these exact pieces, a color or fit detail, what to carry for later in the day, ' +
-    'or one of their own wardrobe pieces that fits today. Do not list the outfit back or restate the temperature.';
+    'or one of their own wardrobe pieces that fits today. Do not list the outfit back, and do not write numbers ' +
+    '(temperature, wind speed, percentages): the screen already shows them. Output only the final tip.';
   const payload = {
     model: env.ANTHROPIC_MODEL || DEFAULT_MODEL,
     // Thinking tokens count toward max_tokens; keep headroom so the tip isn't cut off.
-    max_tokens: 1500,
-    output_config: { effort: 'low' },
+    max_tokens: 3000,
+    output_config: { effort: 'medium' },
     messages: [{ role: 'user', content: prompt }],
   };
-  return json(200, { tip: await callClaude(env, payload, 20000) });
+  return json(200, { tip: lastParagraph(await callClaude(env, payload, 25000)) });
 }
 
 async function analyzePhoto(body, env) {
@@ -200,6 +208,9 @@ async function adjustOutfit(body, env) {
     '"change": array of slot codes they want swapped for something else (for example they dislike the shoes: ["ayak"]), ' +
     `"avoid": array of garment kinds they do not want to wear, only from this list: ${GARMENT_KINDS}, ` +
     `"reply": one short, friendly sentence in ${langName} telling them what you changed}. ` +
+    'The app picks the new pieces itself from these settings, so in the reply describe the direction of the change ' +
+    '("I made it warmer", "the shoes will change", "I kept it dark") and never name a specific new piece or claim a piece was added. ' +
+    'The reply must agree with "avoid" and "change", and must not contain numbers. ' +
     'Never use em dashes or en dashes in the reply. ' +
     `If the wish is not about today's outfit, return 0, null and empty arrays, and use "reply" to say kindly in ${langName} that you can only adjust the outfit.`;
   const payload = {

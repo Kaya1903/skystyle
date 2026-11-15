@@ -86,7 +86,8 @@ LANG_HINT = {'tr': r'[çğışöüÇĞİŞÖÜ]', 'de': r'[äöüßÄÖÜ]|\b(un
 
 def post(path, body):
     req = urllib.request.Request(BASE + path, data=json.dumps(body).encode(), method='POST',
-                                 headers={'Content-Type': 'application/json'})
+                                 # Cloudflare blocks Python's default User-Agent as a bot (error 1010).
+                                 headers={'Content-Type': 'application/json', 'User-Agent': 'SkyStyle-ai-eval/1.0'})
     pw = os.environ.get('SKYSTYLE_PASSWORD')
     if pw:
         req.add_header('Authorization', 'Basic ' + base64.b64encode(f'skystyle:{pw}'.encode()).decode())
@@ -110,6 +111,10 @@ def tip_checks(text, lang):
         problems.append(f'çok uzun ({len(text)} karakter)')
     if not re.search(LANG_HINT[lang], text, re.I):
         problems.append('dil şüpheli')
+    if re.search(r'\d', text):
+        problems.append('sayı var (ekranda zaten yazıyor)')
+    if '\n' in text.strip():
+        problems.append('birden fazla paragraf')
     if re.search(r'^["\'“]|[*#]', text):
         problems.append('tırnak veya işaretleme')
     return problems
@@ -122,6 +127,8 @@ def adjust_checks(res, exp, lang):
         problems.append('cevapta uzun tire')
     if not re.search(LANG_HINT[lang], reply, re.I):
         problems.append('cevabın dili şüpheli')
+    if re.search(r'\d', reply):
+        problems.append('cevapta sayı var')
     avoid, change = res.get('avoid') or [], res.get('change') or []
     if 'avoid_has' in exp and exp['avoid_has'] not in avoid:
         problems.append(f"avoid içinde {exp['avoid_has']} yok")

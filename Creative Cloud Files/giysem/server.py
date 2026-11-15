@@ -45,6 +45,12 @@ def _load_stylist_guide():
 SYSTEM = [{'type': 'text', 'text': _load_stylist_guide(), 'cache_control': {'type': 'ephemeral'}}]
 
 
+def last_paragraph(text):
+    """A tip is one paragraph; if a draft and a corrected version arrive, keep the last."""
+    parts = [p.strip() for p in re.split(r'\n\s*\n', text) if p.strip()]
+    return parts[-1] if parts else text.strip()
+
+
 def clip(v, n):
     return ('' if v is None else str(v))[:n]
 
@@ -251,16 +257,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 f"their wardrobe: {clip(ctx.get('wardrobeSummary') or 'no saved wardrobe items', 600)}. "
                 + (f'The outfit the app suggests: {outfit}. Your tip must fit this outfit and never contradict it. ' if outfit else '')
                 + 'Good tips: a styling trick for these exact pieces, a color or fit detail, what to carry for later in the day, '
-                'or one of their own wardrobe pieces that fits today. Do not list the outfit back or restate the temperature.'
+                'or one of their own wardrobe pieces that fits today. Do not list the outfit back, and do not write numbers '
+                '(temperature, wind speed, percentages): the screen already shows them. Output only the final tip.'
             )
             payload = {
                 'model': MODEL,
                 # Thinking tokens count toward max_tokens; keep headroom so the tip isn't cut off.
-                'max_tokens': 1500,
-                'output_config': {'effort': 'low'},
+                'max_tokens': 3000,
+                'output_config': {'effort': 'medium'},
                 'messages': [{'role': 'user', 'content': prompt}],
             }
-            text = self._call_claude(payload, timeout=20)
+            text = last_paragraph(self._call_claude(payload, timeout=25))
             self._send_json(200, {'tip': text})
         except urllib.error.HTTPError as e:
             detail = e.read().decode('utf-8', 'ignore')
@@ -311,6 +318,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 '"change": array of slot codes they want swapped for something else (for example they dislike the shoes: ["ayak"]), '
                 f'"avoid": array of garment kinds they do not want to wear, only from this list: {GARMENT_KINDS}, '
                 f'"reply": one short, friendly sentence in {lang_name} telling them what you changed}}. '
+                'The app picks the new pieces itself from these settings, so in the reply describe the direction of the change '
+                '("I made it warmer", "the shoes will change", "I kept it dark") and never name a specific new piece or claim a piece was added. '
+                'The reply must agree with "avoid" and "change", and must not contain numbers. '
                 'Never use em dashes or en dashes in the reply. '
                 f"If the wish is not about today's outfit, return 0, null and empty arrays, and use \"reply\" to say kindly in {lang_name} that you can only adjust the outfit."
             )
