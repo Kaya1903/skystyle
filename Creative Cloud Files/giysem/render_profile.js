@@ -155,6 +155,7 @@ export function renderProfileScreen(s) {
     <div class="delete-link profile-reset">
       <button data-action="reset-profile" type="button">${t(s.lang, 'logout_reset')}</button>
     </div>
+    ${historySheet(s)}
   `;
 }
 
@@ -170,34 +171,81 @@ function learnBlock(s) {
 }
 
 // "What I wore": the days marked with "I'm wearing this", newest first.
-const HISTORY_SHOWN = 7;
+// The profile card stays short (last 3 days); "See all" opens the full list.
+const HISTORY_SHOWN = 3;
 const ANSWER_EMOJI = { cold: '🥶', ok: '👌', warm: '🥵' };
+const todayStr = () => new Date().toLocaleDateString('en-CA');
+const daysAgo = (date, today) => Math.round((Date.parse(today) - Date.parse(date)) / 86400000);
+
+function historyRow(r, today, s) {
+  const answer = ANSWER_EMOJI[r.answer]
+    ? `<span class="hist-answer">${ANSWER_EMOJI[r.answer]} <span>${t(s.lang, 'fb_' + r.answer)}</span></span>`
+    : r.answer === 'skip' ? `<span class="hist-answer muted">${t(s.lang, 'fb_skip')}</span>`
+    : daysAgo(r.date, today) <= 6 ? `<span class="hist-answer muted">${t(s.lang, 'fb_history_waiting')}</span>` : '';
+  return `
+    <li class="hist-row">
+      <div class="hist-top">
+        <span class="hist-day">${dayLabel(r.date, today, s.lang, t)}</span>
+        <span class="hist-meta">${r.city ? escapeHtml(r.city) + ' · ' : ''}${Math.round(r.feelsLike)}°</span>
+        ${answer}
+      </div>
+      ${wornPieces(r.rows)}
+      <div class="hist-names">${r.rows.map(x => escapeHtml(x.item)).join(' · ')}</div>
+    </li>`;
+}
+
 function historyCard(s) {
   const all = wornHistory(s.feedback || { days: {} });
-  const today = new Date().toLocaleDateString('en-CA');
-  const list = s.historyAll ? all : all.slice(0, HISTORY_SHOWN);
-  const rows = list.map(r => {
-    const answer = ANSWER_EMOJI[r.answer]
-      ? `<span class="hist-answer" title="${t(s.lang, 'fb_' + r.answer)}">${ANSWER_EMOJI[r.answer]} <span>${t(s.lang, 'fb_' + r.answer)}</span></span>`
-      : r.answer === 'skip' ? `<span class="hist-answer muted">${t(s.lang, 'fb_skip')}</span>`
-      : `<span class="hist-answer muted">${t(s.lang, 'fb_history_waiting')}</span>`;
-    return `
-      <li class="hist-row">
-        <div class="hist-top">
-          <span class="hist-day">${dayLabel(r.date, today, s.lang, t)}</span>
-          <span class="hist-meta">${r.city ? escapeHtml(r.city) + ' · ' : ''}${Math.round(r.feelsLike)}°</span>
-          ${answer}
-        </div>
-        ${wornPieces(r.rows)}
-        <div class="hist-names">${r.rows.map(x => escapeHtml(x.item)).join(' · ')}</div>
-      </li>`;
-  }).join('');
+  const today = todayStr();
   return `
     <section class="glass panel profile-card history-card rise-in" style="animation-delay:150ms">
-      <div class="profile-card-head"><h3>${t(s.lang, 'fb_history_title')}</h3></div>
-      ${all.length ? `<ul class="hist-list">${rows}</ul>` : `<p class="profile-hint">${t(s.lang, 'fb_history_empty')}</p>`}
-      ${all.length > HISTORY_SHOWN ? `<button type="button" class="learn-reset hist-more" data-action="history-more">${t(s.lang, s.historyAll ? 'fb_history_less' : 'fb_history_more')}</button>` : ''}
+      <div class="profile-card-head">
+        <h3>${t(s.lang, 'fb_history_title')}</h3>
+        ${all.length ? `<button type="button" class="link-btn" data-action="history-open">${t(s.lang, 'fb_history_all')} ${icons.chevron}</button>` : ''}
+      </div>
+      ${all.length ? `<ul class="hist-list">${all.slice(0, HISTORY_SHOWN).map(r => historyRow(r, today, s)).join('')}</ul>` : `<p class="profile-hint">${t(s.lang, 'fb_history_empty')}</p>`}
+      ${all.length > HISTORY_SHOWN ? `<button type="button" class="hist-count" data-action="history-open">${t(s.lang, 'fb_history_count', all.length)}</button>` : ''}
     </section>`;
+}
+
+// Full history in its own window: a short summary, then the days grouped
+// as This week / Last week / month by month.
+function historySheet(s) {
+  if (!s.historyOpen) return '';
+  const all = wornHistory(s.feedback || { days: {} });
+  const today = todayStr();
+  const groups = [];
+  for (const r of all) {
+    const age = daysAgo(r.date, today);
+    let key, label;
+    if (age <= 6) { key = 'w0'; label = t(s.lang, 'fb_history_this_week'); }
+    else if (age <= 13) { key = 'w1'; label = t(s.lang, 'fb_history_last_week'); }
+    else {
+      key = r.date.slice(0, 7);
+      try { label = new Intl.DateTimeFormat(s.lang, { month: 'long', year: 'numeric' }).format(new Date(r.date + 'T12:00:00')); } catch { label = key; }
+      label = label.charAt(0).toLocaleUpperCase(s.lang) + label.slice(1);
+    }
+    let g = groups[groups.length - 1];
+    if (!g || g.key !== key) groups.push(g = { key, label, rows: [] });
+    g.rows.push(r);
+  }
+  const counts = { cold: 0, ok: 0, warm: 0 };
+  for (const r of all) if (counts[r.answer] !== undefined) counts[r.answer]++;
+  const summary = Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `<span class="hist-stat">${ANSWER_EMOJI[k]} ${n}</span>`).join('');
+  return `
+    <div class="sheet-backdrop history-sheet open" id="history-backdrop">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="history-title">
+        <div class="sheet-handle"></div>
+        <div class="history-sheet-head">
+          <div class="sheet-title" id="history-title">${t(s.lang, 'fb_history_title')}</div>
+          <button type="button" class="adjust-close" data-action="history-close" aria-label="${t(s.lang, 'cancel')}">✕</button>
+        </div>
+        <div class="hist-summary"><span>${t(s.lang, 'fb_history_count', all.length)}</span>${summary}</div>
+        <div class="history-scroll">
+          ${groups.map(g => `<div class="hist-group"><div class="hist-group-title">${g.label}</div><ul class="hist-list">${g.rows.map(r => historyRow(r, today, s)).join('')}</ul></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
 }
 
 const COMFORT_ICON = {
@@ -205,6 +253,11 @@ const COMFORT_ICON = {
   normal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M8.5 14.5c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2M9 10h.01M15 10h.01"/></svg>',
   warm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
 };
+
+// Escape closes the history window (one listener for the whole app).
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && state.historyOpen) { state.historyOpen = false; state.quietRender = true; render(); }
+});
 
 function escapeAttr(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -250,8 +303,13 @@ export function attachProfileHandlers(root) {
   root.querySelectorAll('[data-comfort]').forEach(btn => {
     btn.addEventListener('click', () => setComfort(btn.dataset.comfort));
   });
-  const histMore = root.querySelector('[data-action="history-more"]');
-  if (histMore) histMore.addEventListener('click', () => { state.historyAll = !state.historyAll; state.quietRender = true; render(); });
+  const setHistory = open => { state.historyOpen = open; state.quietRender = true; render(); };
+  root.querySelectorAll('[data-action="history-open"]').forEach(b => b.addEventListener('click', () => setHistory(true)));
+  const histBackdrop = root.querySelector('#history-backdrop');
+  if (histBackdrop) {
+    histBackdrop.addEventListener('click', e => { if (e.target === histBackdrop) setHistory(false); });
+    histBackdrop.querySelector('[data-action="history-close"]').addEventListener('click', () => setHistory(false));
+  }
   const resetLearnBtn = root.querySelector('[data-action="reset-learning"]');
   if (resetLearnBtn) resetLearnBtn.addEventListener('click', resetLearning);
   const backBtn = root.querySelector('[data-action="go-today"]');

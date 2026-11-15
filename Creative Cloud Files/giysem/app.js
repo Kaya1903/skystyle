@@ -240,6 +240,7 @@ async function useFallbackCity() {
 }
 
 export function switchTab(tab) {
+  state.historyOpen = false;
   if (state.activeTab === tab) return;
   state.activeTab = tab;
   render();

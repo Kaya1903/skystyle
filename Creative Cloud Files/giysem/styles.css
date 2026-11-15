@@ -1541,3 +1541,22 @@ p { margin: 0; }
 .hist-answer.muted { color: var(--ink-soft); font-weight: 500; }
 .hist-names { font-size: 12px; color: var(--ink-soft); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .hist-more { margin-top: 10px; }
+
+/* Full outfit history window */
+.hist-count { margin-top: 10px; border: none; background: none; padding: 0; color: var(--ink-soft); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.history-sheet .sheet { display: flex; flex-direction: column; max-height: 86vh; animation: sheet-up 0.45s var(--spring) both; }
+.history-sheet { animation: fade-in 0.25s ease both; }
+.history-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.history-sheet-head .sheet-title { margin-bottom: 6px; }
+.hist-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 13px; color: var(--ink-soft); padding-bottom: 12px; border-bottom: 1px solid var(--card-border); }
+.hist-stat { font-weight: 700; color: var(--ink); }
+.history-scroll { overflow-y: auto; overscroll-behavior: contain; margin: 0 -22px; padding: 4px 22px 4px; }
+.hist-group { padding-top: 14px; }
+.hist-group-title { font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+@keyframes sheet-up { from { transform: translateY(60px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (min-width: 860px) {
+  .history-sheet { align-items: center; }
+  .history-sheet .sheet { max-width: 620px; border-radius: 30px; max-height: 80vh; padding-bottom: 22px; }
+  .history-sheet .sheet-handle { display: none; }
+}
