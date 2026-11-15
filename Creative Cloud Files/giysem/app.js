@@ -299,8 +299,8 @@ function todaysAdjust(date = todayDate()) {
 function changeAdjust(update) {
   const date = todayDate();
   if (!date) return;
-  const cur = todaysAdjust(date) || { date, reroll: 0, slotRolls: {}, avoid: [], tone: null, vibe: null, warmth: 0, reply: null };
-  state.adjust = update({ ...cur, slotRolls: { ...cur.slotRolls }, avoid: [...cur.avoid] });
+  const cur = todaysAdjust(date) || { date, reroll: 0, slotRolls: {}, avoid: [], want: [], tone: null, vibe: null, warmth: 0, reply: null };
+  state.adjust = update({ ...cur, slotRolls: { ...cur.slotRolls }, avoid: [...cur.avoid], want: [...(cur.want || [])] });
   try { localStorage.setItem(ADJUST_KEY, JSON.stringify(state.adjust)); } catch { /* private mode */ }
   state.quietRender = true;
   render();
@@ -367,14 +367,25 @@ export async function askAdjust(text) {
       if (w === 1 || w === -1) next.warmth = Math.max(-2, Math.min(2, a.warmth + w));
       if (ADJUST_TONES.includes(res.tone)) next.tone = res.tone;
       if (ADJUST_STYLES.includes(res.vibe)) next.vibe = res.vibe;
-      const avoid = (Array.isArray(res.avoid) ? res.avoid : []).filter(x => typeof x === 'string' && /^[a-z]{2,12}$/.test(x));
-      next.avoid = [...new Set([...a.avoid, ...avoid])];
+      const kinds = v => (Array.isArray(v) ? v : []).filter(x => typeof x === 'string' && /^[a-z]{2,12}$/.test(x));
+      const want = kinds(res.want).slice(0, 3);
+      // Asking for a piece cancels an earlier "not that one".
+      const avoid = kinds(res.avoid).filter(x => !want.includes(x));
+      next.want = want.length ? want : (a.want || []);
+      next.avoid = [...new Set([...a.avoid.filter(x => !want.includes(x)), ...avoid])];
       const change = new Set((Array.isArray(res.change) ? res.change : []).filter(x => ADJUST_SLOTS.includes(x)));
       // A piece they don't want changes right away, whatever slot it's in.
       data.outfit.rows.forEach(r => { if (avoid.includes(r.art)) change.add(r.slotKey); });
       change.forEach(slot => { next.slotRolls[slot] = (next.slotRolls[slot] || 0) + 1; });
       return next;
     });
+    // The app, not the AI, picks the pieces. If an asked-for piece doesn't suit
+    // today's weather it isn't in the outfit, so say that instead of the AI's reply.
+    const want = (state.adjust && state.adjust.want) || [];
+    const after = computeOutfitFor(0);
+    if (want.length && after && !after.outfit.rows.some(r => want.includes(r.art))) {
+      changeAdjust(a => ({ ...a, want: [], reply: t(state.lang, 'adj_want_unavailable') }));
+    }
   } catch (err) {
     state.adjustBusy = false;
     state.quietRender = true;

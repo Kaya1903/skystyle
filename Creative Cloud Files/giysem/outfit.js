@@ -383,14 +383,30 @@ function hashStr(str) {
 // Picks today's wording for a suggested (non-wardrobe) slot: options that fit
 // the user's style first, rotating by date; never the same kind of garment
 // the user is already wearing from their own wardrobe in another upper slot.
-function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, avoidArts, warmth, feelsLike, roll = 0 }) {
+function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, avoidArts, wantArts = [], warmth, feelsLike, roll = 0 }) {
   const list = ((VARIANTS[language] || VARIANTS.tr)[bandKey] || {})[slot] || [];
   const gList = genderKey === 'unisex' ? []
     : ((((GENDERED[language] || GENDERED.tr)[genderKey] || {})[bandKey] || {})[slot] || []);
   const options = [{ vibe: 'casual', item: base.item, reason: base.reason, base: true, gendered: genderKey !== 'unisex' }]
     .concat(gList.map(([v, item, reason]) => ({ vibe: v, item, reason, gendered: true })))
     .concat(list.filter(([, , , g]) => !g || g === genderKey).map(([v, item, reason, g]) => ({ vibe: v, item, reason, gendered: !!g })));
-  const usable = options.filter(o => !avoidArts.includes(garmentVariant(slot, o.item, warmth)));
+  const usable0 = options.filter(o => !avoidArts.includes(garmentVariant(slot, o.item, warmth)));
+  // A piece they asked for ("I want to wear sandals") wins when this weather
+  // has one; otherwise the usual choice stays and the app says so.
+  let asked = wantArts.length ? usable0.filter(o => wantArts.includes(garmentVariant(slot, o.item, warmth))) : [];
+  // Not among today's pieces? A neighbouring band's version is still fine for the
+  // weather (boots on a mild day); two bands away (sandals in the cold) is not.
+  if (wantArts.length && !asked.length) {
+    const i = BAND_KEYS.indexOf(bandKey);
+    for (const nb of [BAND_KEYS[i - 1], BAND_KEYS[i + 1]].filter(Boolean)) {
+      const near = (((VARIANTS[language] || VARIANTS.tr)[nb] || {})[slot] || [])
+        .filter(([, , , g]) => !g || g === genderKey)
+        .map(([v, item, reason]) => ({ vibe: v, item, reason, gendered: false }))
+        .filter(o => wantArts.includes(garmentVariant(slot, o.item, warmth)) && !avoidArts.includes(garmentVariant(slot, o.item, warmth)));
+      if (near.length) { asked = near; break; }
+    }
+  }
+  const usable = asked.length ? asked : usable0;
   const pool0 = usable.length ? usable : options;
   const wanted = vibe === 'minimal' ? ['minimal', 'elegant'] : [vibe || 'casual'];
   let pool = pool0.filter(o => wanted.includes(o.vibe));
@@ -419,7 +435,8 @@ function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, a
 
 // The user's own changes to today's outfit (app.js `state.adjust`):
 //   reroll: whole-outfit dice count, slotRolls: { slot: n } single-piece changes,
-//   avoid: drawing kinds they don't want (e.g. ['boot']), tone: 'dark' | 'bright' | 'light'.
+//   avoid: drawing kinds they don't want (e.g. ['boot']), want: kinds they asked for (e.g. ['sandal']),
+//   tone: 'dark' | 'bright' | 'light'.
 // A piece the user doesn't want is avoided in its women's/men's versions too.
 const AVOID_GROUPS = [['puffer', 'pufferw', 'parka'], ['coat', 'wrapcoat'], ['jacket', 'cropjacket'], ['blazer', 'blazerw'],
   ['shirt', 'shortshirt', 'blouse'], ['shorts', 'minishorts'], ['sunglasses', 'catglasses']];
@@ -511,8 +528,10 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   // Rain and snow decide the shoes, but there's more than one safe choice.
   const shoeRoll = (adj.reroll || 0) + ((adj.slotRolls || {}).ayak || 0);
   const pickShoe = list => {
-    const ok = list.filter(it => !expandAvoid(adj.avoid).includes(garmentVariant('ayak', it, BAND_WARMTH[bandKey])));
-    const pool = ok.length ? ok : list;
+    const art = it => garmentVariant('ayak', it, BAND_WARMTH[bandKey]);
+    const ok = list.filter(it => !expandAvoid(adj.avoid).includes(art(it)));
+    const asked = ok.filter(it => (adj.want || []).includes(art(it)));
+    const pool = asked.length ? asked : ok.length ? ok : list;
     return pool[shoeRoll % pool.length];
   };
   if (rainy) {
@@ -547,7 +566,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   for (const key of SLOT_ORDER) {
     if (!rows[key] || picks[key] || fixed.has(key)) continue;
     const roll = (adj.reroll || 0) + ((adj.slotRolls || {})[key] || 0);
-    rows[key] = { ...chooseVariant(rows[key], { language, bandKey, slot: key, genderKey, vibe, seed, avoidArts: ownedUpperArts.concat(expandAvoid(adj.avoid)), warmth: BAND_WARMTH[bandKey], feelsLike, roll }), swappable: true };
+    rows[key] = { ...chooseVariant(rows[key], { language, bandKey, slot: key, genderKey, vibe, seed, avoidArts: ownedUpperArts.concat(expandAvoid(adj.avoid)), wantArts: adj.want || [], warmth: BAND_WARMTH[bandKey], feelsLike, roll }), swappable: true };
   }
   if (windOnJacket && rows.dis && !picks.dis) {
     const swappable = rows.dis.swappable;
