@@ -476,6 +476,13 @@ function detailOverlays(name, d, fill, c2, dark, light) {
 // `kind` is a drawing name (tee, puffer, boot, ...) or a wardrobe category (ust, dis, ...).
 // `opts` is either a boolean (legacy "patterned") or { patternType, color2, details }.
 // Add the class "flat" to drop the ground shadow (for stacked layouts).
+// A saved outfit as a row of small drawings, optionally with the piece names.
+export function wornPieces(rows, withNames = false) {
+  const esc = v => String(v || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return `<div class="worn-pieces ${withNames ? 'named' : ''}">${(rows || []).map(r => `
+    <span class="worn-piece" title="${esc(r.item)}">${garmentArt(r.art, r.color || null, r.look || {}, 'flat')}${withNames ? `<span class="worn-name">${esc(r.item)}</span>` : ''}</span>`).join('')}</div>`;
+}
+
 export function garmentArt(kind, color, opts = {}, extraClass = '') {
   if (typeof opts === 'boolean') opts = { patternType: opts ? 'stripes' : 'solid' };
   const name = GARMENTS[kind] || kind === 'chinos' ? kind : (CATEGORY_DEFAULT[kind] || 'tee');

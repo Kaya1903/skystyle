@@ -689,7 +689,12 @@ export function wearToday() {
     feelsLike: dayView.hero.feelsLike,
     wind: dayView.hero.wind,
     rain: dayView.maxRainToday,
-    rows: outfit.rows.map(r => ({ slot: r.slotKey, item: r.item, art: r.art, fromWardrobe: r.fromWardrobe })),
+    gender: state.gender || null,
+    rows: outfit.rows.map(r => ({
+      slot: r.slotKey, item: r.item, art: r.art, fromWardrobe: r.fromWardrobe,
+      color: r.color || (r.look && r.look.color) || null,
+      look: r.look ? { patternType: r.look.patternType, color2: r.look.color2, lens: r.look.lens } : null,
+    })),
   });
   saveFeedback(state.feedback);
   state.celebrate = true;

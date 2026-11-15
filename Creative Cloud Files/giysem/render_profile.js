@@ -3,13 +3,13 @@ import { t } from './i18n.js';
 import { avatarBackground, avatarContent, AVATARS, AVATAR_KEYS, STYLE_VIBES } from './profile.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { CATEGORIES } from './wardrobe.js';
-import { itemLook, garmentArt } from './visuals.js';
+import { itemLook, garmentArt, wornPieces } from './visuals.js';
 import {
   updateProfileGender, updateProfileStyleVibe, saveProfileName, resetProfile, openCitySheet,
   toggleAvatarPicker, setAvatar, setAvatarPhotoFile, removeAvatarPhoto, setComfort,
-  switchTab, loadRecentCities, chooseCity, resetLearning,
+  switchTab, loadRecentCities, chooseCity, resetLearning, state, render,
 } from './app.js';
-import { learningSummary } from './feedback.js';
+import { learningSummary, wornHistory, dayLabel } from './feedback.js';
 
 function avatarPicker(s) {
   const profile = s.profile;
@@ -147,6 +147,7 @@ export function renderProfileScreen(s) {
         ${learnBlock(s)}
       </section>
 
+      ${historyCard(s)}
       ${wardrobeCard(s)}
       ${citiesCard(s, cityLabel)}
     </div>
@@ -166,6 +167,37 @@ function learnBlock(s) {
       <p class="profile-hint learn-text">${text}</p>
       ${sum.count ? `<button type="button" class="learn-reset" data-action="reset-learning">${t(s.lang, 'fb_reset')}</button>` : ''}
     </div>`;
+}
+
+// "What I wore": the days marked with "I'm wearing this", newest first.
+const HISTORY_SHOWN = 7;
+const ANSWER_EMOJI = { cold: '🥶', ok: '👌', warm: '🥵' };
+function historyCard(s) {
+  const all = wornHistory(s.feedback || { days: {} });
+  const today = new Date().toLocaleDateString('en-CA');
+  const list = s.historyAll ? all : all.slice(0, HISTORY_SHOWN);
+  const rows = list.map(r => {
+    const answer = ANSWER_EMOJI[r.answer]
+      ? `<span class="hist-answer" title="${t(s.lang, 'fb_' + r.answer)}">${ANSWER_EMOJI[r.answer]} <span>${t(s.lang, 'fb_' + r.answer)}</span></span>`
+      : r.answer === 'skip' ? `<span class="hist-answer muted">${t(s.lang, 'fb_skip')}</span>`
+      : `<span class="hist-answer muted">${t(s.lang, 'fb_history_waiting')}</span>`;
+    return `
+      <li class="hist-row">
+        <div class="hist-top">
+          <span class="hist-day">${dayLabel(r.date, today, s.lang, t)}</span>
+          <span class="hist-meta">${r.city ? escapeHtml(r.city) + ' · ' : ''}${Math.round(r.feelsLike)}°</span>
+          ${answer}
+        </div>
+        ${wornPieces(r.rows)}
+        <div class="hist-names">${r.rows.map(x => escapeHtml(x.item)).join(' · ')}</div>
+      </li>`;
+  }).join('');
+  return `
+    <section class="glass panel profile-card history-card rise-in" style="animation-delay:150ms">
+      <div class="profile-card-head"><h3>${t(s.lang, 'fb_history_title')}</h3></div>
+      ${all.length ? `<ul class="hist-list">${rows}</ul>` : `<p class="profile-hint">${t(s.lang, 'fb_history_empty')}</p>`}
+      ${all.length > HISTORY_SHOWN ? `<button type="button" class="learn-reset hist-more" data-action="history-more">${t(s.lang, s.historyAll ? 'fb_history_less' : 'fb_history_more')}</button>` : ''}
+    </section>`;
 }
 
 const COMFORT_ICON = {
@@ -218,6 +250,8 @@ export function attachProfileHandlers(root) {
   root.querySelectorAll('[data-comfort]').forEach(btn => {
     btn.addEventListener('click', () => setComfort(btn.dataset.comfort));
   });
+  const histMore = root.querySelector('[data-action="history-more"]');
+  if (histMore) histMore.addEventListener('click', () => { state.historyAll = !state.historyAll; state.quietRender = true; render(); });
   const resetLearnBtn = root.querySelector('[data-action="reset-learning"]');
   if (resetLearnBtn) resetLearnBtn.addEventListener('click', resetLearning);
   const backBtn = root.querySelector('[data-action="go-today"]');

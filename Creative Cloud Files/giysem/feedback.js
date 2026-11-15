@@ -42,6 +42,25 @@ export function markWorn(fb, rec) {
   return { days: trim(days) };
 }
 
+// Same outfit = same pieces in the same slots. Used to show the "wearing this"
+// tick only on the outfit that was actually marked.
+// Compared by drawing and color so a language switch doesn't count as a change;
+// records saved before colors were stored fall back to the piece names.
+export function sameOutfit(saved, rows) {
+  const a = saved || [], b = rows || [];
+  if (a.length !== b.length) return false;
+  const byText = a.some(r => !('color' in r));
+  const key = r => byText
+    ? `${r.slot || r.slotKey}:${r.item}`
+    : `${r.slot || r.slotKey}:${r.art}:${r.color || (r.look && r.look.color) || ''}`;
+  return a.map(key).join('|') === b.map(key).join('|');
+}
+
+// Worn days, newest first, for the profile history.
+export function wornHistory(fb) {
+  return Object.values(fb.days || {}).filter(r => r && r.date && Array.isArray(r.rows)).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
 export function unmarkWorn(fb, date) {
   const days = { ...fb.days };
   delete days[date];

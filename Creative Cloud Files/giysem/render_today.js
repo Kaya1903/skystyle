@@ -3,9 +3,9 @@ import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
   toggleAdjustPanel, rerollOutfit, swapSuggestedPiece, quickAdjust, askAdjust } from './app.js';
-import { dayLabel } from './feedback.js';
+import { dayLabel, sameOutfit } from './feedback.js';
 import { renderLandmark } from './landmarks.js';
-import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows } from './visuals.js';
+import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows, wornPieces } from './visuals.js';
 
 // Turkish writes the percent sign first (%20); German and Spanish leave a space (20 %); others 20%.
 const pct = (n, lang) => (lang === 'tr' ? `%${n}` : lang === 'de' || lang === 'es' ? `${n} %` : `${n}%`);
@@ -174,6 +174,13 @@ function memoryNote(fb, s) {
 // "I'm wearing this today" (only for today's outfit).
 function wearRow(fb, s) {
   if (!fb.isToday) return '';
+  if (fb.worn && !fb.wornSame) {
+    // Today is marked, but with a different outfit than the one on screen
+    // (gender, city or pieces changed since). Show which one, and let them switch.
+    return `<div class="wear-row is-other">
+      <div class="wear-other"><span class="wear-other-text">${t(s.lang, 'fb_worn_other')}</span>${wornPieces(fb.worn.rows)}</div>
+      <button type="button" class="wear-btn wear-switch" data-action="wear">${icons.hanger}<span>${t(s.lang, 'fb_wear_this')}</span></button></div>`;
+  }
   if (fb.worn) {
     // A small confetti burst right after "I'm wearing this".
     const confetti = s.celebrate ? `<div class="confetti" aria-hidden="true">${Array.from({ length: 16 }, (_, i) => `<i style="--a:${(i * 360 / 16 + (i % 3) * 7).toFixed(0)}deg;--d:${48 + (i % 4) * 14}px;--c:${CONFETTI[i % CONFETTI.length]};--r:${(i * 47) % 360}deg"></i>`).join('')}</div>` : '';
@@ -229,6 +236,7 @@ function feedbackCard(pending, today, s) {
   return `
     <section class="glass fb-card rise-in" style="animation-delay:200ms" aria-live="polite">
       <div class="fb-q">${t(s.lang, 'fb_question', day, pending.feelsLike)}</div>
+      ${pending.rows && pending.rows.length ? wornPieces(pending.rows, true) : ''}
       <div class="fb-opts">
         ${opts.map(([k, e]) => `<button type="button" class="fb-opt" data-fb="${k}" data-fb-date="${pending.date}"><span class="fb-emoji">${e}</span><span>${t(s.lang, 'fb_' + k)}</span></button>`).join('')}
       </div>
@@ -292,7 +300,7 @@ export function renderTodayScreen({ dayOffset, state: s, data }) {
     return `${brandHeader(s)}<div class="state-msg">${t(s.lang, 'loading_data')}</div>`;
   }
   const { dayView, outfit, tip, memory, worn, pending, today, adjust } = data;
-  const fb = { memory, worn, isToday: dayOffset === 0, date: dayView.date, adjust };
+  const fb = { memory, worn, wornSame: !!worn && sameOutfit(worn.rows, outfit.rows), isToday: dayOffset === 0, date: dayView.date, adjust };
   const kombinLabel = dayOffset === 0 ? t(s.lang, 'kombin_bugun') : t(s.lang, 'kombin_yarin');
   return `
     ${brandHeader(s)}
