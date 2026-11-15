@@ -328,11 +328,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
             payload = {
                 'model': MODEL,
-                'max_tokens': 1200,
-                'output_config': {'effort': 'low'},
+                'max_tokens': 3000,
+                'output_config': {'effort': 'medium'},
                 'messages': [{'role': 'user', 'content': prompt}],
             }
-            text_out = self._call_claude(payload, timeout=20)
+            text_out = self._call_claude(payload, timeout=25)
             self._send_json(200, extract_json_object(text_out))
         except urllib.error.HTTPError as e:
             detail = e.read().decode('utf-8', 'ignore')

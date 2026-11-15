@@ -217,11 +217,11 @@ async function adjustOutfit(body, env) {
     `If the wish is not about today's outfit, return 0, null and empty arrays, and use "reply" to say kindly in ${langName} that you can only adjust the outfit.`;
   const payload = {
     model: env.ANTHROPIC_MODEL || DEFAULT_MODEL,
-    max_tokens: 1200,
-    output_config: { effort: 'low' },
+    max_tokens: 3000,
+    output_config: { effort: 'medium' },
     messages: [{ role: 'user', content: prompt }],
   };
-  return json(200, extractJsonObject(await callClaude(env, payload, 20000)));
+  return json(200, extractJsonObject(await callClaude(env, payload, 25000)));
 }
 
 export async function onRequestPost({ request, env, params }) {
