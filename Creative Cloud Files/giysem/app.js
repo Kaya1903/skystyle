@@ -8,7 +8,7 @@ import { generateOutfit } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile, comfortOffset } from './profile.js';
 import { getSmartTip, askOutfitChange } from './ai.js';
-import { loadFeedback, saveFeedback, markWorn, unmarkWorn, answerDay, clearLearning, pendingQuestion, learnedOffset, findMemory } from './feedback.js';
+import { loadFeedback, saveFeedback, markWorn, unmarkWorn, answerDay, clearLearning, pendingQuestion, learnedOffset, findMemory, learningSummary } from './feedback.js';
 import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
 import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
 import { renderWeekScreen, attachWeekHandlers, updateWeekTipRow } from './render_week.js';
@@ -353,6 +353,10 @@ export async function askAdjust(text) {
       lang: state.lang,
       text: text.trim().slice(0, 300),
       feelsLike: data.dayView.hero.feelsLike,
+      wind: data.dayView.hero.wind,
+      rain: data.dayView.maxRainToday,
+      gender: state.gender,
+      styleVibe: (data.adjust && data.adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'),
       rows: data.outfit.rows.map(r => ({ slot: r.slotKey, item: r.item, kind: r.art })),
     });
     state.adjustBusy = false;
@@ -749,14 +753,29 @@ function computeWeekOutfits() {
         memory: (findMemory(state.feedback, day.feelsLike, day.date) || {}).answer || null },
       state.wardrobe
     );
-    const tipKey = [day.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
+    const tipKey = [day.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit)].join('|');
     return { day, outfit, tipKey, tip: state.weekTips[tipKey] || null, tipLoading: state.weekTipStatus[tipKey] === 'loading' };
   });
 }
 
+// What the AI gets to know about the person besides the weather (see ai.js).
+function aiPersonal() {
+  const sum = learningSummary(state.feedback);
+  const lean = { cold: 'they usually felt cold', warm: 'they usually felt too warm', ok: 'our outfits usually felt right' };
+  return {
+    comfort: (state.profile && state.profile.comfort) || 'normal',
+    learned: sum.count ? `${sum.count} answers, ${lean[sum.lean]}` : '',
+  };
+}
+const aiOutfit = outfit => outfit.rows.map(r => ({ slot: r.slotKey, item: r.item }));
+const outfitSig = outfit => outfit.rows.map(r => r.art).join(',');
+
 function summarizeWardrobe() {
-  return state.wardrobe.slice(0, 12)
-    .map(i => isValidColor(i.color) ? `${i.name} (${colorName(i.color, 'en').toLowerCase()})` : i.name)
+  return state.wardrobe.slice(0, 20)
+    .map(i => {
+      const bits = [isValidColor(i.color) ? colorName(i.color, 'en').toLowerCase() : null, i.category, i.warmth ? `warmth ${i.warmth}/5` : null].filter(Boolean);
+      return bits.length ? `${i.name} (${bits.join(', ')})` : i.name;
+    })
     .join(', ');
 }
 
@@ -782,7 +801,8 @@ function rememberTip(key, tip) {
 function ensureSmartTip(dayView, outfit) {
   const cityName = state.city ? state.city.name : 'unknown';
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
-  const key = [dayView.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang].join('|');
+  // The note talks about the outfit on screen, so a different outfit gets its own note.
+  const key = [dayView.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit)].join('|');
   if (state.smartTipKey === key) return;
   state.smartTipKey = key;
 
@@ -803,9 +823,12 @@ function ensureSmartTip(dayView, outfit) {
     condition: dayView.hero.condition,
     wind: dayView.hero.wind,
     rain: dayView.hero.rain,
+    evening: eveningTip(dayView, state.lang),
     gender: state.gender,
     styleVibe,
     wardrobeSummary,
+    outfit: aiOutfit(outfit),
+    ...aiPersonal(),
   }).then(tip => {
     if (state.smartTipKey !== key) return;
     state.smartTip = tip;
@@ -858,6 +881,7 @@ function ensureWeekTips(weekOutfits) {
     getSmartTip({
       lang: state.lang,
       city: cityName,
+      day: day.date,
       feelsLike: day.feelsLike,
       condition: day.condition,
       wind: day.wind,
@@ -865,6 +889,8 @@ function ensureWeekTips(weekOutfits) {
       gender: state.gender,
       styleVibe,
       wardrobeSummary,
+      outfit: aiOutfit(outfit),
+      ...aiPersonal(),
     }).then(tip => {
       state.weekTips[tipKey] = tip;
       state.weekTipStatus[tipKey] = 'done';
