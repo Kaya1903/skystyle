@@ -1381,7 +1381,10 @@ p { margin: 0; }
 .avatar-option { width: 58px; height: 58px; border-radius: 50%; border: 3px solid transparent; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 14px -6px rgba(10,20,50,0.5); transition: transform 0.3s var(--spring), border-color 0.2s ease; }
 .avatar-option:hover { transform: translateY(-3px) scale(1.05); }
 .avatar-option.active { border-color: #fff; box-shadow: 0 0 0 3px var(--ink), 0 8px 18px -6px rgba(10,20,50,0.6); }
-.profile-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.profile-grid { display: flex; flex-direction: column; gap: 14px; }
+/* Phone: one column in a sensible order. Desktop: two columns that stack on their own, so no gaps. */
+.profile-col { display: contents; }
+.about-card { order: 1; } .comfort-card { order: 2; } .history-card { order: 3; } .wardrobe-card { order: 4; } .cities-card { order: 5; }
 .profile-card { margin: 0; }
 .profile-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .profile-card-head h3 { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
@@ -1420,7 +1423,8 @@ p { margin: 0; }
 .profile-reset { margin: 18px 0 6px; }
 .profile-reset button { color: #fff; text-shadow: var(--sky-text-shadow); opacity: 0.85; }
 @media (min-width: 860px) {
-  .profile-grid { grid-template-columns: 1fr 1fr; max-width: 980px; margin: 0 auto; align-items: start; }
+  .profile-grid { flex-direction: row; align-items: flex-start; max-width: 980px; margin: 0 auto; }
+  .profile-col { display: flex; flex-direction: column; gap: 14px; flex: 1 1 0; min-width: 0; }
   .profile-hero { padding-top: 0; }
 }
 

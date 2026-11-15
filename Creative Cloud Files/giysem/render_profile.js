@@ -45,7 +45,7 @@ function wardrobeCard(s) {
   }
   const palette = [...colorCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([hex]) => hex);
   return `
-    <section class="glass panel profile-card rise-in" style="animation-delay:150ms">
+    <section class="glass panel profile-card wardrobe-card rise-in" style="animation-delay:150ms">
       <div class="profile-card-head">
         <h3>${t(s.lang, 'profile_wardrobe_title')}</h3>
         <button type="button" class="link-btn" data-action="go-wardrobe">${t(s.lang, 'go_wardrobe')} ${icons.chevron}</button>
@@ -71,7 +71,7 @@ function wardrobeCard(s) {
 function citiesCard(s, cityLabel) {
   const recent = loadRecentCities().filter(c => !(s.city && Math.abs(c.lat - s.city.lat) < 0.05 && Math.abs(c.lon - s.city.lon) < 0.05));
   return `
-    <section class="glass panel profile-card rise-in" style="animation-delay:190ms">
+    <section class="glass panel profile-card cities-card rise-in" style="animation-delay:190ms">
       <div class="profile-card-head"><h3>${t(s.lang, 'profile_cities_title')}</h3></div>
       <button class="city-name-btn city-row profile-city-row" data-action="open-city" type="button">
         ${icons.location}
@@ -107,7 +107,8 @@ export function renderProfileScreen(s) {
     ${avatarPicker(s)}
 
     <div class="profile-grid">
-      <section class="glass panel profile-card rise-in" style="animation-delay:90ms">
+      <div class="profile-col">
+      <section class="glass panel profile-card about-card rise-in" style="animation-delay:90ms">
         <div class="profile-card-head"><h3>${t(s.lang, 'profile_about_title')}</h3></div>
         <div class="field-group">
           <label class="field-label">${t(s.lang, 'field_name')}</label>
@@ -134,7 +135,10 @@ export function renderProfileScreen(s) {
         </div>
       </section>
 
-      <section class="glass panel profile-card rise-in" style="animation-delay:120ms">
+      ${historyCard(s)}
+      </div>
+      <div class="profile-col">
+      <section class="glass panel profile-card comfort-card rise-in" style="animation-delay:120ms">
         <div class="profile-card-head"><h3>${t(s.lang, 'comfort_title')}</h3></div>
         <p class="profile-hint">${t(s.lang, 'comfort_hint')}</p>
         <div class="comfort-options">
@@ -147,9 +151,9 @@ export function renderProfileScreen(s) {
         ${learnBlock(s)}
       </section>
 
-      ${historyCard(s)}
       ${wardrobeCard(s)}
       ${citiesCard(s, cityLabel)}
+      </div>
     </div>
 
     <div class="delete-link profile-reset">
@@ -171,8 +175,8 @@ function learnBlock(s) {
 }
 
 // "What I wore": the days marked with "I'm wearing this", newest first.
-// The profile card stays short (last 3 days); "See all" opens the full list.
-const HISTORY_SHOWN = 3;
+// The profile card stays short (last 2 days); "See all" opens the full list.
+const HISTORY_SHOWN = 2;
 const ANSWER_EMOJI = { cold: '🥶', ok: '👌', warm: '🥵' };
 const todayStr = () => new Date().toLocaleDateString('en-CA');
 const daysAgo = (date, today) => Math.round((Date.parse(today) - Date.parse(date)) / 86400000);
