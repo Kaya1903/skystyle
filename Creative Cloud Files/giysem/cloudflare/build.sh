@@ -1,6 +1,6 @@
 #!/bin/sh
 # Cloudflare Pages build: publish only the app's own front-end files
-# (index.html and the top-level .css/.js files), like server.py does.
+# (index.html, the top-level .css/.js files and a few images), like server.py does.
 # Everything else (server.py, marketing/, this folder, dotfiles) stays private.
 set -e
 cd "$(dirname "$0")/.."
@@ -12,6 +12,10 @@ for f in *.css *.js; do
     *[!A-Za-z0-9_.-]*) continue ;;  # same naming rule as server.py's allowlist
   esac
   cp "$f" dist/
+done
+# Images the page itself uses: link preview and icons.
+for f in og-image.jpg apple-touch-icon.png favicon.png; do
+  [ -f "$f" ] && cp "$f" dist/
 done
 cp cloudflare/_headers dist/_headers
 echo "Published files:" && ls dist

@@ -124,7 +124,7 @@ def extract_json_object(text):
 # Only the app's own front-end files are served: the root page and top-level
 # .html/.css/.js files. Everything else in the folder (this server's source,
 # dotfiles, spreadsheets, directory listings) gets a 404.
-PUBLIC_FILE = re.compile(r'^/[A-Za-z0-9_-]+\.(?:html|css|js)$')
+PUBLIC_FILE = re.compile(r'^/[A-Za-z0-9_-]+\.(?:html|css|js|png|jpg)$')
 PRIVATE_FILES = {'/server.py'}
 
 
