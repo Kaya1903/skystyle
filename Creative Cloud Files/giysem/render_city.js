@@ -31,7 +31,7 @@ export function renderCitySheet(state) {
 
 function cityButton(r, extraClass = '', inner = '') {
   return `
-    <button class="city-result ${extraClass}" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${escapeAttr(r.name)}" data-admin="${escapeAttr(r.admin)}" data-country="${escapeAttr(r.country)}">
+    <button class="city-result ${extraClass}" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${escapeAttr(r.name)}" data-admin="${escapeAttr(r.admin)}" data-country="${escapeAttr(r.country)}" data-cc="${escapeAttr(r.countryCode || '')}">
       ${inner}<span class="city-text">${escapeHtml(r.name)}
       <span class="sub">${escapeHtml([r.admin, r.country].filter((v, i, a) => v && a.indexOf(v) === i).join(', '))}</span></span>
     </button>`;
@@ -90,6 +90,7 @@ export function attachCitySheetHandlers(root) {
         name: btn.dataset.name,
         admin: btn.dataset.admin,
         country: btn.dataset.country || '',
+        countryCode: btn.dataset.cc || '',
         lat: parseFloat(btn.dataset.lat),
         lon: parseFloat(btn.dataset.lon),
       });

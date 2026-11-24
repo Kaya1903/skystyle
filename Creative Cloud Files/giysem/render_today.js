@@ -5,6 +5,7 @@ import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchFor
   toggleAdjustPanel, rerollOutfit, swapSuggestedPiece, quickAdjust, askAdjust } from './app.js';
 import { dayLabel, sameOutfit } from './feedback.js';
 import { renderLandmark } from './landmarks.js';
+import { cityLabel } from './weather.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows, wornPieces } from './visuals.js';
 
 // Turkish writes the percent sign first (%20); German and Spanish leave a space (20 %); others 20%.
@@ -12,7 +13,7 @@ const pct = (n, lang) => (lang === 'tr' ? `%${n}` : lang === 'de' || lang === 'e
 
 function cityRow(s) {
   const city = s.city;
-  const label = city ? (city.admin && city.admin !== city.name ? `${city.name}, ${city.admin}` : city.name) : t(s.lang, 'no_city');
+  const label = city ? cityLabel(city, s.lang) : t(s.lang, 'no_city');
   return `
     <button class="city-chip fade-slide" data-action="open-city">
       ${icons.location}

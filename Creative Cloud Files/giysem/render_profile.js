@@ -10,6 +10,7 @@ import {
   switchTab, loadRecentCities, chooseCity, resetLearning, state, render,
 } from './app.js';
 import { learningSummary, wornHistory, dayLabel } from './feedback.js';
+import { cityLabel as cityLabelOf } from './weather.js';
 
 function avatarPicker(s) {
   const profile = s.profile;
@@ -90,7 +91,7 @@ export function renderProfileScreen(s) {
   const genderOpts = [['unisex', 'gender_unisex'], ['kadin', 'gender_kadin'], ['erkek', 'gender_erkek']];
   const comfortOpts = ['cold', 'normal', 'warm'];
   const comfort = profile.comfort || 'normal';
-  const cityLabel = s.city ? (s.city.admin && s.city.admin !== s.city.name ? `${s.city.name}, ${s.city.admin}` : s.city.name) : t(s.lang, 'no_city');
+  const cityLabel = s.city ? cityLabelOf(s.city, s.lang) : t(s.lang, 'no_city');
 
   return `
     ${brandHeader(s)}

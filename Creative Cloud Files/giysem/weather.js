@@ -114,6 +114,7 @@ export async function geocodeCity(name, lang = 'tr') {
     name: r.name,
     admin: r.admin1 || r.country || '',
     country: r.country || '',
+    countryCode: r.country_code || '',
     lat: r.latitude,
     lon: r.longitude,
   }));
@@ -124,6 +125,25 @@ const REVERSE_GEOCODE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-c
 // Resolves GPS coordinates to a real place name (no API key required).
 // Returns null if the lookup fails or the response is unusable, callers should
 // fall back to a generic "my location" label rather than surfacing an error.
+// "Varşova, Polonya": the city with its country in the app's language. The
+// country name comes from the browser (Intl), not from the geocoder, so it's
+// short and localized. Older saved cities without a country code fall back to
+// the stored country, or a short region name, or just the city.
+export function cityLabel(city, lang = 'tr') {
+  if (!city || !city.name) return '';
+  let country = '';
+  if (city.countryCode) {
+    try { country = new Intl.DisplayNames([lang], { type: 'region' }).of(String(city.countryCode).toUpperCase()) || ''; } catch { country = ''; }
+  }
+  if (!country) country = city.country || '';
+  if (!country && city.admin) {
+    const parts = String(city.admin).split(',').map(x => x.trim()).filter(Boolean);
+    const last = parts[parts.length - 1] || '';
+    if (parts.length > 1 || last.length <= 18) country = last;
+  }
+  return country && country !== city.name ? `${city.name}, ${country}` : city.name;
+}
+
 export async function reverseGeocode(lat, lon, lang = 'tr') {
   const url = `${REVERSE_GEOCODE_URL}?latitude=${lat}&longitude=${lon}&localityLanguage=${lang}`;
   const res = await fetch(url);
@@ -132,7 +152,7 @@ export async function reverseGeocode(lat, lon, lang = 'tr') {
   const name = data.city || data.locality || data.principalSubdivision;
   if (!name) return null;
   const admin = [data.principalSubdivision, data.countryName].filter(v => v && v !== name).join(', ');
-  return { name, admin };
+  return { name, admin, country: data.countryName || '', countryCode: data.countryCode || '' };
 }
 
 export async function geocodeSingle(name, lang = 'tr') {
@@ -142,7 +162,7 @@ export async function geocodeSingle(name, lang = 'tr') {
   const data = await res.json();
   const r = (data.results || [])[0];
   if (!r) throw new Error('city not found');
-  return { name: r.name, admin: r.admin1 || r.country || '', country: r.country || '', lat: r.latitude, lon: r.longitude };
+  return { name: r.name, admin: r.admin1 || r.country || '', country: r.country || '', countryCode: r.country_code || '', lat: r.latitude, lon: r.longitude };
 }
 
 export async function fetchForecast(lat, lon) {

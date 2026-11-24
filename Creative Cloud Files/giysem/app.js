@@ -156,7 +156,7 @@ function sameCity(a, b) {
 
 function rememberCity(city) {
   if (!city || typeof city.lat !== 'number') return;
-  const entry = { name: city.name, admin: city.admin || '', country: city.country || '', lat: city.lat, lon: city.lon };
+  const entry = { name: city.name, admin: city.admin || '', country: city.country || '', countryCode: city.countryCode || '', lat: city.lat, lon: city.lon };
   const next = [entry, ...loadRecentCities().filter(c => !sameCity(c, entry))].slice(0, RECENT_MAX);
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* history is a convenience */ }
 }
@@ -222,7 +222,7 @@ async function locateFromCoords(lat, lon) {
   const base = { admin: '', lat, lon, isGeo: true };
   try {
     const place = await reverseGeocode(lat, lon, state.lang);
-    if (place && place.name) return { ...base, name: place.name, admin: place.admin };
+    if (place && place.name) return { ...base, name: place.name, admin: place.admin, country: place.country, countryCode: place.countryCode };
   } catch { /* fall through to generic label */ }
   return { ...base, name: t(state.lang, 'my_location') };
 }
@@ -230,7 +230,7 @@ async function locateFromCoords(lat, lon) {
 async function useFallbackCity() {
   try {
     const c = await geocodeSingle(FALLBACK_CITY, state.lang);
-    state.city = { name: c.name, admin: c.admin, lat: c.lat, lon: c.lon };
+    state.city = { name: c.name, admin: c.admin, country: c.country, countryCode: c.countryCode, lat: c.lat, lon: c.lon };
     await refetchForecast();
   } catch {
     state.loading = false;
