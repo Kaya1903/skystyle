@@ -1,4 +1,5 @@
 const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+const GEOCODE_GET_URL = 'https://geocoding-api.open-meteo.com/v1/get';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
 const WMO_TEXT = {
@@ -105,19 +106,66 @@ export function wmoToText(code, lang = 'tr') {
   return dict[code] || dict.default;
 }
 
-export async function geocodeCity(name, lang = 'tr') {
-  const url = `${GEOCODE_URL}?name=${encodeURIComponent(name)}&count=5&language=${lang}`;
+// The geocoder only knows a city by the names used in the language it is
+// asked in, so "Warszawa" searched in Turkish finds just a park in Ohio.
+// First search in the app's language; if that has no real town whose name
+// matches what was typed, also search in a few common languages and show
+// what was found under its name in the app's language ("Varşova").
+const SEARCH_LANGS = ['en', 'de', 'fr', 'es', 'it', 'pl', 'pt', 'ru', 'nl', 'tr'];
+const fold = str => String(str || '').toLocaleLowerCase('en').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/ł/g, 'l');
+const isTown = r => /^PPL/.test(r.feature_code || '');
+
+// Countries are left out: a whole country has no single weather ("Roma" → Romania).
+async function searchRaw(name, lang, count) {
+  const url = `${GEOCODE_URL}?name=${encodeURIComponent(name)}&count=${count}&language=${lang}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('geocode failed');
-  const data = await res.json();
-  return (data.results || []).map(r => ({
-    name: r.name,
-    admin: r.admin1 || r.country || '',
-    country: r.country || '',
-    countryCode: r.country_code || '',
-    lat: r.latitude,
-    lon: r.longitude,
+  return ((await res.json()).results || []).filter(r => !/^PCL/.test(r.feature_code || ''));
+}
+
+const toCity = r => ({
+  name: r.name,
+  admin: r.admin1 || r.country || '',
+  country: r.country || '',
+  countryCode: r.country_code || '',
+  lat: r.latitude,
+  lon: r.longitude,
+});
+
+export async function geocodeCity(name, lang = 'tr') {
+  const first = await searchRaw(name, lang, 5);
+  const q = fold(name);
+  const exact = r => fold(r.name) === q;
+  // The geocoder's own order is good once it knows the place (it finds Prague for
+  // "Praha"). If its top answer is a real city, keep its order and
+  // only move a city with exactly the typed name to the top (Kars over Karşıyaka).
+  const big = r => isTown(r) && ((r.population || 0) >= 100000 || /^PPL(C|A)$/.test(r.feature_code || ''));
+  if (first.length && big(first[0])) {
+    const top = first.filter(r => big(r) && exact(r));
+    return [...top, ...first.filter(r => !top.includes(r))].map(toCity);
+  }
+
+  const others = await Promise.all(SEARCH_LANGS.filter(l => l !== lang).map(l => searchRaw(name, l, 5).catch(() => [])));
+  const byId = new Map(first.map(r => [r.id, { r, mine: true }]));
+  for (const list of others) for (const r of list) if (!byId.has(r.id)) byId.set(r.id, { r, mine: false });
+  // A place counts as an exact match if its name in any of the languages is what was typed ("Warsaw" for Varşova).
+  const exactIds = new Set([first, ...others].flat().filter(exact).map(r => r.id));
+  // Real towns first; among them bigger places first, with an exact name
+  // counting as fifty times the size, and as at least a mid-size town when the
+  // geocoder has no population for it (Kars beats Karşıyaka, Vienna still beats Wien, Texas).
+  const weight = r => (exactIds.has(r.id) ? Math.max(r.population || 0, 50000) * 50 : (r.population || 1));
+  const ranked = [...byId.values()].sort((a, b) =>
+    (isTown(b.r) - isTown(a.r)) || (weight(b.r) - weight(a.r)));
+  const top = ranked.slice(0, 5);
+  // Places found through another language: fetch their names in the app's language.
+  const local = await Promise.all(top.map(async ({ r, mine }) => {
+    if (mine) return r;
+    try {
+      const res = await fetch(`${GEOCODE_GET_URL}?id=${r.id}&language=${lang}`);
+      return res.ok ? { ...r, ...(await res.json()) } : r;
+    } catch { return r; }
   }));
+  return local.map(toCity);
 }
 
 const REVERSE_GEOCODE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';

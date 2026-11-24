@@ -427,6 +427,7 @@ export async function searchCity(query) {
   render();
   try {
     const results = await geocodeCity(query.trim(), state.lang);
+    if (state.citySheetQuery !== query) return; // a newer search already started
     state.citySheetResults = results;
     state.citySheetMsg = results.length ? '' : t(state.lang, 'city_not_found');
   } catch {
