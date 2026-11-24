@@ -4,11 +4,11 @@ const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 const WMO_TEXT = {
   tr: {
     0: 'Açık', 1: 'Çoğunlukla açık', 2: 'Parçalı bulutlu', 3: 'Kapalı',
-    45: 'Sisli', 48: 'Sisli, yer buz tutabilir',
-    51: 'Yağmur çiseliyor', 53: 'Yağmur çiseliyor', 55: 'Hafif yağmurlu',
-    56: 'Çiseliyor, yer buz tutabilir', 57: 'Yağmurlu, yer buz tutabilir',
+    45: 'Sisli', 48: 'Sisli, buzlanma riski',
+    51: 'Hafif çiseleme', 53: 'Hafif çiseleme', 55: 'Hafif yağmurlu',
+    56: 'Çiseleme ve buzlanma riski', 57: 'Yağmurlu, buzlanma riski',
     61: 'Hafif yağmurlu', 63: 'Yağmurlu', 65: 'Kuvvetli yağmur',
-    66: 'Yağmurlu, yer buz tutabilir', 67: 'Kuvvetli yağmur, yer buz tutabilir',
+    66: 'Yağmurlu, buzlanma riski', 67: 'Kuvvetli yağmur, buzlanma riski',
     71: 'Hafif kar', 73: 'Karlı', 75: 'Yoğun kar',
     77: 'Hafif kar',
     80: 'Sağanak yağmur', 81: 'Kuvvetli sağanak', 82: 'Şiddetli sağanak',
@@ -171,7 +171,7 @@ function findHourIndex(times, dateStr, hour) {
 }
 
 const CONDITION_HEURISTIC = {
-  tr: { high: 'Yağmur ihtimali yüksek', mid: 'Parçalı bulutlu olabilir', low: 'Açık ve kuru görünüyor' },
+  tr: { high: 'Yağış ihtimali yüksek', mid: 'Parçalı bulutlu geçebilir', low: 'Açık ve yağışsız görünüyor' },
   en: { high: 'High chance of rain', mid: 'Could be partly cloudy', low: 'Looks clear and dry' },
   es: { high: 'Alta probabilidad de lluvia', mid: 'Puede estar parcialmente nublado', low: 'Parece despejado y seco' },
   pl: { high: 'Duża szansa na deszcz', mid: 'Możliwe częściowe zachmurzenie', low: 'Zapowiada się pogodnie i sucho' },
@@ -269,12 +269,12 @@ export function buildWeekView(raw, lang = 'tr') {
 // The evening note under today's outfit, in every language.
 const EVENING = {
   tr: {
-    none: 'Akşam için ayrı tahmin yok, gündüz havasına göre giyin.',
-    snow: r => `Akşam kar ihtimali %${r}. Kaymaz tabanlı, su geçirmez bot en güvenlisi.`,
-    rain: r => `Akşam yağmur ihtimali %${r}. Yanına küçük bir şemsiye al.`,
-    wind: w => `Akşam rüzgar saatte ${w} km'ye çıkıyor. İnce de olsa rüzgarı kesen bir şey al.`,
-    colder: t => `Akşam hissedilen sıcaklık ${t}° olacak. Çıkarken yanına bir kat daha al.`,
-    calm: 'Akşam hava sakin görünüyor, fazladan bir şeye gerek yok.',
+    none: 'Akşam için ayrı tahmin yok, gündüz havasına göre hazırlanabilirsin.',
+    snow: r => `Akşam kar ihtimali %${r}. Kaymaz tabanlı ve su geçirmez bir bot iyi olur.`,
+    rain: r => `Akşam yağmur ihtimali %${r}. Yanına küçük bir şemsiye almayı unutma.`,
+    wind: w => `Akşam rüzgar ${w} km/sa hızına çıkıyor. İnce de olsa rüzgar kesen bir şey al.`,
+    colder: t => `Akşam hissedilen sıcaklık ${t}° olacak. Çıkarken yanına ekstra bir kat al.`,
+    calm: 'Akşam hava sakin, ekstra bir şey almana gerek yok.',
   },
   en: {
     none: 'No separate forecast for tonight, so dress for the daytime weather.',
