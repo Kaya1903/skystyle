@@ -552,10 +552,17 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const ctx = { feelsLike, wind, rainMax };
   const needsRain = rainy || snowy;
   const needsWind = wind >= 20;
-  const pickOpts = { bandKey, needsRain, needsWind, allowArts: { yanina: accKinds || ['__none__'] }, relaxed: onlyMine };
+  const pickOpts = { bandKey, needsRain, needsWind, allowArts: { yanina: accKinds || ['__none__'] }, relaxed: onlyMine, seed: String(seed || '') + (adj.reroll ? `#${adj.reroll}` : '') };
   const optional = (OPTIONAL_SLOTS[bandKey] || []).filter(k => !rows[k]);
   const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k] || optional.includes(k)), pickOpts, locks);
   for (const k of optional) if (picks[k]) rows[k] = { item: picks[k].name, reason: '' };
+  // A mild day has room for one light layer over the top. Wind or rain keep
+  // the jacket; otherwise an owned piece wins over a suggestion, and if both
+  // are owned the cardigan stays and the jacket goes.
+  if (bandKey === 'ilik' && rows.ustune && rows.dis) {
+    if (needsWind || needsRain || (picks.dis && !picks.ustune)) { delete rows.ustune; delete picks.ustune; }
+    else { delete rows.dis; delete picks.dis; }
+  }
   const pickedItems = Object.values(picks);
   // Wardrobe-only: drop every suggested slot; what's missing or off becomes a tip.
   const tips = onlyMine ? wardrobeTips({ rows, picks, bandKey, needsRain, needsWind, language, L }) : [];
@@ -598,11 +605,12 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
 
   // ---- Keep suggestions consistent with what the user is actually wearing ----
   const ownBottom = picks.alt ? itemLook(picks.alt).art : null;
-  // A dress is a whole look: no suggested top over it when it's warm, and in
-  // the cold the top becomes the layer worn under the dress.
-  if (ownBottom === 'dress' && rows.ust && !picks.ust) {
-    if (WARM_BANDS.includes(bandKey) || bandKey === 'serin') delete rows.ust;
-    else rows.ust = { item: X.dress_cold_top[0], reason: () => X.dress_cold_top[1] };
+  const bottomArt = ownBottom || (rows.alt ? garmentVariant('alt', rows.alt.item, BAND_WARMTH[bandKey]) : null);
+  // A dress is a whole look: no top with it when it's mild or warm (owned or
+  // suggested), and in the cold the top becomes the layer worn under the dress.
+  if (bottomArt === 'dress' && rows.ust) {
+    if (WARM_BANDS.includes(bandKey) || bandKey === 'serin') { delete rows.ust; delete picks.ust; }
+    else if (!picks.ust) rows.ust = { item: X.dress_cold_top[0], reason: () => X.dress_cold_top[1] };
   }
   // A suggested mid layer that would be the same garment as an owned top, or
   // an extra layer under an already very warm owned coat, is dropped/softened.

@@ -222,6 +222,15 @@ function idHash(id) {
   return hash;
 }
 
+// 0..0.99, well mixed: a one-letter change in the date reshuffles every piece
+// (a plain string hash would shift them all by the same amount).
+function dayNudge(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; h = Math.imul(h, 3266489909); h ^= h >>> 16;
+  return ((h >>> 0) % 1000) / 1000;
+}
+
 const MAX_CANDIDATES_PER_SLOT = 5;
 const COLOR_WEIGHT = 0.7;
 
@@ -230,7 +239,7 @@ const COLOR_WEIGHT = 0.7;
 // the accessory slot on a rainy day, only a beanie or scarf when it's freezing).
 // `relaxed` (wardrobe-only mode): any thickness is allowed and rain/wind only
 // lower the score, so the user always gets an outfit from their own clothes.
-function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed }, limit = MAX_CANDIDATES_PER_SLOT) {
+function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed, seed = '' }, limit = MAX_CANDIDATES_PER_SLOT) {
   const desired = BAND_WARMTH[bandKey];
   const kinds = allowArts && allowArts[category];
   const isAcc = category === 'yanina';
@@ -242,6 +251,9 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
     .filter(i => relaxed || isAcc || Math.abs((i.warmth || 3) - desired) <= 1)
     // Even from the user's own clothes, a coat or extra layer that's far too warm is left out.
     .filter(i => !relaxed || !['dis', 'ustune'].includes(category) || (i.warmth || 3) - desired <= 1)
+    // On mild and warm days a layer may not be warmer than the day calls for
+    // (no fleece or wool coat at 20°).
+    .filter(i => !['dis', 'ustune'].includes(category) || !['ilik', 'sicak', 'cok_sicak'].includes(bandKey) || (i.warmth || 3) <= desired)
     .filter(i => relaxed || !(needsRain && category === 'ayak' && !i.rainOk))
     .filter(i => relaxed || !(needsWind && category === 'dis' && !i.windproof))
     .map(i => {
@@ -249,6 +261,9 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
       if (needsRain && category !== 'yanina') score += i.rainOk ? 2 : -3;
       if (needsWind && category === 'dis') score += i.windproof ? 2 : -3;
       if (needsRain && i.rainOk) score += 0.5;
+      // A small nudge that changes every day, so similar pieces take turns
+      // instead of the same T-shirt winning every day.
+      if (seed) score += dayNudge(`${i.id}|${seed}`);
       return { item: i, score };
     })
     .sort((a, b) => b.score - a.score || idHash(a.item.id) - idHash(b.item.id))
@@ -265,10 +280,10 @@ export function slotOptionIds(items, category, { bandKey, needsRain, needsWind, 
 // whole outfit fits the weather AND its colors/patterns work together.
 // `locks` pins a slot to a specific item id (from the swap button); the other
 // slots are then re-picked to go with it. Returns { [category]: item }.
-export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind, allowArts, relaxed }, locks = {}) {
+export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind, allowArts, relaxed, seed }, locks = {}) {
   const slots = categories
     .map(category => {
-      const opts = { category, bandKey, needsRain, needsWind, allowArts, relaxed };
+      const opts = { category, bandKey, needsRain, needsWind, allowArts, relaxed, seed };
       if (locks[category]) {
         const locked = slotCandidates(items, opts, Infinity).filter(c => c.item.id === locks[category]);
         if (locked.length) return { category, cands: locked };
