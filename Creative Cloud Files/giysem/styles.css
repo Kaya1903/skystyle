@@ -403,12 +403,15 @@ p { margin: 0; }
   display: flex; align-items: flex-start;
 }
 .hero-deg { font-size: 0.5em; margin-top: 0.12em; opacity: 0.85; }
-.hero-meta { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; text-shadow: var(--sky-text-shadow); }
+/* "Feels like" sits right above the big number it describes; the actual
+   (thermometer) temperature is a separate pill next to wind and rain. */
+.hero-temp-block { display: flex; flex-direction: column; min-width: 0; }
 .hero-temp-label {
-  font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700;
-  color: var(--on-sky);
+  margin-top: 14px;
+  font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700;
+  color: var(--on-sky); text-shadow: var(--sky-text-shadow);
 }
-.hero-thermo { font-size: 13.5px; color: var(--on-sky-soft); }
+.hero-temp-block .hero-temp { margin-top: 8px; }
 .hero-condition {
   font-family: var(--display);
   font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
@@ -1564,3 +1567,8 @@ p { margin: 0; }
   .history-sheet .sheet { max-width: 620px; border-radius: 30px; max-height: 80vh; padding-bottom: 22px; }
   .history-sheet .sheet-handle { display: none; }
 }
+
+/* Temperatures read left to right in every language, so "-2°" never turns into "2°-" in Arabic. */
+.hero-temp, .daypart-temp, .week-temp-min, .week-temp-max, .hist-meta { direction: ltr; unicode-bidi: isolate; }
+.hero-temp { justify-content: flex-start; }
+[dir="rtl"] .hero-temp { justify-content: flex-end; }

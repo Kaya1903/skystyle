@@ -29,17 +29,17 @@ function heroSection(dayView, s) {
       <div class="hero-main">
         ${cityRow(s)}
         <div class="hero-row">
+          <div class="hero-temp-block">
+          <div class="hero-temp-label fade-slide" style="animation-delay:60ms">${t(s.lang, 'hero_feels')}</div>
           <div class="hero-temp pop-in" style="animation-delay:80ms">
             <span class="count-up" data-to="${h.feelsLike}">${h.feelsLike}</span><span class="hero-deg">°</span>
           </div>
+          </div>
           <div class="hero-glyph pop-in" style="animation-delay:140ms">${weatherGlyph(h.kind, h.isDay)}</div>
-        </div>
-        <div class="hero-meta fade-slide" style="animation-delay:200ms">
-          <span class="hero-temp-label">${t(s.lang, 'hissedilen')}</span>
-          ${h.hasActualTemp ? `<span class="hero-thermo">${t(s.lang, 'termometre', h.actualTemp)}</span>` : ''}
         </div>
         <div class="hero-condition fade-slide" style="animation-delay:260ms"><strong>${h.condition}</strong></div>
         <div class="hero-stats fade-slide" style="animation-delay:320ms">
+          ${h.hasActualTemp ? `<span class="stat-pill" title="${t(s.lang, 'hero_actual_hint')}">${icons.thermo}${t(s.lang, 'hero_actual')} <b>${h.actualTemp}°</b></span>` : ''}
           <span class="stat-pill">${icons.wind}<b>${h.wind}</b> ${t(s.lang, 'unit_kmh')}</span>
           <span class="stat-pill">${icons.drop}<b>${pct(h.rain, s.lang)}</b></span>
         </div>

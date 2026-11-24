@@ -13,6 +13,7 @@ export const icons = {
   plus: `<svg viewBox="0 0 24 24" ${S}><path d="M12 5v14M5 12h14"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" ${S}><path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.4"/></svg>`,
   drop: `<svg viewBox="0 0 24 24" ${S}><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>`,
+  thermo: `<svg viewBox="0 0 24 24" ${S}><path d="M10 14.2V5a2 2 0 0 1 4 0v9.2a4 4 0 1 1-4 0z"/><path d="M12 10v6"/></svg>`,
   wind: `<svg viewBox="0 0 24 24" ${S}><path d="M3 8h11.5a2.5 2.5 0 1 0-2.3-3.5M3 12.5h15a2.5 2.5 0 1 1-2.3 3.5M3 17h9"/></svg>`,
   hanger: `<svg viewBox="0 0 24 24" ${S}><path d="M12 3a1.8 1.8 0 1 1 1.8 1.8"/><path d="M12 4.8V7"/><path d="M12 7l-8.5 6c-.6.4-.3 1.5.5 1.5h16c.8 0 1.1-1.1.5-1.5L12 7z"/><path d="M6 17.3h12"/></svg>`,
   chevron: `<svg viewBox="0 0 24 24" ${S}><path d="M9 6l6 6-6 6"/></svg>`,
