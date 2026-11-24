@@ -285,7 +285,7 @@ const KEYWORDS = {
   ],
   dis: [
     ['parka', ['parka']],
-    ['puffer', ['şişme', 'puf', 'puffer', 'down', 'kaz tüyü', 'dizüstü', 'knee-length', 'plumífero', 'puchowa', 'daunen', 'stepp']],
+    ['puffer', ['şişme', 'puf', 'puffer', 'down', 'kaz tüyü', 'dizüstü', 'diz boyu', 'knee-length', 'plumífero', 'puchowa', 'daunen', 'stepp']],
     ['trench', ['trençkot', 'trenchcoat', 'trench', 'gabardina', 'trencz']],
     ['coat', ['kaban', 'palto', 'coat', 'abrigo', 'płaszcz', 'معطف', 'mantel']],
     ['bomber', ['bomber']],

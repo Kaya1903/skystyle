@@ -31,122 +31,122 @@ const BASE = {
   tr: {
     dondurucu: {
       unisex: {
-        ust: { item: 'İnce termal içlik, üzerine kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişörtle çıkılmaz, en alta ince bir termal giy` },
+        ust: { item: 'İnce termal içlik, üzerine kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişörtle çıkmak zor; en alta ince termal giy` },
         ustune: { item: 'Kalın polar hırka', reason: () => `Araya bir kat daha, vücut ısın kaçmasın` },
-        dis: { item: 'Dizüstü kalın mont, kapüşonlu', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı giy` },
-        alt: { item: 'Astarlı kalın pantolon', reason: () => `Bu soğukta ince pantolon üşütür, astarlı olanı giy` },
-        ayak: { item: 'Kalın tabanlı bot, yün çorapla', reason: () => `Kalın taban, yerden gelen soğuğu keser` },
+        dis: { item: 'Diz boyu kalın kapüşonlu mont', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı seç` },
+        alt: { item: 'Kalın astarlı pantolon', reason: () => `Bu soğukta ince pantolon üşütür, astarlısını giy` },
+        ayak: { item: 'Kalın tabanlı bot, yün çorapla', reason: () => `Kalın taban yerden gelen soğuğu keser` },
       },
       kadin: {
         ust: { item: 'İnce termal içlik, üzerine kalın triko kazak', reason: c => `Hissedilen ${c.feelsLike}°. İnce kazak tek başına yetmez, altına termal giy` },
         ustune: { item: 'Kalın örgü hırka', reason: () => `Araya bir kat daha, vücut ısın kaçmasın` },
-        dis: { item: 'Dizüstü kalın mont, kapüşonlu', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı giy` },
-        alt: { item: 'Astarlı kalın pantolon (ya da kalın tayt üstüne uzun yünlü etek)', reason: () => `Bacaklarını açıkta bırakma, kalın ve astarlı bir şey giy` },
-        ayak: { item: 'Kalın tabanlı, su geçirmez bot', reason: () => `Kalın taban, yerden gelen soğuğu keser` },
+        dis: { item: 'Diz boyu kalın kapüşonlu mont', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı seç` },
+        alt: { item: 'Kalın astarlı pantolon (veya kalın tayt üstü uzun yün etek)', reason: () => `Bacaklarını açıkta bırakma, kalın ve astarlı bir şey seç` },
+        ayak: { item: 'Su geçirmez kalın tabanlı bot', reason: () => `Kalın taban yerden gelen soğuğu keser` },
       },
       erkek: {
-        ust: { item: 'İnce termal içlik, üzerine kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişörtle çıkılmaz, en alta ince bir termal giy` },
+        ust: { item: 'İnce termal içlik, üzerine kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişörtle çıkmak zor; en alta ince termal giy` },
         ustune: { item: 'Kalın polar hırka', reason: () => `Araya bir kat daha, vücut ısın kaçmasın` },
-        dis: { item: 'Dizüstü kalın mont, kapüşonlu', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı giy` },
-        alt: { item: 'Astarlı kalın kumaş pantolon', reason: () => `Bu soğukta ince pantolon üşütür, astarlı olanı giy` },
-        ayak: { item: 'Kalın tabanlı bot, yün çorapla', reason: () => `Kalın taban, yerden gelen soğuğu keser` },
+        dis: { item: 'Diz boyu kalın kapüşonlu mont', reason: c => `Bu soğukta kısa mont yetmez, uzun ve kalın olanı seç` },
+        alt: { item: 'Kalın astarlı kumaş pantolon', reason: () => `Bu soğukta ince pantolon üşütür, astarlısını giy` },
+        ayak: { item: 'Kalın tabanlı bot, yün çorapla', reason: () => `Kalın taban yerden gelen soğuğu keser` },
       },
     },
     soguk: {
       unisex: {
-        ust: { item: 'Kalın kumaşlı düz tişört, üstüne kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişört tek başına yetmez, üstüne kalın bir kazak giy` },
-        dis: { item: 'Astarlı kumaş ceket ya da kalın parka', reason: c => `Bu havada ceketsiz çıkılmaz, astarlı bir ceket giy` },
+        ust: { item: 'Kalın kumaşlı düz tişört, üstüne kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişört tek başına yetmez, üstüne kalın bir kazak al` },
+        dis: { item: 'Astarlı kumaş ceket ya da kalın parka', reason: c => `Bu havada ceketsiz üşütür, astarlı bir ceket al` },
         alt: { item: 'Kalın kumaş pantolon', reason: () => `Kalın kumaş bacaklarını soğuktan korur` },
-        ayak: { item: 'Kapalı, kalın tabanlı bot', reason: () => `Bu havada kapalı ayakkabı şart` },
+        ayak: { item: 'Kapalı, kalın tabanlı bot', reason: () => `Bu havada kapalı ayakkabı en iyisi` },
       },
       kadin: {
-        ust: { item: 'Kalın kumaşlı düz tişört, üstüne kalın triko kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişört tek başına yetmez, üstüne kalın bir kazak giy` },
-        dis: { item: 'Astarlı kumaş ceket ya da kısa kaban', reason: c => `Bu havada ceketsiz çıkılmaz, astarlı bir şey giy` },
-        alt: { item: 'Kalın kumaş pantolon (ya da kalın tayt üstüne diz altı etek)', reason: () => `Kalın kumaş bacaklarını soğuktan korur` },
-        ayak: { item: 'Kapalı, kalın tabanlı bot', reason: () => `Bu havada kapalı ayakkabı şart` },
+        ust: { item: 'Kalın kumaşlı düz tişört, üstüne kalın triko kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişört tek başına yetmez, üstüne kalın bir kazak al` },
+        dis: { item: 'Astarlı kumaş ceket ya da kısa kaban', reason: c => `Bu havada ceketsiz üşütür, astarlı bir şey giy` },
+        alt: { item: 'Kalın pantolon (veya kalın tayt üstü diz altı etek)', reason: () => `Kalın kumaş bacaklarını soğuktan korur` },
+        ayak: { item: 'Kapalı, kalın tabanlı bot', reason: () => `Bu havada kapalı ayakkabı en iyisi` },
       },
       erkek: {
-        ust: { item: 'Kalın kumaşlı düz tişört, üstüne kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişört tek başına yetmez, üstüne kalın bir kazak giy` },
-        dis: { item: 'Astarlı kumaş ceket', reason: c => `${c.feelsLike}° hissedilende ceketsiz durmak zor, astarlı bir ceket al` },
+        ust: { item: 'Kalın kumaşlı düz tişört, üstüne kalın örgü kazak', reason: c => `Hissedilen ${c.feelsLike}°. Tişört tek başına yetmez, üstüne kalın bir kazak al` },
+        dis: { item: 'Astarlı kumaş ceket', reason: c => `Hissedilen ${c.feelsLike}°'de ceketsiz durmak zor; astarlı bir ceket al` },
         alt: { item: 'Kalın kumaş pantolon', reason: () => `Kalın kumaş bacaklarını soğuktan korur` },
-        ayak: { item: 'Kapalı, kalın tabanlı bot', reason: () => `Bu havada kapalı ayakkabı şart` },
+        ayak: { item: 'Kapalı, kalın tabanlı bot', reason: () => `Bu havada kapalı ayakkabı en iyisi` },
       },
     },
     serin: {
       unisex: {
-        ust: { item: 'Kalın kumaşlı düz tişört (beyaz ya da gri)', reason: c => `Hissedilen ${c.feelsLike}°. İnce tişört üşütebilir, kalın kumaşlı olanı seç` },
+        ust: { item: 'Kalın düz tişört (beyaz veya gri)', reason: c => `Hissedilen ${c.feelsLike}°. İnce tişört üşütebilir, kalın kumaşlı olanı seç` },
         ustune: { item: 'Önü açık kalın gömlek', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
-        dis: { item: 'İnce hırka ya da hafif ceket, istersen elinde taşı', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir şey olsun` },
-        alt: { item: 'Kumaş pantolon', reason: () => `Bu sıcaklıkta kumaş pantolon rahat ve yeterli` },
-        ayak: { item: 'Spor ayakkabı ya da kapalı bot', reason: () => `Kapalı ayakkabı bu sıcaklıkta en rahatı` },
+        dis: { item: 'İnce hırka veya hafif ceket (istersen elinde taşı)', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir kat dursun` },
+        alt: { item: 'Kumaş pantolon', reason: () => `Bu havada kumaş pantolon rahat ve tam kararında` },
+        ayak: { item: 'Spor ayakkabı veya kapalı bot', reason: () => `Kapalı ayakkabı bu havada en rahatı` },
       },
       kadin: {
         ust: { item: 'Kalın kumaşlı düz tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce tişört üşütebilir` },
         ustune: { item: 'Önü açık ince hırka', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
-        dis: { item: 'Hafif trençkot, istersen elinde taşı', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir şey olsun` },
-        alt: { item: 'Kumaş pantolon (ya da ince tayt üstüne diz boyu etek)', reason: () => `Bu sıcaklıkta kumaş pantolon rahat ve yeterli` },
-        ayak: { item: 'Spor ayakkabı ya da makosen', reason: () => `Kapalı ayakkabı bu sıcaklıkta en rahatı` },
+        dis: { item: 'Hafif trençkot (istersen elinde taşı)', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir kat dursun` },
+        alt: { item: 'Kumaş pantolon (veya ince tayt üstü diz boyu etek)', reason: () => `Bu havada kumaş pantolon rahat ve tam kararında` },
+        ayak: { item: 'Spor ayakkabı veya loafer', reason: () => `Kapalı ayakkabı bu havada en rahatı` },
       },
       erkek: {
         ust: { item: 'Kalın kumaşlı düz tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce tişört üşütebilir` },
         ustune: { item: 'Önü açık kalın gömlek', reason: () => `Üşürsen giyersin, ısınırsan çıkarırsın` },
-        dis: { item: 'İnce, hafif ceket, istersen elinde taşı', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir şey olsun` },
-        alt: { item: 'Kumaş pantolon', reason: () => `Bu sıcaklıkta kumaş pantolon rahat ve yeterli` },
-        ayak: { item: 'Makosen ya da spor ayakkabı', reason: () => `Kapalı ayakkabı bu sıcaklıkta en rahatı` },
+        dis: { item: 'Hafif ceket (istersen elinde taşı)', reason: () => `Sabah ve akşam serinleyebilir, yanında hafif bir kat dursun` },
+        alt: { item: 'Kumaş pantolon', reason: () => `Bu havada kumaş pantolon rahat ve tam kararında` },
+        ayak: { item: 'Loafer veya spor ayakkabı', reason: () => `Kapalı ayakkabı bu havada en rahatı` },
       },
     },
     ilik: {
       unisex: {
         ust: { item: 'İnce pamuklu tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce bir tişört yeterli` },
-        ustune: { item: 'İnce gömlek ya da hırka (yanında dursun)', reason: () => `Akşamüstü serinlerse üstüne giyersin` },
-        alt: { item: 'İnce kumaş pantolon', reason: () => `Bu ılık havada ince kumaş pantolon rahat eder` },
-        ayak: { item: 'Spor ayakkabı', reason: () => `Spor ayakkabı bu sıcaklıkta en rahatı` },
+        ustune: { item: 'İnce gömlek veya hırka (yanında bulunsun)', reason: () => `Akşamüstü serinlerse üzerine alırsın` },
+        alt: { item: 'İnce kumaş pantolon', reason: () => `Bu havada ince kumaş pantolon çok rahat` },
+        ayak: { item: 'Spor ayakkabı', reason: () => `Spor ayakkabı bu havada en rahatı` },
       },
       kadin: {
-        ust: { item: 'İnce pamuklu tişört ya da gömlek', reason: c => `Hissedilen ${c.feelsLike}°. İnce bir tişört yeterli` },
-        ustune: { item: 'İnce hırka (yanında dursun)', reason: () => `Akşamüstü serinlerse üstüne giyersin` },
-        alt: { item: 'İnce kumaş pantolon ya da midi elbise', reason: () => `Bu ılık havada ince kumaş rahat eder` },
-        ayak: { item: 'Spor ayakkabı ya da makosen', reason: () => `Spor ayakkabı bu sıcaklıkta en rahatı` },
+        ust: { item: 'İnce pamuklu tişört veya gömlek', reason: c => `Hissedilen ${c.feelsLike}°. İnce bir tişört yeterli` },
+        ustune: { item: 'İnce hırka (yanında bulunsun)', reason: () => `Akşamüstü serinlerse üzerine alırsın` },
+        alt: { item: 'İnce kumaş pantolon veya midi elbise', reason: () => `Bu havada ince kumaş çok rahat` },
+        ayak: { item: 'Spor ayakkabı veya loafer', reason: () => `Spor ayakkabı bu havada en rahatı` },
       },
       erkek: {
         ust: { item: 'İnce pamuklu tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce bir tişört yeterli` },
-        ustune: { item: 'İnce gömlek (yanında dursun)', reason: () => `Akşamüstü serinlerse üstüne giyersin` },
-        alt: { item: 'İnce kumaş pantolon', reason: () => `Bu ılık havada ince kumaş pantolon rahat eder` },
-        ayak: { item: 'Spor ayakkabı ya da makosen', reason: () => `Spor ayakkabı bu sıcaklıkta en rahatı` },
+        ustune: { item: 'İnce gömlek (yanında bulunsun)', reason: () => `Akşamüstü serinlerse üzerine alırsın` },
+        alt: { item: 'İnce kumaş pantolon', reason: () => `Bu havada ince kumaş pantolon çok rahat` },
+        ayak: { item: 'Spor ayakkabı veya loafer', reason: () => `Spor ayakkabı bu havada en rahatı` },
       },
     },
     sicak: {
       unisex: {
-        ust: { item: 'İnce, nefes alan tişört (keten ya da pamuklu)', reason: c => `Hissedilen ${c.feelsLike}°. İnce ve nefes alan kumaş seni terletmez` },
-        alt: { item: 'İnce kumaş şort ya da hafif pantolon', reason: () => `Hafif kumaş bu sıcakta çok daha rahat` },
-        ayak: { item: 'Açık spor ayakkabı ya da sandalet', reason: () => `Ayakların nefes alsın, açık ayakkabı iyi gelir` },
+        ust: { item: 'İnce, nefes alan tişört (keten veya pamuk)', reason: c => `Hissedilen ${c.feelsLike}°. İnce, nefes alan kumaş bunaltmaz` },
+        alt: { item: 'Hafif kumaş şort veya ince pantolon', reason: () => `Hafif kumaş bu sıcakta çok daha rahat` },
+        ayak: { item: 'Açık spor ayakkabı veya sandalet', reason: () => `Ayakların nefes alsın, açık bir model iyi gelir` },
       },
       kadin: {
-        ust: { item: 'İnce keten gömlek ya da tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce ve nefes alan kumaş seni terletmez` },
-        alt: { item: 'Hafif kumaş şort ya da yazlık elbise', reason: () => `Hafif kumaş bu sıcakta çok daha rahat` },
-        ayak: { item: 'Sandalet ya da açık spor ayakkabı', reason: () => `Ayakların nefes alsın, açık ayakkabı iyi gelir` },
+        ust: { item: 'İnce keten gömlek veya tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce, nefes alan kumaş bunaltmaz` },
+        alt: { item: 'Hafif şort veya yazlık elbise', reason: () => `Hafif kumaş bu sıcakta çok daha rahat` },
+        ayak: { item: 'Sandalet veya açık spor ayakkabı', reason: () => `Ayakların nefes alsın, açık bir model iyi gelir` },
       },
       erkek: {
-        ust: { item: 'İnce keten ya da pamuklu tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce ve nefes alan kumaş seni terletmez` },
+        ust: { item: 'İnce keten veya pamuklu tişört', reason: c => `Hissedilen ${c.feelsLike}°. İnce, nefes alan kumaş bunaltmaz` },
         alt: { item: 'Hafif kumaş şort', reason: () => `Hafif kumaş bu sıcakta çok daha rahat` },
-        ayak: { item: 'Sandalet ya da açık spor ayakkabı', reason: () => `Ayakların nefes alsın, açık ayakkabı iyi gelir` },
+        ayak: { item: 'Sandalet veya açık spor ayakkabı', reason: () => `Ayakların nefes alsın, açık bir model iyi gelir` },
       },
     },
     cok_sicak: {
       unisex: {
-        ust: { item: 'Çok ince, açık renk keten gömlek ya da tişört', reason: c => `Hissedilen ${c.feelsLike}°. Açık renk keten, güneşin sıcağını daha az tutar` },
-        alt: { item: 'Hafif keten şort', reason: () => `Bu sıcakta bacakların rahat nefes alsın` },
-        ayak: { item: 'Sandalet', reason: () => `Kapalı ayakkabı bu sıcakta bunaltır, sandalet en iyisi` },
+        ust: { item: 'İnce açık renk keten gömlek veya tişört', reason: c => `Hissedilen ${c.feelsLike}°. Açık renk keten güneşin ısısını daha az tutar` },
+        alt: { item: 'Hafif keten şort', reason: () => `Bu sıcakta bacakların rahatça nefes alsın` },
+        ayak: { item: 'Sandalet', reason: () => `Kapalı ayakkabı bu sıcakta bunaltır, sandalet daha rahat` },
       },
       kadin: {
-        ust: { item: 'Çok ince, açık renk keten gömlek', reason: c => `Hissedilen ${c.feelsLike}°. Açık renk keten, güneşin sıcağını daha az tutar` },
-        alt: { item: 'Hafif keten şort ya da yazlık etek', reason: () => `Bu sıcakta bacakların rahat nefes alsın` },
-        ayak: { item: 'Sandalet', reason: () => `Kapalı ayakkabı bu sıcakta bunaltır, sandalet en iyisi` },
+        ust: { item: 'İnce açık renk keten gömlek', reason: c => `Hissedilen ${c.feelsLike}°. Açık renk keten güneşin ısısını daha az tutar` },
+        alt: { item: 'Hafif keten şort veya yazlık etek', reason: () => `Bu sıcakta bacakların rahatça nefes alsın` },
+        ayak: { item: 'Sandalet', reason: () => `Kapalı ayakkabı bu sıcakta bunaltır, sandalet daha rahat` },
       },
       erkek: {
-        ust: { item: 'Çok ince, açık renk keten gömlek', reason: c => `Hissedilen ${c.feelsLike}°. Açık renk keten, güneşin sıcağını daha az tutar` },
-        alt: { item: 'Hafif keten şort', reason: () => `Bu sıcakta bacakların rahat nefes alsın` },
-        ayak: { item: 'Sandalet', reason: () => `Kapalı ayakkabı bu sıcakta bunaltır, sandalet en iyisi` },
+        ust: { item: 'İnce açık renk keten gömlek', reason: c => `Hissedilen ${c.feelsLike}°. Açık renk keten güneşin ısısını daha az tutar` },
+        alt: { item: 'Hafif keten şort', reason: () => `Bu sıcakta bacakların rahatça nefes alsın` },
+        ayak: { item: 'Sandalet', reason: () => `Kapalı ayakkabı bu sıcakta bunaltır, sandalet daha rahat` },
       },
     },
   },
@@ -276,12 +276,12 @@ const BASE = {
 
 const RAIN_SHOE = {
   tr: {
-    dondurucu: 'Su geçirmez, kalın tabanlı bot',
-    soguk: 'Su geçirmez, kalın tabanlı bot',
-    serin: 'Su geçirmez, kapalı hafif ayakkabı',
-    ilik: 'Su geçirmez, kapalı hafif ayakkabı',
-    sicak: 'Su geçirmez, kapalı hafif ayakkabı (sandalet bugün ıslanır)',
-    cok_sicak: 'Su geçirmez, kapalı hafif ayakkabı (sandalet bugün ıslanır)',
+    dondurucu: 'Kalın tabanlı su geçirmez bot',
+    soguk: 'Kalın tabanlı su geçirmez bot',
+    serin: 'Kapalı, suya dayanıklı hafif ayakkabı',
+    ilik: 'Kapalı, suya dayanıklı hafif ayakkabı',
+    sicak: 'Kapalı, suya dayanıklı ayakkabı (sandalet ıslanır)',
+    cok_sicak: 'Kapalı, suya dayanıklı ayakkabı (sandalet ıslanır)',
   },
   en: {
     dondurucu: 'Waterproof, thick-soled boots',
@@ -310,10 +310,11 @@ function applyWind(rows, wind, lang) {
     return;
   }
   if (rows.dis) {
-    const item = rows.dis.item.includes('rüzgar') ? rows.dis.item : rows.dis.item + ', tercihen rüzgar geçirmez';
-    rows.dis = { item, reason: c => `Saatte ${c.wind} km rüzgar var, havayı olduğundan soğuk hissettiriyor. Rüzgar geçirmez bir şey giy` };
+    // "(rüzgar kesen)" replaces a closing note like "(istersen elinde taşı)", or is added at the end.
+    const item = rows.dis.item.includes('rüzgar') ? rows.dis.item : rows.dis.item.replace(/\s*\([^)]*\)$/, '') + ' (rüzgar kesen)';
+    rows.dis = { item, reason: c => `${c.wind} km/sa rüzgar var, havayı olduğundan soğuk hissettiriyor. Rüzgar kesen bir parça giy` };
   } else {
-    rows.dis = { item: 'İnce rüzgar geçirmez mont', reason: c => `Saatte ${c.wind} km rüzgar var. İnce de olsa rüzgarı kesen bir şey giy` };
+    rows.dis = { item: 'İnce rüzgarlık mont', reason: c => `${c.wind} km/sa rüzgar var. İnce olsa da rüzgarı kesen bir şey al` };
   }
 }
 
@@ -323,8 +324,8 @@ function applyRain(rows, bandKey, rainMax, lang) {
     rows.yanina = { item: 'A small umbrella', reason: c => `${c.rainMax}% chance of rain. Take a small umbrella with you` };
     return;
   }
-  rows.ayak = { item: RAIN_SHOE.tr[bandKey], reason: c => `Yağmur ihtimali %${c.rainMax}. Süet ve kumaş ayakkabı ıslanır, su geçirmez bir şey giy` };
-  rows.yanina = { item: 'Küçük bir şemsiye', reason: c => `Yağmur ihtimali %${c.rainMax}. Yanına küçük bir şemsiye al` };
+  rows.ayak = { item: RAIN_SHOE.tr[bandKey], reason: c => `Yağmur ihtimali %${c.rainMax}. Süet ve kumaş ıslanır; suya dayanıklı bir şey seç` };
+  rows.yanina = { item: 'Ufak şemsiye', reason: c => `Yağmur ihtimali %${c.rainMax}. Yanına ufak bir şemsiye al` };
 }
 
 // Layers the base outfit doesn't suggest for a band but that still make sense
@@ -743,32 +744,33 @@ function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked =
     if (partner) bits.push(L('{c} pairs well with your {n}').replace('{c}', colorName(item.color, outLang).toLocaleLowerCase(outLang)).replace('{n}', partner.name));
     return bits.join(L(', ')) + '.';
   }
-  const bits = [isAcc ? 'Bugüne uygun' : diff < -1 ? `Hissedilen ${ctx.feelsLike}° için biraz ince` : diff > 1 ? `Hissedilen ${ctx.feelsLike}° için biraz kalın` : `Hissedilen ${ctx.feelsLike}° için kalınlığı tam`];
+  const bits = [isAcc ? 'Bugüne uygun' : diff < -1 ? `Hissedilen ${ctx.feelsLike}° için biraz ince kalabilir` : diff > 1 ? `Hissedilen ${ctx.feelsLike}° için biraz kalın` : `Hissedilen ${ctx.feelsLike}° için kalınlığı tam`];
   if (needsRain && slotKey === 'ayak') bits.push(item.rainOk ? 'yağmura dayanıklı' : 'su geçirmez değil');
-  if (needsWind && slotKey === 'dis' && item.windproof) bits.push('rüzgar geçirmiyor');
-  if (partner) bits.push(`${colorName(item.color, 'tr').toLocaleLowerCase('tr')} rengi ${partner.name} ile iyi gider`);
-  return bits.join(', ') + '.';
+  if (needsWind && slotKey === 'dis' && item.windproof) bits.push('rüzgar kesiyor');
+  // The color note follows a semicolon: "Bugüne uygun; kırmızı, Siyah bere ile iyi gider."
+  const color = partner ? `${colorName(item.color, 'tr').toLocaleLowerCase('tr')}, ${partner.name} ile iyi gider` : '';
+  return bits.join(', ') + (color ? `; ${color}` : '') + '.';
 }
 
 // Advice for an outfit made only from the user's own clothes: what to add,
 // what may be too warm, what won't handle the weather.
 const TIP_TEXT = {
   tr: {
-    add_layer: 'Bu hava için üstün ince kalıyor. Üstüne bir hırka ya da kalın bir kat daha al.',
+    add_layer: 'Bu hava için üstün ince kalıyor. Üstüne hırka veya kalın bir kat daha al.',
     add_coat: 'Dolabında bu soğuğa uygun bir mont yok. Dışarıda uzun kalacaksan kalın bir mont şart.',
     add_mid: 'Montunun altına bir hırka ya da polar eklersen daha sıcak olur.',
     thin_top: '{n} bu soğuk için ince. Altına termal ya da üstüne bir kazak giy.',
-    thin_bottom: 'Altın bu hava için ince. Altına tayt ya da termal giyebilirsin.',
+    thin_bottom: 'Altın bu hava için ince kalıyor. Altına tayt veya termal giyebilirsin.',
     no_bottom: 'Dolabında bu havaya uygun bir alt yok.',
     no_shoe: 'Dolabında bu havaya uygun bir ayakkabı yok.',
     thin_shoe: 'Ayakkabın bu soğuk için ince, kalın çorap giy.',
     open_shoe: '{n} bu soğukta olmaz, kapalı bir ayakkabı ya da bot giy.',
-    too_warm: '{n} bugün için kalın, terletebilir. Daha ince bir şey varsa onu seç.',
+    too_warm: '{n} bugün için kalın, bunaltabilir. Daha ince bir şey varsa onu seç.',
     wet_shoe: '{n} su geçirmez değil, yağmurda ıslanabilir.',
     wind: '{n} rüzgarı kesmiyor, altına bir kat daha al.',
     umbrella: 'Yağmur bekleniyor, yanına bir şemsiye al.',
     cold_acc: 'Bere, atkı ve eldiven de al.',
-    all_good: 'Dolabındakiler bu havaya çok uygun, ek bir şeye gerek yok.',
+    all_good: 'Dolabındakiler bu havaya gayet uygun, ekstra bir şeye gerek yok.',
   },
   en: {
     add_layer: 'Your top is thin for this weather. Add a cardigan or another warm layer on top.',
