@@ -58,7 +58,8 @@ export function sameOutfit(saved, rows) {
 
 // Worn days, newest first, for the profile history.
 export function wornHistory(fb) {
-  return Object.values(fb.days || {}).filter(r => r && r.date && Array.isArray(r.rows)).sort((a, b) => (a.date < b.date ? 1 : -1));
+  // Days answered "didn't wear it" aren't part of what they wore.
+  return Object.values(fb.days || {}).filter(r => r && r.date && Array.isArray(r.rows) && r.answer !== 'skip').sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export function unmarkWorn(fb, date) {
@@ -102,6 +103,9 @@ function answered(fb) {
 export function learnedOffset(fb, feelsLike, wind, today) {
   let num = 0, den = 0;
   for (const r of answered(fb)) {
+    // An answer counts from the next day on, so today's outfit doesn't jump
+    // the moment someone says how today went.
+    if (dayDiff(r.date, today) <= 0) continue;
     const dT = Math.abs(r.feelsLike - feelsLike);
     if (dT > 8) continue;
     const wTemp = 1 - dT / 9;

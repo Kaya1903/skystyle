@@ -678,11 +678,16 @@ function computeOutfitFor(dayOffset) {
   const memory = findMemory(state.feedback, dayView.hero.feelsLike, dayView.date);
   // The user's own changes apply to today's outfit only. "Warmer" = dress for 3° colder.
   const adjust = dayOffset === 0 ? todaysAdjust(dayView.date) : null;
+  // From 18:00 local time there's no sun left to dress for. A day already
+  // marked "I'm wearing this" keeps its outfit as it was.
+  const nowIso = state.forecastRaw.current && state.forecastRaw.current.time;
+  const hour = nowIso ? parseInt(nowIso.slice(11, 13), 10) : new Date().getHours();
+  const late = dayOffset === 0 && hour >= 18 && !state.feedback.days[dayView.date];
   const outfit = generateOutfit(
     { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang,
       comfort: comfortOffset(state.profile) + learned, shift: -3 * (adjust ? adjust.warmth : 0),
       vibe: (adjust && adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'), seed: dayView.date, kind: dayView.hero.kind,
-      wardrobeOnly: state.wardrobeOnly, memory: memory ? memory.answer : null, adjust },
+      wardrobeOnly: state.wardrobeOnly, memory: memory ? memory.answer : null, adjust, late },
     state.wardrobe,
     dayOffset === 0 ? state.outfitLocks : {}
   );

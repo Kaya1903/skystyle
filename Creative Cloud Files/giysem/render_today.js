@@ -235,7 +235,7 @@ function feedbackCard(pending, today, s) {
   const opts = [['cold', '🥶'], ['ok', '👌'], ['warm', '🥵']];
   return `
     <section class="glass fb-card rise-in" style="animation-delay:200ms" aria-live="polite">
-      <div class="fb-q">${t(s.lang, 'fb_question', day, pending.feelsLike)}</div>
+      <div class="fb-q">${pending.date === today ? t(s.lang, 'fb_question_today', pending.feelsLike) : t(s.lang, 'fb_question', day, pending.feelsLike)}</div>
       ${pending.rows && pending.rows.length ? wornPieces(pending.rows, true) : ''}
       <div class="fb-opts">
         ${opts.map(([k, e]) => `<button type="button" class="fb-opt" data-fb="${k}" data-fb-date="${pending.date}"><span class="fb-emoji">${e}</span><span>${t(s.lang, 'fb_' + k)}</span></button>`).join('')}

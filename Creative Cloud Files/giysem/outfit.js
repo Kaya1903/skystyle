@@ -482,7 +482,7 @@ function coldLevel(temp) {
   return 0;
 }
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false, memory = null, adjust = null, shift = 0 }, allItems = [], locks = {}) {
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false, memory = null, adjust = null, shift = 0, late = false }, allItems = [], locks = {}) {
   const adj = adjust || {};
   // Turkish and English have their own wording; every other language runs on
   // the English rules and is translated on the way out (outfit_i18n.js).
@@ -518,7 +518,8 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const snowy = kind === 'snow' || snowFall;
   const rainy = rainMax >= 50 && !snowFall;
   const freezing = bandKey === 'dondurucu' || snowy;
-  const sunny = !rainy && (bandKey === 'cok_sicak' || (bandKey === 'sicak' && (kind === 'clear' || kind === 'partly')));
+  // `late`: it's already evening where they are, so no sunglasses or sun hat.
+  const sunny = !late && !rainy && (bandKey === 'cok_sicak' || (bandKey === 'sicak' && (kind === 'clear' || kind === 'partly')));
   const fixed = new Set(); // slots whose text the weather rules set; variants don't override them
 
   // Wind: with no jacket in the base outfit, add a thin windproof one. If there
@@ -547,7 +548,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   else if (freezing) { rows.yanina = { item: X.cold_acc[0], reason: () => X.cold_acc[1] }; fixed.add('yanina'); accKinds = ['beanie', 'scarf']; }
   else if (sunny) { rows.yanina = { item: X.sun_acc[0], reason: () => X.sun_acc[1] }; fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses', 'cap']; }
   // A clear but cool day still has low, glaring sun: sunglasses (dark frame).
-  else if (kind === 'clear' && (bandKey === 'serin' || bandKey === 'ilik') && !rows.yanina) { rows.yanina = { item: X.cool_sun_acc[0], reason: () => X.cool_sun_acc[1] }; fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses']; }
+  else if (!late && kind === 'clear' && (bandKey === 'serin' || bandKey === 'ilik') && !rows.yanina) { rows.yanina = { item: X.cool_sun_acc[0], reason: () => X.cool_sun_acc[1] }; fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses']; }
 
   const ctx = { feelsLike, wind, rainMax };
   const needsRain = rainy || snowy;
@@ -610,7 +611,8 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   // suggested), and in the cold the top becomes the layer worn under the dress.
   if (bottomArt === 'dress' && rows.ust) {
     if (WARM_BANDS.includes(bandKey) || bandKey === 'serin') { delete rows.ust; delete picks.ust; }
-    else if (!picks.ust) rows.ust = { item: X.dress_cold_top[0], reason: () => X.dress_cold_top[1] };
+    // Only for an owned dress: a suggested winter dress already comes with its tights.
+    else if (ownBottom === 'dress' && !picks.ust) rows.ust = { item: X.dress_cold_top[0], reason: () => X.dress_cold_top[1] };
   }
   // A suggested mid layer that would be the same garment as an owned top, or
   // an extra layer under an already very warm owned coat, is dropped/softened.
@@ -628,7 +630,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   if (!picks.yanina && !rainy && !onlyMine) {
     if (cold >= 3) rows.yanina = { item: I.l3_acc[0], reason: () => I.l3_acc[1] };
     else if (cold >= 2) rows.yanina = { item: I.l2_acc[0], reason: () => I.l2_acc[1] };
-    else if (extremeHeat) rows.yanina = { item: I.heat_acc[0], reason: () => I.heat_acc[1] };
+    else if (extremeHeat && !late) rows.yanina = { item: I.heat_acc[0], reason: () => I.heat_acc[1] };
   }
   // ---- What this person told us about a day like this (feedback.js) ----
   // Cold last time: one more layer (a mid layer if there's none, plus a thin
@@ -677,6 +679,11 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
       itemId = match.id;
       options = slotOptionIds(wardrobeItems, key, pickOpts);
       reason = wardrobeReason(match, PH, needsRain, needsWind, key, language, pickedItems, BAND_WARMTH[bandKey], outLang);
+      // In the freezing cold one owned scarf or hat isn't the whole job.
+      if (key === 'yanina' && freezing && !rainy) {
+        const accArt = itemLook(match).art;
+        reason += L(accArt === 'beanie' ? X.acc_rest_scarf : accArt === 'scarf' ? X.acc_rest_hat : X.acc_rest_all);
+      }
       // Bare legs in the cold: remind about tights under the user's own skirt/shorts/dress.
       if (key === 'alt' && ['skirt', 'shorts', 'minishorts', 'dress'].includes(itemLook(match).art)) {
         if (COLD_BANDS.includes(bandKey)) reason += L(X.tights_cold);

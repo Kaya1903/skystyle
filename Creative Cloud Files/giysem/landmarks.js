@@ -609,9 +609,24 @@ const REGIONS = {
   ],
 };
 
+function inTurkey(lat, lon) {
+  if (!(lat >= 35.8 && lat <= 42.2 && lon >= 25.6 && lon <= 44.8)) return false;
+  if (lon < 26.6 && lat < 40) return false;                // Greek islands (Lesbos, Chios, Samos)
+  if (lat < 36.9 && lon > 36.7) return false;              // Syria and northern Iraq (Aleppo, Mosul, Erbil)
+  if (lon > 42.6 && lat < 37.2) return false;              // Iraqi Kurdistan
+  if (lat > 41.2 && lon > 41.6) return false;              // Georgia (Batumi, Tbilisi)
+  if (lon > 43.6 && lat > 40.1) return false;              // Armenia and Georgia (Yerevan, Gyumri)
+  return true;
+}
+
 function regionFor(lat, lon) {
-  if (lat >= 35.8 && lat <= 42.2 && lon >= 25.6 && lon <= 44.8) return 'turkey';
-  if (lat > 45 && lon > 40) return 'russia';
+  if (inTurkey(lat, lon)) return 'turkey';
+  if (lat >= 38.8 && lat <= 43.6 && lon >= 40 && lon <= 46.8) return 'europe'; // Georgia and Armenia: old churches
+  if (lat >= 35 && lat < 37.5 && lon >= 35.5 && lon <= 48) return 'mena';      // northern Syria and Iraq
+  if (lat >= 37.5 && lat <= 46 && lon > 46 && lon < 88) return 'default'; // Caspian and Central Asia: neutral skyline
+  if (lat > 45 && lon > 40 && !(lat < 50 && lon > 87 && lon < 120)) return 'russia'; // Mongolia stays out
+  if (lon < -150) return 'northAmerica';                   // Hawaii and Alaska
+  if (lon < -30 && lat > 24.5 && lon > -98) return 'northAmerica'; // Florida, Gulf coast and the US South
   if (lat >= 35 && lon >= -25 && lon <= 40) return 'europe';
   if (lat >= 12 && lat < 35 && lon >= -18 && lon <= 63) return 'mena';
   if (lat >= 12 && lat <= 42 && lon > 35 && lon <= 63) return 'mena';
