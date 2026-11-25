@@ -18,7 +18,9 @@ import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboa
 
 const CITY_KEY = 'giysem_city_v1';
 const LANG_KEY = 'giysem_lang_v1';
-const WARDROBE_ONLY_KEY = 'giysem_wardrobe_only_v1';
+const WARDROBE_ONLY_KEY = 'giysem_wardrobe_only_v1'; // older on/off switch, read once
+const WARDROBE_MODE_KEY = 'giysem_wardrobe_mode_v1';
+const WARDROBE_MODES = ['mix', 'mine', 'ideas'];
 const ADJUST_KEY = 'giysem_adjust_v1'; // today's changes to the suggested outfit
 const FALLBACK_CITY = 'Warsaw';
 
@@ -40,7 +42,15 @@ export const state = {
   adjust: (() => { try { return JSON.parse(localStorage.getItem(ADJUST_KEY) || 'null'); } catch { return null; } })(),
   adjustOpen: false,   // the "change it" panel is expanded
   adjustBusy: false,   // waiting for the AI to read a typed request
-  wardrobeOnly: (() => { try { return localStorage.getItem(WARDROBE_ONLY_KEY) === '1'; } catch { return false; } })(),
+  // 'mix': own pieces first, suggestions fill the rest; 'mine': only own pieces; 'ideas': only suggestions.
+  wardrobeMode: (() => {
+    try {
+      const m = localStorage.getItem(WARDROBE_MODE_KEY);
+      if (WARDROBE_MODES.includes(m)) return m;
+      return localStorage.getItem(WARDROBE_ONLY_KEY) === '1' ? 'mine' : 'mix';
+    } catch { return 'mix'; }
+  })(),
+  modeMenuOpen: false,
   wardrobeFilter: 'all',
   wardrobeSearch: '',
   citySheetOpen: false,
@@ -244,13 +254,28 @@ export function switchTab(tab) {
   render();
 }
 
-// Today's outfit made only from the user's own clothes (with tips), or the usual mix.
-export function setWardrobeOnly(on) {
-  state.wardrobeOnly = !!on;
-  state.outfitLocks = {};
-  try { localStorage.setItem(WARDROBE_ONLY_KEY, on ? '1' : '0'); } catch { /* private mode */ }
+// Where outfits come from: own clothes first with suggestions filling in ('mix'),
+// only own clothes with tips ('mine'), or only suggestions ('ideas').
+export function setWardrobeMode(mode) {
+  state.modeMenuOpen = false;
+  if (WARDROBE_MODES.includes(mode) && mode !== state.wardrobeMode) {
+    state.wardrobeMode = mode;
+    state.outfitLocks = {};
+    try { localStorage.setItem(WARDROBE_MODE_KEY, mode); } catch { /* private mode */ }
+  }
   state.quietRender = true;
   render();
+}
+
+export function toggleModeMenu(open = !state.modeMenuOpen) {
+  state.modeMenuOpen = open;
+  state.quietRender = true;
+  render();
+}
+
+// The wardrobe the outfit engine may use in the current mode.
+function outfitWardrobe() {
+  return state.wardrobeMode === 'ideas' ? [] : state.wardrobe;
 }
 
 export function toggleSound() {
@@ -697,8 +722,8 @@ function computeOutfitFor(dayOffset) {
     { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang,
       comfort: comfortOffset(state.profile) + learned, shift: -3 * (adjust ? adjust.warmth : 0),
       vibe: (adjust && adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'), seed: dayView.date, kind: dayView.hero.kind,
-      wardrobeOnly: state.wardrobeOnly, memory: memory ? memory.answer : null, adjust, late },
-    state.wardrobe,
+      wardrobeOnly: state.wardrobeMode === 'mine', memory: memory ? memory.answer : null, adjust, late },
+    outfitWardrobe(),
     dayOffset === 0 ? state.outfitLocks : {}
   );
   const tip = eveningTip(dayView, state.lang);
@@ -775,9 +800,9 @@ function computeWeekOutfits() {
     const outfit = generateOutfit(
       { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang,
         comfort: comfortOffset(state.profile) + learnedOffset(state.feedback, day.feelsLike, day.wind, day.date),
-        vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeOnly,
+        vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeMode === 'mine',
         memory: (findMemory(state.feedback, day.feelsLike, day.date) || {}).answer || null },
-      state.wardrobe
+      outfitWardrobe()
     );
     const tipKey = [day.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit)].join('|');
     return { day, outfit, tipKey, tip: state.weekTips[tipKey] || null, tipLoading: state.weekTipStatus[tipKey] === 'loading' };
@@ -1077,6 +1102,7 @@ navEl.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('[data-lang-menu]')) closeLangMenu();
   if (!e.target.closest('[data-sound-menu]')) closeSoundPanel();
+  if (state.modeMenuOpen && !e.target.closest('[data-mode-menu]')) toggleModeMenu(false);
 });
 
 if (state.screen === 'app') {

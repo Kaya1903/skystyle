@@ -1,7 +1,7 @@
 import { icons } from './icons.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { state, switchTab, setGender, setWardrobeOnly, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
+import { state, switchTab, setGender, setWardrobeMode, toggleModeMenu, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
   toggleAdjustPanel, rerollOutfit, swapSuggestedPiece, quickAdjust, askAdjust } from './app.js';
 import { dayLabel, sameOutfit } from './feedback.js';
 import { renderLandmark } from './landmarks.js';
@@ -120,12 +120,30 @@ function boardCard(outfit, s) {
     </article>`;
 }
 
+// Where outfits come from: own clothes + ideas, only own clothes, or only ideas.
+const MODE_LABEL = { mix: 'mode_mix', mine: 'only_mine', ideas: 'mode_ideas' };
+function modeMenu(s) {
+  const mode = s.wardrobeMode || 'mix';
+  const open = !!s.modeMenuOpen;
+  return `
+    <div class="mode-menu" data-mode-menu>
+      <button type="button" class="mine-toggle ${mode === 'mix' ? '' : 'on'}" data-action="toggle-mode" aria-expanded="${open}" aria-haspopup="true">${icons.hanger}<span>${t(s.lang, MODE_LABEL[mode])}</span>${icons.chevron}</button>
+      <div class="mode-menu-list ${open ? 'open' : ''}" role="menu">
+        ${['mix', 'mine', 'ideas'].map(m => `
+          <button type="button" class="mode-opt ${m === mode ? 'active' : ''}" data-mode="${m}" role="menuitemradio" aria-checked="${m === mode}">
+            <span class="mode-opt-text"><span class="mode-opt-title">${t(s.lang, MODE_LABEL[m])}</span><span class="mode-opt-desc">${t(s.lang, MODE_LABEL[m] + '_desc')}</span></span>
+            <span class="mode-opt-check">${m === mode ? icons.check : ''}</span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+}
+
 function outfitSection(outfit, kombinLabel, s, fb = {}) {
   return `
     <div class="section-head fade-slide" style="animation-delay:280ms">
       <h2 class="section-big">${kombinLabel}</h2>
       <div class="section-actions">
-        ${s.wardrobe && s.wardrobe.length ? `<button class="mine-toggle ${s.wardrobeOnly ? 'on' : ''}" data-action="toggle-mine" aria-pressed="${s.wardrobeOnly ? 'true' : 'false'}">${icons.hanger}<span>${t(s.lang, 'only_mine')}</span></button>` : ''}
+        ${s.wardrobe && s.wardrobe.length ? modeMenu(s) : ''}
         ${Object.keys(s.outfitLocks || {}).length || fb.adjust ? `<button class="reset-chip" data-action="reset-outfit">${t(s.lang, 'reset_outfit')}</button>` : ''}
         <span class="band-chip">${outfit.bandLabel}</span>
       </div>
@@ -247,7 +265,7 @@ function feedbackCard(pending, today, s) {
 
 // Wardrobe-only mode: what to add or watch out for with the user's own clothes.
 function tipsList(outfit, s) {
-  if (s.wardrobeOnly && !outfit.wardrobeOnly) return `<div class="mine-tips"><div class="mine-tips-text">${t(s.lang, 'only_mine_empty')}</div></div>`;
+  if (s.wardrobeMode === 'mine' && !outfit.wardrobeOnly) return `<div class="mine-tips"><div class="mine-tips-text">${t(s.lang, 'only_mine_empty')}</div></div>`;
   if (!outfit.wardrobeOnly || !outfit.tips || !outfit.tips.length) return '';
   return `
     <div class="mine-tips">
@@ -376,8 +394,11 @@ export function attachTodayHandlers(root) {
   root.querySelectorAll('[data-fb]').forEach(btn => {
     btn.addEventListener('click', () => answerFeedback(btn.dataset.fbDate, btn.dataset.fb));
   });
-  const mineBtn = root.querySelector('[data-action="toggle-mine"]');
-  if (mineBtn) mineBtn.addEventListener('click', () => setWardrobeOnly(!state.wardrobeOnly));
+  const modeBtn = root.querySelector('[data-action="toggle-mode"]');
+  if (modeBtn) modeBtn.addEventListener('click', () => toggleModeMenu());
+  root.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => setWardrobeMode(btn.dataset.mode));
+  });
   const resetBtn = root.querySelector('[data-action="reset-outfit"]');
   if (resetBtn) resetBtn.addEventListener('click', resetOutfit);
   animateCounts(root);

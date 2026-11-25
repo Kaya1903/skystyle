@@ -262,6 +262,14 @@ function dayNudge(str) {
 }
 
 const MAX_CANDIDATES_PER_SLOT = 5;
+// Clothes people change every day. Shoes, coats and accessories are fine to repeat.
+const REST_SLOTS = ['ust', 'ustune', 'alt'];
+
+// Days since 1970 from a seed that starts with the date (YYYY-MM-DD), or null.
+function dayNumber(seed) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(seed || ''));
+  return m ? Math.floor(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000) : null;
+}
 const COLOR_WEIGHT = 0.7;
 
 // Viable wardrobe pieces for one slot, best weather fit first.
@@ -311,6 +319,7 @@ export function slotOptionIds(items, category, { bandKey, needsRain, needsWind, 
 // `locks` pins a slot to a specific item id (from the swap button); the other
 // slots are then re-picked to go with it. Returns { [category]: item }.
 export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind, allowArts, relaxed, seed }, locks = {}) {
+  const day = dayNumber(seed);
   const slots = categories
     .map(category => {
       const opts = { category, bandKey, needsRain, needsWind, allowArts, relaxed, seed };
@@ -318,7 +327,14 @@ export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, need
         const locked = slotCandidates(items, opts, Infinity).filter(c => c.item.id === locks[category]);
         if (locked.length) return { category, cands: locked };
       }
-      return { category, cands: slotCandidates(items, opts) };
+      const cands = slotCandidates(items, opts);
+      // Mixed mode: with only a few pieces that fit, some days go to a suggestion
+      // instead, so one black T-shirt doesn't turn up every single day of the week.
+      if (!relaxed && day !== null && REST_SLOTS.includes(category) && cands.length && cands.length <= 3) {
+        const cycle = cands.length + 1;
+        if ((day + idHash(category)) % cycle === cands.length) return { category, cands: [] };
+      }
+      return { category, cands };
     })
     .filter(s => s.cands.length);
   if (!slots.length) return {};
