@@ -685,7 +685,7 @@ p { margin: 0; }
 .mine-toggle[aria-expanded="true"] svg:last-child { transform: rotate(-90deg); }
 .mode-menu { position: relative; }
 .mode-menu-list {
-  position: absolute; top: calc(100% + 8px); right: 0; z-index: 40;
+  position: absolute; top: calc(100% + 8px); inset-inline-end: 0; z-index: 40;
   width: min(290px, calc(100vw - 32px));
   background: var(--glass-strong);
   -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
@@ -1623,3 +1623,32 @@ p { margin: 0; }
 .install-btn { margin-top: 10px; padding: 10px 18px; font-size: 14px; }
 .install-close { position: absolute; top: 8px; inset-inline-end: 10px; border: none; background: none; font-size: 22px; line-height: 1; color: var(--ink-soft); cursor: pointer; padding: 4px 6px; }
 .install-card.is-banner .install-text { padding-inline-end: 18px; }
+
+/* =========================================================
+   Phones: tighter scale, comfortable touch targets
+   ========================================================= */
+@media (max-width: 859px) {
+  /* Section titles fit one line on small phones */
+  .section-big { font-size: clamp(22px, 6.6vw, 30px); }
+  /* The outfit drawing stays compact so the pieces list is in view sooner */
+  .board .figure { max-width: min(190px, 52vw); max-height: 42vh; }
+  .board-card { padding-bottom: 2px; }
+  /* Touch targets of at least ~40px */
+  .onboard-back { padding: 10px 16px; min-height: 40px; }
+  .adjust-toggle { padding: 10px 0; min-height: 40px; }
+  .install-close { padding: 8px 10px; top: 4px; inset-inline-end: 4px; }
+  .swap-btn { min-height: 36px; min-width: 36px; justify-content: center; }
+  .recent-clear, .link-btn { padding: 9px 10px; }
+  .warmth-dot { width: 34px; height: 34px; }
+  .profile-reset button { padding: 10px 14px; }
+}
+/* Small phones: the title gets its own line and the chips wrap under it, never off screen. */
+@media (max-width: 420px) {
+  .section-head { flex-wrap: wrap; row-gap: 10px; }
+  .section-actions { flex-shrink: 1; min-width: 0; max-width: 100%; justify-content: flex-start; }
+  .section-head:has(.mode-menu) .section-big { flex-basis: 100%; }
+  /* The chips now start at the left, so the menu opens from the left edge too. */
+  .mode-menu-list { inset-inline-end: auto; inset-inline-start: 0; transform-origin: top left; }
+  [dir="rtl"] .mode-menu-list { transform-origin: top right; }
+  .mine-toggle { min-height: 36px; }
+}
