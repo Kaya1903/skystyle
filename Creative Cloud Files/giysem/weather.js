@@ -332,6 +332,30 @@ export function buildDayView(raw, dayOffset, lang = 'tr') {
   };
 }
 
+// The weather for just the hours someone is out (start to end, local time) on a
+// date: what to dress for (leaning toward the coldest hour), the range, the
+// strongest wind and the highest rain chance. Null if the hours aren't in the data.
+export function windowWeather(raw, date, start, end) {
+  const times = raw && raw.hourly && raw.hourly.time;
+  if (!times || !(end > start)) return null;
+  const idx = [];
+  for (let i = 0; i < times.length; i++) {
+    const { date: d, hour } = localDateFromISO(times[i]);
+    if (d === date && hour >= start && hour <= end) idx.push(i);
+  }
+  if (!idx.length) return null;
+  const feels = idx.map(i => raw.hourly.apparent_temperature[i]).filter(v => typeof v === 'number');
+  if (!feels.length) return null;
+  const min = Math.min(...feels), max = Math.max(...feels), mean = feels.reduce((a, b) => a + b, 0) / feels.length;
+  return {
+    feelsLike: Math.round(min * 0.6 + mean * 0.4),
+    min: Math.round(min),
+    max: Math.round(max),
+    wind: Math.round(Math.max(...idx.map(i => raw.hourly.wind_speed_10m[i] || 0))),
+    rain: Math.max(...idx.map(i => raw.hourly.precipitation_probability[i] || 0)),
+  };
+}
+
 // Builds a 7-day summary from the daily block of the forecast response.
 export function buildWeekView(raw, lang = 'tr') {
   const d = raw.daily;

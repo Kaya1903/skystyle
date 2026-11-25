@@ -3,7 +3,7 @@ import { installCard, attachInstallHandlers } from './install.js';
 import { t } from './i18n.js';
 import { OCCASION_KEYS } from './outfit.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { state, switchTab, setGender, setWardrobeMode, toggleModeMenu, setOccasion, todaysOccasion, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
+import { state, switchTab, setGender, setWardrobeMode, toggleModeMenu, setOccasion, todaysOccasion, setOutHours, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
   toggleAdjustPanel, rerollOutfit, swapSuggestedPiece, quickAdjust, askAdjust } from './app.js';
 import { dayLabel, sameOutfit } from './feedback.js';
 import { renderLandmark } from './landmarks.js';
@@ -135,6 +135,25 @@ function occasionRow(s, date) {
     </div>`;
 }
 
+// "When are you out?": the hours to dress for (kept across days), with that window's feels-like range.
+const hh = h => `${String(h).padStart(2, '0')}:00`;
+function hoursRow(s, w) {
+  const h = s.outHours;
+  const startOpts = [`<option value="" ${h ? '' : 'selected'}>${t(s.lang, 'hours_all')}</option>`]
+    .concat(range(5, 22).map(x => `<option value="${x}" ${h && h.start === x ? 'selected' : ''}>${hh(x)}</option>`)).join('');
+  const endOpts = h ? range(h.start + 1, 23).map(x => `<option value="${x}" ${h.end === x ? 'selected' : ''}>${hh(x)}</option>`).join('') : '';
+  return `
+    <div class="out-hours fade-slide" style="animation-delay:320ms">
+      <span class="out-hours-title"><span aria-hidden="true">🕐</span>${t(s.lang, 'hours_title')}</span>
+      <div class="out-hours-ctrl">
+        <select class="hours-select" data-hours="start" aria-label="${t(s.lang, 'hours_title')}">${startOpts}</select>
+        ${h ? `<span class="hours-dash">–</span><select class="hours-select" data-hours="end" aria-label="${t(s.lang, 'hours_title')}">${endOpts}</select>` : ''}
+        ${h && w ? `<span class="hours-temps" dir="ltr">${w.min}° / ${w.max}°</span>` : ''}
+      </div>
+    </div>`;
+}
+const range = (a, b) => Array.from({ length: Math.max(0, b - a + 1) }, (_, i) => a + i);
+
 // Where outfits come from: own clothes + ideas, only own clothes, or only ideas.
 const MODE_LABEL = { mix: 'mode_mix', mine: 'only_mine', ideas: 'mode_ideas' };
 function modeMenu(s) {
@@ -163,7 +182,7 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
         <span class="band-chip">${outfit.bandLabel}</span>
       </div>
     </div>
-    ${fb.isToday ? occasionRow(s, fb.date) : ''}
+    ${fb.isToday ? occasionRow(s, fb.date) + hoursRow(s, fb.outHoursWeather) : ''}
     <div class="outfit-layout">
       <div class="board-col">${boardCard(outfit, s)}</div>
       <div class="glass pieces-card rise-in" style="animation-delay:340ms">
@@ -345,8 +364,8 @@ export function renderTodayScreen({ dayOffset, state: s, data }) {
   if (!data) {
     return `${brandHeader(s)}<div class="state-msg">${t(s.lang, 'loading_data')}</div>`;
   }
-  const { dayView, outfit, tip, memory, worn, pending, today, adjust, stylistPending } = data;
-  const fb = { memory, worn, wornSame: !!worn && sameOutfit(worn.rows, outfit.rows), isToday: dayOffset === 0, date: dayView.date, adjust, stylistPending };
+  const { dayView, outfit, tip, memory, worn, pending, today, adjust, stylistPending, outHoursWeather } = data;
+  const fb = { memory, worn, wornSame: !!worn && sameOutfit(worn.rows, outfit.rows), isToday: dayOffset === 0, date: dayView.date, adjust, stylistPending, outHoursWeather };
   const kombinLabel = dayOffset === 0 ? t(s.lang, 'kombin_bugun') : t(s.lang, 'kombin_yarin');
   return `
     ${brandHeader(s)}
@@ -424,6 +443,18 @@ export function attachTodayHandlers(root) {
     btn.addEventListener('click', () => answerFeedback(btn.dataset.fbDate, btn.dataset.fb));
   });
   root.querySelectorAll('[data-occasion]').forEach(btn => btn.addEventListener('click', () => setOccasion(btn.dataset.occasion)));
+  root.querySelectorAll('[data-hours]').forEach(sel => sel.addEventListener('change', () => {
+    const cur = state.outHours;
+    if (sel.dataset.hours === 'start') {
+      if (sel.value === '') return setOutHours(null);
+      const start = +sel.value;
+      // A new start keeps the old end when it still fits, otherwise a normal day out (9 hours).
+      const end = cur && cur.end > start ? cur.end : Math.min(23, start + 9);
+      setOutHours({ start, end });
+    } else {
+      setOutHours({ start: cur.start, end: +sel.value });
+    }
+  }));
   const modeBtn = root.querySelector('[data-action="toggle-mode"]');
   if (modeBtn) modeBtn.addEventListener('click', () => toggleModeMenu());
   root.querySelectorAll('[data-mode]').forEach(btn => {

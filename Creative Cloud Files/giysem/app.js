@@ -2,7 +2,7 @@ import { colorName, isValidColor, nearestColorKey, COLORS } from './colors.js';
 import { setSky } from './sky.js';
 import { unlockSound, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
 import { skyKind } from './weather.js';
-import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
+import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip, windowWeather } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe, cropPrint } from './wardrobe.js';
 import { generateOutfit, OCCASION_KEYS } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
@@ -21,6 +21,9 @@ const CITY_KEY = 'giysem_city_v1';
 const LANG_KEY = 'giysem_lang_v1';
 const WARDROBE_ONLY_KEY = 'giysem_wardrobe_only_v1'; // older on/off switch, read once
 const WARDROBE_MODE_KEY = 'giysem_wardrobe_mode_v1';
+// Read while `state` is built below, so they must be declared before it.
+const OCCASION_KEY = 'giysem_occasion_v1';
+const OUT_HOURS_KEY = 'giysem_out_hours_v1';
 const WARDROBE_MODES = ['mix', 'mine', 'ideas'];
 const ADJUST_KEY = 'giysem_adjust_v1'; // today's changes to the suggested outfit
 const FALLBACK_CITY = 'Warsaw';
@@ -76,6 +79,8 @@ export const state = {
   // The AI stylist's pick for today: { key, status: 'loading' | 'done' | 'error', roll, colors, note }.
   stylist: null,
   // What they're doing today ({ date, key }), chosen on Today; it resets the next day.
+  // The hours they're usually outside ({ start, end }, 0-23), or null for the whole day. Kept across days.
+  outHours: (() => { try { const v = JSON.parse(localStorage.getItem(OUT_HOURS_KEY) || 'null'); return v && v.end > v.start ? v : null; } catch { return null; } })(),
   occasion: (() => { try { return JSON.parse(localStorage.getItem(OCCASION_KEY) || 'null'); } catch { return null; } })(),
   smartTipLoading: false,
   smartTipKey: null,
@@ -92,7 +97,6 @@ export const state = {
 let toastTimer = null;
 const SMART_TIP_CACHE_KEY = 'giysem_smart_tip_v1';
 const STYLIST_CACHE_KEY = 'giysem_stylist_v1';
-const OCCASION_KEY = 'giysem_occasion_v1';
 const WEEK_TIP_CACHE_KEY = 'giysem_week_tip_v1';
 
 const screenEl = document.getElementById('screen');
@@ -734,15 +738,41 @@ function outfitParams(dayView, dayOffset, adjust, lang = state.lang) {
   // marked "I'm wearing this" keeps its outfit as it was.
   const nowIso = state.forecastRaw.current && state.forecastRaw.current.time;
   const hour = nowIso ? parseInt(nowIso.slice(11, 13), 10) : new Date().getHours();
-  const late = dayOffset === 0 && hour >= 18 && !state.feedback.days[dayView.date];
+  // Out only in certain hours: dress for those hours' weather. After dark the whole
+  // time means no sun gear either.
+  const win = dayOffset === 0 ? outWindow(dayView) : null;
+  const late = dayOffset === 0 && ((hour >= 18 && !state.feedback.days[dayView.date]) || (!!state.outHours && state.outHours.start >= 18));
   return {
     memory,
-    params: { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang,
+    window: win,
+    params: { feelsLike: win ? win.feelsLike : dayView.hero.feelsLike, wind: win ? win.wind : dayView.hero.wind, rainMax: win ? win.rain : dayView.maxRainToday, gender: state.gender, lang,
       comfort: comfortOffset(state.profile) + learned, shift: -3 * (adjust ? adjust.warmth : 0),
       vibe: (adjust && adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'), seed: dayView.date, kind: dayView.hero.kind,
       wardrobeOnly: state.wardrobeMode === 'mine', memory: memory ? memory.answer : null, adjust, late, uv: dayView.uvMax,
       occasion: dayOffset === 0 ? todaysOccasion(dayView.date) : null },
   };
+}
+
+// The weather for the hours they're out today, or null for the whole day.
+export function outWindow(dayView) {
+  const h = state.outHours;
+  return h && state.forecastRaw ? windowWeather(state.forecastRaw, dayView.date, h.start, h.end) : null;
+}
+
+// "08:00-19:00" for the AI, or '' for the whole day.
+function hoursText() {
+  const h = state.outHours;
+  return h ? `${String(h.start).padStart(2, '0')}:00-${String(h.end).padStart(2, '0')}:00` : '';
+}
+
+// Sets the hours they're out ({ start, end }), or null for the whole day.
+export function setOutHours(hours) {
+  state.outHours = hours && hours.end > hours.start ? { start: hours.start, end: hours.end } : null;
+  try { localStorage.setItem(OUT_HOURS_KEY, JSON.stringify(state.outHours)); } catch { /* private mode */ }
+  state.outfitLocks = {};
+  state.swappedSlot = 'all';
+  state.quietRender = true;
+  render();
 }
 
 // Today's plans, if they picked any (yesterday's choice doesn't carry over).
@@ -771,7 +801,7 @@ function computeOutfitFor(dayOffset) {
   // The user's own changes apply to today's outfit only. "Warmer" = dress for 3° colder.
   const adjust = dayOffset === 0 ? todaysAdjust(dayView.date) : null;
   const locks = dayOffset === 0 ? state.outfitLocks : {};
-  const { memory, params } = outfitParams(dayView, dayOffset, adjust);
+  const { memory, params, window: outHoursWeather } = outfitParams(dayView, dayOffset, adjust);
   // Today, unless the user is steering the outfit themselves, the AI stylist
   // picks among a few weather-safe versions and may recolor suggested pieces.
   const steering = !!adjust || Object.keys(locks).length > 0;
@@ -785,7 +815,7 @@ function computeOutfitFor(dayOffset) {
   const tip = eveningTip(dayView, state.lang);
   const worn = dayOffset === 0 ? state.feedback.days[dayView.date] || null : null;
   const pending = dayOffset === 0 ? pendingQuestion(state.feedback, today) : null;
-  return { dayView, outfit, tip, today, memory, worn, pending, adjust, stylistPending: !!stylist && stylist.status === 'loading' };
+  return { dayView, outfit, tip, today, memory, worn, pending, adjust, outHoursWeather, stylistPending: !!stylist && stylist.status === 'loading' };
 }
 
 // ---------------- AI stylist ----------------
@@ -861,10 +891,11 @@ function stylistFor(dayView) {
     .sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, 5)
     .map(([d, v]) => `${d}: ${v.rows.map(r => `${r.item}${r.color ? ` (${colorName(nearestColorKey(r.color), 'en').toLowerCase()})` : ''}`).join(', ')}`);
   const vibe = state.profile ? state.profile.styleVibe || 'casual' : 'casual';
+  const { params: wp } = outfitParams(dayView, 0, null);
   askStylist({
     lang: state.lang,
-    weather: { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rain: dayView.maxRainToday, uv: dayView.uvMax, sky: dayView.hero.kind,
-      evening: eveningTip(dayView, 'en'), late: outfitParams(dayView, 0, null).params.late },
+    weather: { feelsLike: wp.feelsLike, wind: wp.wind, rain: wp.rainMax, uv: dayView.uvMax, sky: dayView.hero.kind,
+      evening: eveningTip(dayView, 'en'), late: wp.late, hours: hoursText() },
     person: { gender: state.gender || 'unisex', styleVibe: vibe, ...aiPersonal() },
     occasion: todaysOccasion(dayView.date),
     recent,
@@ -924,9 +955,10 @@ export function wearToday() {
   state.feedback = markWorn(state.feedback, {
     date: dayView.date,
     city: state.city ? state.city.name : '',
-    feelsLike: dayView.hero.feelsLike,
-    wind: dayView.hero.wind,
-    rain: dayView.maxRainToday,
+    // What they dressed for: the hours they're out, when they set them.
+    feelsLike: (outWindow(dayView) || {}).feelsLike ?? dayView.hero.feelsLike,
+    wind: (outWindow(dayView) || {}).wind ?? dayView.hero.wind,
+    rain: (outWindow(dayView) || {}).rain ?? dayView.maxRainToday,
     gender: state.gender || null,
     rows: outfit.rows.map(r => ({
       slot: r.slotKey, item: r.item, art: r.art, fromWardrobe: r.fromWardrobe,
@@ -1043,7 +1075,7 @@ function ensureSmartTip(dayView, outfit) {
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
   // The note talks about the outfit on screen, so a different outfit gets its own note.
   const occasion = todaysOccasion(dayView.date);
-  const key = [dayView.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit), occasion || ''].join('|');
+  const key = [dayView.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit), occasion || '', hoursText()].join('|');
   if (state.smartTipKey === key) return;
   state.smartTipKey = key;
 
@@ -1060,10 +1092,11 @@ function ensureSmartTip(dayView, outfit) {
   getSmartTip({
     lang: state.lang,
     city: cityName,
-    feelsLike: dayView.hero.feelsLike,
+    feelsLike: (outWindow(dayView) || {}).feelsLike ?? dayView.hero.feelsLike,
     condition: dayView.hero.condition,
-    wind: dayView.hero.wind,
-    rain: dayView.hero.rain,
+    wind: (outWindow(dayView) || {}).wind ?? dayView.hero.wind,
+    rain: (outWindow(dayView) || {}).rain ?? dayView.hero.rain,
+    hours: hoursText(),
     evening: eveningTip(dayView, state.lang),
     gender: state.gender,
     styleVibe,

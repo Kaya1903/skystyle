@@ -160,6 +160,7 @@ async function styleTip(ctx, env) {
     `${ctx.evening ? `evening ${clip(ctx.evening, 120)}; ` : ''}` +
     `fit preference ${clip(ctx.gender || 'unisex', 10)}; style vibe ${clip(ctx.styleVibe || 'casual', 12)}; ` +
     `${OCCASION_TEXT[ctx.occasion] ? `today they are ${OCCASION_TEXT[ctx.occasion]}; ` : ''}` +
+    `${ctx.hours ? `they are outside ${clip(ctx.hours, 20)} and the weather above is for those hours; ` : ''}` +
     `how they feel temperature: ${clip(ctx.comfort || 'normal', 10)}` +
     `${ctx.learned ? `, and from their past answers: ${clip(ctx.learned, 160)}` : ''}; ` +
     `their wardrobe: ${clip(ctx.wardrobeSummary || 'no saved wardrobe items', 600)}. ` +
@@ -271,7 +272,8 @@ function stylistPrompt(body) {
   return 'Task: you are choosing today\'s outfit for the person, with a stylist\'s eye (see "Your stylist\'s eye" in the guide). ' +
     `Weather today: feels like ${num(w.feelsLike)}°C, wind ${num(w.wind)} km/h, rain chance ${num(w.rain)}%` +
     `${w.uv !== null && w.uv !== undefined ? `, UV index ${num(w.uv)}` : ''}, sky ${clip(w.sky || 'unknown', 20)}` +
-    `${w.evening ? `, evening: ${clip(w.evening, 120)}` : ''}${w.late ? ', it is already evening' : ''}. ` +
+    `${w.evening ? `, evening: ${clip(w.evening, 120)}` : ''}${w.late ? ', it is already evening' : ''}` +
+    `${w.hours ? ` (this is the weather for the hours they are outside, ${clip(w.hours, 20)})` : ''}. ` +
     `Person: fit preference ${clip(p.gender || 'unisex', 10)}, style vibe ${clip(p.styleVibe || 'casual', 12)}, ` +
     `feels temperature ${clip(p.comfort || 'normal', 10)}${p.learned ? `, from past answers: ${clip(p.learned, 160)}` : ''}.\n` +
     (OCCASION_TEXT[body.occasion] ? `Today they are ${OCCASION_TEXT[body.occasion]}: choose for that occasion (see Occasions and the formality ladder in the guide).\n` : '') +

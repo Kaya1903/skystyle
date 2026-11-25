@@ -203,6 +203,7 @@ def stylist_prompt(body):
     uv = f", UV index {_num(w.get('uv')):g}" if w.get('uv') is not None else ''
     evening = f", evening: {clip(w.get('evening'), 120)}" if w.get('evening') else ''
     late = ', it is already evening' if w.get('late') else ''
+    late += f" (this is the weather for the hours they are outside, {clip(w.get('hours'), 20)})" if w.get('hours') else ''
     learned = f", from past answers: {clip(p.get('learned'), 160)}" if p.get('learned') else ''
     return (
         "Task: you are choosing today's outfit for the person, with a stylist's eye (see \"Your stylist's eye\" in the guide). "
@@ -349,6 +350,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 f'{evening}'
                 f"fit preference {clip(ctx.get('gender') or 'unisex', 10)}; style vibe {clip(ctx.get('styleVibe') or 'casual', 12)}; "
                 + (f"today they are {OCCASION_TEXT[ctx.get('occasion')]}; " if ctx.get('occasion') in OCCASION_TEXT else '')
+                + (f"they are outside {clip(ctx.get('hours'), 20)} and the weather above is for those hours; " if ctx.get('hours') else '')
                 + f"how they feel temperature: {clip(ctx.get('comfort') or 'normal', 10)}{learned}; "
                 f"their wardrobe: {clip(ctx.get('wardrobeSummary') or 'no saved wardrobe items', 600)}. "
                 + (f'The outfit the app suggests: {outfit}. Your tip must fit this outfit and never contradict it. ' if outfit else '')
