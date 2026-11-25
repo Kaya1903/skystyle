@@ -173,11 +173,11 @@ export const STRINGS = {
     save: 'Kaydet',
     delete_item: 'Kıyafeti sil',
 
-    cat_ust: 'Üst',
+    cat_ust: 'İç giyim',
     cat_ustune: 'Üstüne',
     cat_dis: 'Dış giyim',
     cat_alt: 'Alt',
-    cat_ayak: 'Ayak',
+    cat_ayak: 'Ayakkabı',
     cat_yanina: 'Yanına',
 
     band_dondurucu: 'Dondurucu',
