@@ -757,7 +757,11 @@ const STYLIST_HEX = {
   denim: '#3f6496', haki: '#6f6f47', yesil: '#4e7a5a', mavi: '#5b8fc9', kirmizi: '#c0453b', bordo: '#7a2e3b',
   pembe: '#e8a7b8', mor: '#7a5a9e', sari: '#e8c45a', turuncu: '#e07a3f',
 };
-const EN_TO_KEY = Object.fromEntries(Object.keys(COLORS).map(k => [colorName(k, 'en').toLowerCase(), k]));
+const EN_TO_KEY = {
+  ...Object.fromEntries(Object.keys(COLORS).map(k => [colorName(k, 'en').toLowerCase(), k])),
+  // Names the model sometimes uses outside the list.
+  camel: 'bej', cream: 'beyaz', ivory: 'beyaz', tan: 'bej', sand: 'bej', charcoal: 'gri', gray: 'gri', olive: 'haki', maroon: 'bordo', wine: 'bordo', rust: 'turuncu', mustard: 'sari', lilac: 'mor', 'light blue': 'mavi', 'sky blue': 'mavi',
+};
 
 // Up to six different weather-safe versions of today's outfit (in English for the AI),
 // each with the roll that reproduces it in any language.
