@@ -1149,3 +1149,19 @@ export const EXTRAS = {
     ],
   },
 };
+
+// ---- The piece catalog (outfit_catalog.js) joins the variants above ----
+// Each catalog piece is added to every weather band it suits, in Turkish and
+// English, with what the engine knows about it: { styles, formality, sport }.
+import { CATALOG, REASONS, BAND_LETTERS } from './outfit_catalog.js';
+for (const [slot, bands, styles, formality, sport, gender, tr, en, reasonKey] of CATALOG) {
+  const reason = REASONS[reasonKey] || ['', ''];
+  const meta = { styles: styles.split('|'), formality, sport: !!sport };
+  for (const letter of bands) {
+    const band = BAND_LETTERS[letter];
+    for (const [lang, item, text] of [['tr', tr, reason[0]], ['en', en, reason[1]]]) {
+      const slots = VARIANTS[lang][band] || (VARIANTS[lang][band] = {});
+      (slots[slot] || (slots[slot] = [])).push([meta.styles[0], item, text, gender, meta]);
+    }
+  }
+}

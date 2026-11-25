@@ -1,6 +1,7 @@
 import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH } from './wardrobe.js';
 import { garmentVariant, itemLook, garmentDefaultColor, shade, ONE_PIECE, accessoryArts } from './visuals.js';
 import { VARIANTS, EXTRAS, GENDERED, INTENSITY, LAYER_SPLIT } from './outfit_variants.js';
+import { REASONS } from './outfit_catalog.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
 import { tx, fillTemplate } from './outfit_i18n.js';
@@ -376,14 +377,22 @@ const GENDER_PALETTE = {
 const GLASSES = ['sunglasses', 'catglasses'];
 // Today's plans: the style they call for and the drawings that don't fit them.
 export const OCCASIONS = {
-  work: { vibe: 'elegant', avoid: ['hoodie', 'sweatshirt', 'tank', 'shorts', 'minishorts', 'slide', 'cap', 'bucket', 'leggings'] },
-  school: { vibe: 'casual', avoid: ['heel', 'blazerw', 'slide'] },
-  date: { vibe: 'elegant', avoid: ['hoodie', 'sweatshirt', 'fleece', 'slide', 'cap', 'leggings'] },
-  event: { vibe: 'elegant', avoid: ['hoodie', 'sweatshirt', 'fleece', 'tank', 'shorts', 'minishorts', 'slide', 'sneaker', 'cap', 'bucket', 'tote', 'leggings', 'windbreaker'] },
-  sport: { vibe: 'sporty', avoid: ['heel', 'flat', 'loafer', 'chelsea', 'espadrille', 'blazer', 'blazerw', 'shirt', 'blouse', 'dress', 'skirt', 'jumpsuit', 'coat', 'wrapcoat', 'trench'] },
-  walk: { vibe: null, avoid: ['heel', 'flat', 'loafer', 'slide'], want: ['sneaker'] },
+  work: { vibe: 'elegant', formality: [2, 3], sport: 'no', avoid: ['hoodie', 'sweatshirt', 'tank', 'shorts', 'minishorts', 'slide', 'cap', 'bucket', 'leggings'] },
+  school: { vibe: 'casual', formality: [1, 2], avoid: ['heel', 'blazerw', 'slide'] },
+  date: { vibe: 'elegant', formality: [2, 3], sport: 'no', avoid: ['hoodie', 'sweatshirt', 'fleece', 'slide', 'cap', 'leggings'] },
+  event: { vibe: 'elegant', formality: [3, 3], sport: 'no', avoid: ['hoodie', 'sweatshirt', 'fleece', 'tank', 'shorts', 'minishorts', 'slide', 'sneaker', 'cap', 'bucket', 'tote', 'leggings', 'windbreaker'] },
+  sport: { vibe: 'sporty', sport: 'only', avoid: ['heel', 'flat', 'loafer', 'chelsea', 'espadrille', 'blazer', 'blazerw', 'shirt', 'blouse', 'dress', 'skirt', 'jumpsuit', 'coat', 'wrapcoat', 'trench'] },
+  walk: { vibe: null, formality: [1, 2], avoid: ['heel', 'flat', 'loafer', 'slide'], want: ['sneaker'] },
 };
 export const OCCASION_KEYS = Object.keys(OCCASIONS);
+// Spare reasons per slot for when two pieces would say the same thing.
+const SLOT_REASONS = {
+  ust: ['soft_comfy', 'collar_neat', 'texture_detail', 'minimal_clean'],
+  ustune: ['layer_easy', 'wool_warm', 'fleece_light', 'knit_warm'],
+  dis: ['jacket_mid', 'lined_warm', 'puffer_warm', 'classic_smart'],
+  alt: ['jogger_comfy', 'classic_smart', 'denim_classic', 'minimal_clean'],
+  ayak: ['sneaker_easy', 'boot_grip', 'shoe_smart', 'boot_smart'],
+};
 // Color words in Turkish and English item names (the stylist keeps these colors).
 const COLOR_WORD = /siyah|beyaz|gri\b|lacivert|\bbej\b|kahve|haki|yeşil|mavi|kırmızı|bordo|pembe|\bmor\b|sarı|turuncu|krem|pastel|açık renk|koyu renk|\bblack|\bwhite|\bgr[ae]y\b|\bnavy|\bbeige|\bbrown|khaki|\bgreen|\bblue|\bred\b|burgundy|\bpink|purple|yellow|orange|cream|light-colored|dark|denim|\bkot\b/i;
 const ACCENT_WORD = /renkli|canlı|colorful|bright/i;
@@ -414,14 +423,39 @@ function hashStr(str) {
 // Picks today's wording for a suggested (non-wardrobe) slot: options that fit
 // the user's style first, rotating by date; never the same kind of garment
 // the user is already wearing from their own wardrobe in another upper slot.
-function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, avoidArts, wantArts = [], warmth, feelsLike, roll = 0 }) {
+// What the engine knows about a piece: its styles, formality (1 relaxed, 2
+// everyday, 3 smart) and whether it's sportswear. Catalog pieces say so
+// themselves (outfit_catalog.js); older entries are read from their style tag.
+const STYLE_FORMALITY = { sporty: 1, casual: 2, bold: 2, minimal: 2, elegant: 3 };
+function pieceOption(v, item, reason, gendered, meta) {
+  return {
+    vibe: v, item, reason, gendered,
+    styles: meta ? meta.styles : [v],
+    formality: meta ? meta.formality : STYLE_FORMALITY[v] || 2,
+    sport: meta ? meta.sport : v === 'sporty',
+  };
+}
+// Whether a piece fits today's plans (OCCASIONS): formality range and sportswear.
+function fitsOccasion(o, occ) {
+  if (!occ) return true;
+  if (occ.formality && (o.formality < occ.formality[0] || o.formality > occ.formality[1])) return false;
+  if (occ.sport === 'only' && !o.sport) return false;
+  if (occ.sport === 'no' && o.sport) return false;
+  return true;
+}
+
+function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, avoidArts, wantArts = [], warmth, feelsLike, roll = 0, occ = null }) {
   const list = ((VARIANTS[language] || VARIANTS.tr)[bandKey] || {})[slot] || [];
   const gList = genderKey === 'unisex' ? []
     : ((((GENDERED[language] || GENDERED.tr)[genderKey] || {})[bandKey] || {})[slot] || []);
-  const options = [{ vibe: 'casual', item: base.item, reason: base.reason, base: true, gendered: genderKey !== 'unisex' }]
-    .concat(gList.map(([v, item, reason]) => ({ vibe: v, item, reason, gendered: true })))
-    .concat(list.filter(([, , , g]) => !g || g === genderKey).map(([v, item, reason, g]) => ({ vibe: v, item, reason, gendered: !!g })));
-  const usable0 = options.filter(o => !avoidArts.includes(garmentVariant(slot, o.item, warmth)));
+  // `key` is the piece's place in the lists, the same in every language (names can repeat).
+  const options = [{ ...pieceOption('casual', base.item, base.reason, genderKey !== 'unisex'), base: true, key: 'base' }]
+    .concat(gList.map(([v, item, reason, , m], i) => ({ ...pieceOption(v, item, reason, true, m), key: 'g' + i })))
+    .concat(list.map(([v, item, reason, g, m], i) => ({ ...pieceOption(v, item, reason, !!g, m), key: 'v' + i, g })).filter(o => !o.g || o.g === genderKey));
+  const allowed = options.filter(o => !avoidArts.includes(garmentVariant(slot, o.item, warmth)));
+  // Pieces that suit today's plans, when there are any.
+  const fitting = allowed.filter(o => fitsOccasion(o, occ));
+  const usable0 = fitting.length ? fitting : allowed;
   // A piece they asked for ("I want to wear sandals") wins when this weather
   // has one; otherwise the usual choice stays and the app says so.
   let asked = wantArts.length ? usable0.filter(o => wantArts.includes(garmentVariant(slot, o.item, warmth))) : [];
@@ -440,12 +474,22 @@ function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, a
   const usable = asked.length ? asked : usable0;
   const pool0 = usable.length ? usable : options;
   const wanted = vibe === 'minimal' ? ['minimal', 'elegant'] : [vibe || 'casual'];
-  let pool = pool0.filter(o => wanted.includes(o.vibe));
-  if (!pool.length) pool = pool0.filter(o => o.vibe === 'casual');
+  let pool = pool0.filter(o => o.styles.some(st => wanted.includes(st)));
+  // A style with only a few pieces in this weather borrows the everyday ones too,
+  // its own pieces still counting double, so the week doesn't repeat itself.
+  if (new Set(pool.map(o => o.key)).size < 4) {
+    const extra = pool0.filter(o => !pool.includes(o) && o.styles.includes('casual'));
+    pool = pool.flatMap(o => [o, o]).concat(extra);
+  }
+  if (!pool.length) pool = pool0.filter(o => o.styles.includes('casual'));
   if (!pool.length) pool = pool0;
   // Women's and men's picks lean on their own pieces: gendered options count
   // three times, so the two lists rarely land on the same neutral suggestion.
   if (genderKey !== 'unisex') pool = pool.flatMap(o => (o.gendered ? [o, o, o] : [o]));
+  // A fixed shuffle per slot and weather, so stepping one day ahead lands on a
+  // different piece (the copies above don't sit next to each other).
+  // Keyed by position, not by name, so every language lands on the same piece.
+  pool = pool.map((o, i) => [hashStr(`${i}|${slot}|${bandKey}|${genderKey}`), o]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
   // The pick walks forward one step per day and one step per 2°, so -1° and
   // -23° (same band) or two neighbouring days don't give the same outfit.
   const dayNum = Math.floor(Date.parse(seed) / 86400000);
@@ -457,8 +501,8 @@ function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, a
   // pieces, the user's style first, never landing on the same piece twice in a row.
   if (roll > 0) {
     const uniq = [];
-    for (const o of [...pool, ...pool0]) if (!uniq.some(u => u.item === o.item)) uniq.push(o);
-    const start = Math.max(0, uniq.findIndex(u => u.item === pick.item));
+    for (const o of [...pool, ...pool0]) if (!uniq.some(u => u.key === o.key)) uniq.push(o);
+    const start = Math.max(0, uniq.findIndex(u => u.key === pick.key));
     pick = uniq[(start + roll) % uniq.length];
   }
   return pick.base ? base : { item: pick.item, reason: c => pick.reason.replace('{t}', c.feelsLike) };
@@ -643,7 +687,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   for (const key of SLOT_ORDER) {
     if (!rows[key] || picks[key] || fixed.has(key)) continue;
     const roll = (adj.reroll || 0) + ((adj.slotRolls || {})[key] || 0);
-    rows[key] = { ...chooseVariant(rows[key], { language, bandKey, slot: key, genderKey, vibe, seed, avoidArts: ownedUpperArts.concat(expandAvoid(adj.avoid)), wantArts: adj.want || [], warmth: BAND_WARMTH[bandKey], feelsLike, roll }), swappable: true };
+    rows[key] = { ...chooseVariant(rows[key], { language, bandKey, slot: key, genderKey, vibe, seed, avoidArts: ownedUpperArts.concat(expandAvoid(adj.avoid)), wantArts: adj.want || [], warmth: BAND_WARMTH[bandKey], feelsLike, roll, occ }), swappable: true };
   }
   if (windOnJacket && rows.dis && !picks.dis) {
     const swappable = rows.dis.swappable;
@@ -672,6 +716,11 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   }
   // An owned sweater/hoodie as the top already is the warm layer.
   if (picks.ust && rows.ustune && !picks.ustune && MID_ARTS.includes(itemLook(picks.ust).art)) delete rows.ustune;
+  // A cold day with a light suggested top (a shirt, a tee): add one warm layer over it.
+  if (bandKey === 'soguk' && rows.ust && !picks.ust && !rows.ustune && !isMid('ust', rows.ust.item)) {
+    const roll = (adj.reroll || 0) + ((adj.slotRolls || {}).ustune || 0);
+    rows.ustune = { ...chooseVariant({ item: language === 'tr' ? 'İnce yün hırka' : 'Fine wool cardigan', reason: () => REASONS.wool_warm[language === 'tr' ? 0 : 1] }, { language, bandKey, slot: 'ustune', genderKey, vibe, seed, avoidArts: expandAvoid(adj.avoid), wantArts: adj.want || [], warmth: BAND_WARMTH[bandKey], feelsLike, roll, occ }), swappable: true, stripLead: false };
+  }
 
   // ---- Keep suggestions consistent with what the user is actually wearing ----
   const ownBottom = picks.alt ? itemLook(picks.alt).art : null;
@@ -728,6 +777,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   if (wind >= 50 && COLD_BANDS.includes(bandKey)) notes.dis = I.gale;
 
   const output = [];
+  const usedReasons = new Set();
   for (const key of SLOT_ORDER) {
     const r = rows[key];
     if (!r) continue;
@@ -789,6 +839,13 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     const art = look.art;
     // Suggestions: translate the finished English/Turkish text, then fill in the numbers.
     // (A wardrobe row's reason is already in the user's language.)
+    // Two pieces with the same short reason read like a template: the second one
+    // gets another fitting sentence for its slot.
+    if (!match && usedReasons.has(reason)) {
+      const alt = (SLOT_REASONS[key] || []).map(k => REASONS[k][language === 'tr' ? 0 : 1]).find(x => !usedReasons.has(x));
+      if (alt) reason = alt;
+    }
+    usedReasons.add(reason);
     if (!match) { item = L(item); reason = L(reason); }
     // A warm layer split off a combined top keeps its reason without the
     // "Feels like {t}°." opening (that stays on the first row).

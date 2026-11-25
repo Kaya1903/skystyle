@@ -327,18 +327,18 @@ const GARMENTS = {
 // For bottoms and shoes the piece mentioned first wins ("sneakers or boots" -> sneakers).
 const KEYWORDS = {
   ust: [
-    ['hoodie', ['kapüşonlu', 'hoodie', 'con capucha', 'z kapturem', 'kapuzen', 'capuche', 'худи', 'толстовка с капюшоном', 'kapüşonlu', '连帽', 'パーカー', '후디', 'हुडी']],
-    ['sweater', ['kazak', 'triko', 'balıkçı', 'sweater', 'jumper', 'knit', 'suéter', 'sweter', 'كنزة', 'pullover', 'strickpulli', 'rollkragen', 'pull', 'tricot', 'col roulé', 'свитер', 'водолазка', 'sviter', 'toxunma', '毛衣', '针织', 'ニット', 'セーター', '니트', '스웨터', 'स्वेटर']],
+    ['hoodie', ['kapüşonlu', 'hoodie', 'hooded sweatshirt', 'con capucha', 'z kapturem', 'kapuzen', 'capuche', 'худи', 'толстовка с капюшоном', 'kapüşonlu', '连帽', 'パーカー', '후디', 'हुडी']],
+    ['sweater', ['kazak', 'triko', 'balıkçı', 'sweater', 'jumper', 'knit', 'turtleneck', 'rollneck', 'suéter', 'sweter', 'كنزة', 'pullover', 'strickpulli', 'rollkragen', 'pull', 'tricot', 'col roulé', 'свитер', 'водолазка', 'sviter', 'toxunma', '毛衣', '针织', 'ニット', 'セーター', '니트', '스웨터', 'स्वेटर']],
     ['sweatshirt', ['sweatshirt', 'sweat', 'sudadera', 'bluza', 'свитшот', '卫衣', 'スウェット', '맨투맨', 'स्वेटशर्ट']],
     ['polo', ['polo']],
     ['shirt', ['gömlek', 'shirt', 'camisa', 'koszula', 'قميص', 'hemd', 'chemise', 'рубашка', 'köynək', '衬衫', 'シャツ', '셔츠', 'शर्ट']],
     ['longsleeve', ['uzun kollu', 'termal', 'long sleeve', 'long-sleeve', 'thermal', 'manga larga', 'longsleeve', 'golf', 'langarm', 'manches longues', 'лонгслив', 'термо', 'uzunqol', '长袖', '長袖', 'インナー', '긴팔', '발열', 'फ़ुल स्लीव', 'थर्मल']],
-    ['tank', ['atlet', 'askılı', 'tank top', 'camisole', 'strappy', 'tirantes', 'tanktop', 'trägertop', 'débardeur', 'майка', 'топ на бретелях', 'mayka', 'askılı top', '背心', '吊带', 'タンクトップ', 'キャミソール', '민소매', '탱크톱', 'टैंक', 'स्ट्रैपी']],
+    ['tank', ['atlet', 'askılı', 'kolsuz', 'crop', 'tank top', 'sports tank', 'sleeveless', 'camisole', 'strappy', 'tirantes', 'tanktop', 'trägertop', 'débardeur', 'майка', 'топ на бретелях', 'mayka', 'askılı top', '背心', '吊带', 'タンクトップ', 'キャミソール', '민소매', '탱크톱', 'टैंक', 'स्ट्रैपी']],
     ['blouse', ['bluz', 'blouse', 'blusa', 'bluzka', 'بلوزة', 'bluse', 'блузка', 'bluzka', '衬衫裙', 'ブラウス', '블라우스', 'ब्लाउज़']],
     ['tee', ['tişört', 't-shirt', 'tshirt', 'tee', 'camiseta', 'koszulka', 'تيشيرت', 'футболка', 'futbolka', 't恤', 'tシャツ', '티셔츠', 'टी-शर्ट']],
   ],
   ustune: [
-    ['hoodie', ['kapüşonlu', 'hoodie', 'con capucha', 'z kapturem', 'capuche', 'худи', '连帽', 'パーカー', '후디', 'हुडी']],
+    ['hoodie', ['kapüşonlu', 'hoodie', 'hooded', 'con capucha', 'z kapturem', 'capuche', 'худи', '连帽', 'パーカー', '후디', 'हुडी']],
     ['fleece', ['polar', 'fleece', 'forro', 'polaire', 'флис', 'flis', '抓绒', 'フリース', '플리스', 'फ़्लीस']],
     ['sweatshirt', ['sweatshirt', 'sudadera', 'bluza', 'свитшот', '卫衣', 'スウェット', '맨투맨', 'स्वेटशर्ट']],
     ['vest', ['yelek', 'vest', 'gilet', 'chaleco', 'kamizelka', 'weste', 'жилет', 'jilet', '马甲', 'ベスト', '조끼', 'वेस्ट']],
@@ -362,7 +362,7 @@ const KEYWORDS = {
     ['dress', ['elbise', 'dress', 'vestido', 'sukienka', 'فستان', 'kleid', 'robe', 'платье', 'don', '连衣裙', 'ワンピース', '원피스', 'ड्रेस']],
     ['skirt', ['etek', 'skirt', 'falda', 'spódnica', 'تنورة', 'rock', 'jupe', 'юбка', 'ətək', '半身裙', '裙', 'スカート', '스커트', '치마', 'स्कर्ट']],
     ['shorts', ['şort', 'short', 'pantalón corto', 'szorty', 'شورت', 'шорты', 'şort', '短裤', 'ショートパンツ', '반바지', 'शॉर्ट्स']],
-    ['leggings', ['tayt', 'legging', 'tights', 'mallas', 'leginsy', 'rajstopy', 'strumpfhose', 'collant', 'легинсы', 'колготки', 'kolqotka', 'tayt', '打底裤', '连裤袜', 'レギンス', 'タイツ', '레깅스', '타이츠', 'लेगिंग्स', 'टाइट्स']],
+    ['leggings', ['tayt', 'legging', 'bike short', 'tights', 'mallas', 'leginsy', 'rajstopy', 'strumpfhose', 'collant', 'легинсы', 'колготки', 'kolqotka', 'tayt', '打底裤', '连裤袜', 'レギンス', 'タイツ', '레깅스', '타이츠', 'लेगिंग्स', 'टाइट्स']],
     ['jeans', ['kot', 'jean', 'denim', 'vaquero', 'dżinsy', 'جينز', 'джинсы', 'cins', '牛仔裤', 'デニム', 'ジーンズ', '청바지', 'जींस']],
     ['trousers', ['pantolon', 'chino', 'trouser', 'pant', 'eşofman', 'jogger', 'pantalón', 'spodnie', 'بنطال', 'hose', 'pantalon', 'брюки', 'джоггеры', 'şalvar', '裤', 'パンツ', '바지', 'पैंट', 'जॉगर्स']],
   ],
@@ -374,7 +374,7 @@ const KEYWORDS = {
     ['espadrille', ['espadril', 'alpargata', 'espadryl', 'إسبادريل', 'эспадрильи', '草编鞋', 'エスパドリーユ', '에스파드리유', 'एस्पैड्रिल']],
     ['slide', ['terlik', 'slide', 'flip-flop', 'flip flop', 'chancla', 'klapki', 'شبشب', 'pantolette', 'badelatschen', 'claquette', 'tong', 'шлёпанцы', 'шлепанцы', 'şap-şap', 'шлепки', '拖鞋', 'スライドサンダル', 'ビーチサンダル', '슬리퍼', '쪼리', 'स्लिपर', 'चप्पल']],
     ['sandal', ['sandalet', 'sandal', 'sandał', 'صندل', 'sandale', 'сандалии', 'səndəl', '凉鞋', 'サンダル', '샌들', 'सैंडल']],
-    ['loafer', ['makosen', 'loafer', 'oxford', 'mokasyn', 'mocasín', 'mocassin', 'лоферы', '乐福', 'ローファー', '로퍼', 'लोफ़र']],
+    ['loafer', ['makosen', 'kundura', 'loafer', 'oxford', 'derby', 'brogue', 'mokasyn', 'mocasín', 'mocassin', 'лоферы', '乐福', 'ローファー', '로퍼', 'लोफ़र']],
     ['sneaker', ['spor ayakkabı', 'sneaker', 'trainer', 'zapatilla', 'tenis', 'adidasy', 'ayakkabı', 'shoe', 'turnschuh', 'schuh', 'basket', 'chaussure', 'кроссовки', 'кеды', 'ayaqqabı', '运动鞋', '鞋', 'スニーカー', '靴', '운동화', '신발', 'स्नीकर्स', 'जूते']],
   ],
   yanina: [
@@ -396,8 +396,9 @@ const KEYWORDS = {
 // Picks which drawing to use for a piece: the item's own words first,
 // then how warm it is (1 = thinnest .. 5 = winter).
 export function garmentVariant(category, text = '', warmth = 3) {
-  // "T-shirt" contains "shirt": read it as a tee before matching.
-  const lower = String(text || '').toLocaleLowerCase('tr').replace(/t-?shirt/g, 'tee');
+  // "T-shirt" contains "shirt": read it as a tee (but not the "tshirt" inside "sweatshirt").
+  // "baskılı" (printed) contains "askılı" (strappy): take it out before matching.
+  const lower = String(text || '').toLocaleLowerCase('tr').replace(/\bt-?shirt/g, 'tee').replace(/baskılı/g, 'printed');
   const byPriority = category === 'ust' || category === 'ustune' || category === 'dis';
   let best = null, bestPos = Infinity;
   for (const [variant, words] of KEYWORDS[category] || []) {
