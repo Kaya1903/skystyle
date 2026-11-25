@@ -196,7 +196,9 @@ function memoryNote(fb, s) {
   const m = fb.memory;
   if (!m) return '';
   const day = dayLabel(m.date, fb.date, s.lang, t);
-  return `<div class="memory-note">${SPARKLE}<span>${t(s.lang, 'fb_memory_' + m.answer, day, m.feelsLike)}</span></div>`;
+  // With only their own clothes the app can't add a layer itself, so it says what to do instead.
+  const key = 'fb_memory_' + m.answer + (s.wardrobeMode === 'mine' ? '_mine' : '');
+  return `<div class="memory-note">${SPARKLE}<span>${t(s.lang, key, day, m.feelsLike)}</span></div>`;
 }
 
 // "I'm wearing this today" (only for today's outfit).

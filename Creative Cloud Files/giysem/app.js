@@ -938,7 +938,14 @@ function computeWeekOutfits() {
   const week = computeWeekView();
   const cityName = state.city ? state.city.name : 'unknown';
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
+  const today = computeOutfitFor(0);
   return week.map(day => {
+    // Today's row shows exactly the outfit on the Today tab (stylist pick, the
+    // user's own changes and all), with the same note.
+    if (today && day.date === today.dayView.date) {
+      if (!today.stylistPending) ensureSmartTip(today.dayView, today.outfit);
+      return { day, outfit: today.outfit, tipKey: `today|${day.date}`, isToday: true, tip: state.smartTip || null, tipLoading: today.stylistPending || state.smartTipLoading };
+    }
     const outfit = generateOutfit(
       { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang,
         comfort: comfortOffset(state.profile) + learnedOffset(state.feedback, day.feelsLike, day.wind, day.date),
@@ -1063,8 +1070,8 @@ function ensureWeekTips(weekOutfits) {
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
   const wardrobeSummary = summarizeWardrobe();
 
-  weekOutfits.forEach(({ day, outfit, tipKey }) => {
-    if (state.weekTipStatus[tipKey]) return;
+  weekOutfits.forEach(({ day, outfit, tipKey, isToday }) => {
+    if (isToday || state.weekTipStatus[tipKey]) return;
     if (cache[tipKey]) {
       state.weekTips[tipKey] = cache[tipKey];
       state.weekTipStatus[tipKey] = 'done';
