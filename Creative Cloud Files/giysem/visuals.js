@@ -15,6 +15,8 @@ const DEFAULT_GARMENT_COLOR = {
   sweatshirt: '#8a9bb0', hoodie: '#5b6b7d', polo: '#2f6f5e', tank: '#f2f2f2',
   vest: '#2f3e5e', bomber: '#4e5a3a', blazer: '#3a3f4b',
   bag: '#8b5a3c', beanie: '#c94f4f', cap: '#2f3e5e', scarf: '#b7473b',
+  heel: '#1f1f26', flat: '#d9b8a6', chelsea: '#4a3426', slide: '#2b2b33', espadrille: '#e9e1d0', jumpsuit: '#5e7d6a',
+  strawhat: '#e3c98f', bucket: '#7a8b5c', tote: '#ece3cf', crossbody: '#b5523b', belt: '#5a3b28', watch: '#3a3f4b',
   blouse: '#f4d6dc', shortshirt: '#dbe8f2',
   wrapcoat: '#c8a27a', pufferw: '#efe6da', cropjacket: '#d8b4a0', blazerw: '#e9dccb', parka: '#4e5a3a', leggings: '#2b2b33', minishorts: '#8fb3d9', sunglasses: '#23262d', catglasses: '#5a2433',
 };
@@ -178,6 +180,11 @@ const GARMENTS = {
     body: 'M46 12 L40 22 L37 46 Q30 72 22 104 Q21 108 25 108 H95 Q99 108 98 104 Q90 72 83 46 L80 22 L74 12 C70 20 50 20 46 12 Z',
     detail: '<path d="M37 46 Q60 52 83 46" fill="none" stroke="{D}" stroke-width="2.5"/><path d="M46 12 C50 20 70 20 74 12" fill="none" stroke="{D}" stroke-width="2.5"/><path d="M48 54 L40 104 M60 54 V106 M72 54 L80 104" stroke="{D}" stroke-width="1.8" opacity=".3"/>',
   },
+  // Wide-leg jumpsuit, cropped above the ankle: a one-piece look like a dress.
+  jumpsuit: {
+    body: 'M46 12 L40 22 L37 46 L36 58 Q34 62 35 66 L30 106 Q30 109 33 109 H55 Q58 109 58 106 L60 74 L62 106 Q62 109 65 109 H87 Q90 109 90 106 L85 66 Q86 62 84 58 L83 46 L80 22 L74 12 C70 20 50 20 46 12 Z',
+    detail: '<path d="M36 56 H84 L84.6 64 H35.4 Z" fill="{D}" opacity=".4"/><path d="M46 12 C50 20 70 20 74 12" fill="none" stroke="{D}" stroke-width="2.5"/><path d="M60 64 V74" stroke="{D}" stroke-width="2"/><path d="M44 70 L40 104 M76 70 L80 104" stroke="{D}" stroke-width="1.6" opacity=".3"/>',
+  },
   // ---- shoes ----
   sneaker: {
     body: 'M13 80 C13 63 21 52 30 50 L45 47 C51 56 61 61 75 63 L98 67 C106 69 109 75 109 81 V88 H13 Z',
@@ -194,6 +201,31 @@ const GARMENTS = {
   loafer: {
     body: 'M13 84 C13 72 21 66 31 65 L58 63 C66 69 80 71 98 73 C106 74 109 79 109 85 V90 H13 Z',
     detail: '<path d="M11 88 H111 V94 Q111 99 106 99 H16 Q11 99 11 94 Z" fill="{D}" opacity=".8"/><path d="M58 70 Q74 74 86 74" fill="none" stroke="{D}" stroke-width="3"/><rect x="66" y="72" width="10" height="4" rx="2" fill="{L}" opacity=".8"/>',
+  },
+  // Women's pump: pointed toe, slim heel at the back.
+  heel: {
+    body: 'M18 64 Q20 56 30 59 Q50 69 72 73 Q96 78 106 85 Q111 90 104 92 H52 Q41 92 35 86 L31 100 H24 L22 82 Q17 75 18 64 Z',
+    detail: '<path d="M52 92 H104" stroke="{D}" stroke-width="3.5" stroke-linecap="round"/><path d="M24 98 H31" stroke="{D}" stroke-width="4" stroke-linecap="round"/><path d="M28 61 Q44 71 60 71" fill="none" stroke="{D}" stroke-width="2" opacity=".45"/>',
+  },
+  // Ballet flat: low cut, thin sole, a small bow on the toe.
+  flat: {
+    body: 'M14 85 C14 77 20 73 28 73 Q50 78 70 75 Q96 75 106 82 Q110 86 108 90 H14 Z',
+    detail: '<path d="M12 89 H110 V93 Q110 96 106 96 H16 Q12 96 12 93 Z" fill="{D}" opacity=".7"/><path d="M28 75 Q50 83 72 77" fill="none" stroke="{D}" stroke-width="2.2"/><path d="M76 77 L83 73 V81 Z M90 77 L83 73 V81 Z" fill="{D}" opacity=".65"/>',
+  },
+  // Chelsea boot: no laces, elastic side panel and a pull tab.
+  chelsea: {
+    body: 'M28 20 H58 Q61 20 61 23 V58 C61 63 65 67 73 69 L97 75 C105 77 109 83 109 89 V92 H24 V24 Q24 20 28 20 Z',
+    detail: '<path d="M22 90 H111 V97 Q111 103 105 103 H28 Q22 103 22 97 Z" fill="{D}" opacity=".85"/><path d="M41 22 Q37 42 43 62 H55 Q49 42 53 22 Z" fill="{D}" opacity=".4"/><path d="M27 21 V12 H33 V21" fill="none" stroke="{D}" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 74 Q50 70 72 74" fill="none" stroke="{D}" stroke-width="2" opacity=".35"/>',
+  },
+  // Slides: a flat sole with one wide strap over the front.
+  slide: {
+    body: 'M12 88 C12 82 18 80 28 80 H96 C104 80 109 83 109 89 V93 H12 Z',
+    detail: '<path d="M50 83 C52 62 94 62 98 83 Z" fill="{D}" opacity=".85"/><path d="M58 74 Q74 68 90 74" fill="none" stroke="{L}" stroke-width="2" opacity=".6"/><path d="M12 92 H109 V96 Q109 100 105 100 H16 Q12 100 12 96 Z" fill="{D}" opacity=".7"/>',
+  },
+  // Espadrille: canvas upper on a braided jute sole.
+  espadrille: {
+    body: 'M14 83 C14 71 22 65 32 65 L58 65 C68 69 82 71 98 73 C106 74 110 79 110 85 V88 H14 Z',
+    detail: '<path d="M12 86 H112 V95 Q112 99 108 99 H16 Q12 99 12 95 Z" fill="#d9c08f" stroke="#a8875a" stroke-width="1.6"/><path d="M20 88 V97 M28 88 V97 M36 88 V97 M44 88 V97 M52 88 V97 M60 88 V97 M68 88 V97 M76 88 V97 M84 88 V97 M92 88 V97 M100 88 V97" stroke="#a8875a" stroke-width="1.4" opacity=".8"/><path d="M58 66 Q72 72 86 73" fill="none" stroke="{D}" stroke-width="2.2" opacity=".6"/>',
   },
   sweatshirt: {
     body: LONG_TOP,
@@ -256,6 +288,37 @@ const GARMENTS = {
     body: 'M36 28 Q60 40 84 28 L88 44 Q60 58 32 44 Z M62 48 L58 102 H74 L78 50 Z',
     detail: '<path d="M60 102 V110 M64 102 V110 M68 102 V110 M72 102 V110" stroke="{D}" stroke-width="1.6"/><path d="M36 34 Q60 46 84 34" fill="none" stroke="{D}" stroke-width="1.6" opacity=".4"/>',
   },
+  // Wide-brimmed straw hat with a ribbon.
+  strawhat: {
+    body: 'M6 80 Q60 64 114 80 Q119 88 108 90 Q60 98 12 90 Q1 88 6 80 Z M34 78 Q33 44 60 42 Q87 44 86 78 Z',
+    detail: '<path d="M34 66 Q60 72 86 66 L86.4 75 Q60 81 33.6 75 Z" fill="{D}" opacity=".6"/><path d="M42 52 Q60 48 78 52 M20 86 Q60 92 100 86" fill="none" stroke="{D}" stroke-width="1.4" opacity=".4"/>',
+  },
+  // Bucket hat: soft crown, brim angled down all round.
+  bucket: {
+    body: 'M30 80 L36 50 Q60 40 84 50 L90 80 Z M14 82 Q60 74 106 82 L100 96 Q60 104 20 96 Z',
+    detail: '<path d="M36 50 Q60 44 84 50" fill="none" stroke="{D}" stroke-width="2" opacity=".5"/><path d="M20 90 Q60 98 100 90" fill="none" stroke="{D}" stroke-width="1.6" stroke-dasharray="3 3" opacity=".6"/><path d="M31 76 Q60 82 89 76" fill="none" stroke="{D}" stroke-width="2" opacity=".45"/>',
+  },
+  // Canvas tote with two long handles.
+  tote: {
+    back: 'M38 54 Q38 18 49 18 Q56 18 56 54 H51 Q51 24 49 24 Q43 24 43 54 Z M64 54 Q64 18 71 18 Q82 18 82 54 H77 Q77 24 71 24 Q69 24 69 54 Z',
+    body: 'M24 52 H96 L92 108 Q92 111 89 111 H31 Q28 111 28 108 Z',
+    detail: '<path d="M36 70 H84 M38 80 H82" stroke="{D}" stroke-width="2.4" stroke-linecap="round" opacity=".35"/>',
+  },
+  // Small crossbody bag on a long strap.
+  crossbody: {
+    body: 'M40 62 H92 Q97 62 97 67 V96 Q97 101 92 101 H40 Q35 101 35 96 V67 Q35 62 40 62 Z',
+    detail: '<path d="M14 6 L44 63 M14 6 L8 18" fill="none" stroke="{D}" stroke-width="3" stroke-linecap="round"/><path d="M35 67 Q35 62 40 62 H92 Q97 62 97 67 V80 Q66 90 35 80 Z" fill="{D}" opacity=".3"/><circle cx="66" cy="82" r="3" fill="{L}" stroke="{D}" stroke-width="1.5"/>',
+  },
+  // Leather belt with a metal buckle.
+  belt: {
+    body: 'M6 52 H114 V68 H6 Z',
+    detail: '<rect x="46" y="47" width="26" height="26" rx="4" fill="none" stroke="#c9a54a" stroke-width="4.5"/><path d="M59 51 V69" stroke="#c9a54a" stroke-width="3"/><circle cx="86" cy="60" r="2" fill="{D}"/><circle cx="96" cy="60" r="2" fill="{D}"/><circle cx="106" cy="60" r="2" fill="{D}"/>',
+  },
+  // Wristwatch: strap and a round face.
+  watch: {
+    body: 'M48 6 H72 V114 H48 Z',
+    detail: '<path d="M48 22 H72 M48 98 H72" stroke="{D}" stroke-width="1.6" opacity=".4"/><circle cx="60" cy="60" r="23" fill="#c9a54a"/><circle cx="60" cy="60" r="18" fill="#f8f6f0" stroke="{D}" stroke-width="1.5"/><path d="M60 60 V48 M60 60 H69" stroke="#2b2b33" stroke-width="2.6" stroke-linecap="round"/>',
+  },
 };
 
 // Words in an item's name (any of our languages) that tell us which drawing fits.
@@ -295,6 +358,7 @@ const KEYWORDS = {
     ['jacket', ['ceket', 'mont', 'jacket', 'blazer', 'hırka', 'chaqueta', 'kurtka', 'جاكيت', 'jacke', 'veste', 'blouson', 'куртка', 'gödəkçə', '夹克', '外套', 'ジャケット', '재킷', '자켓', 'जैकेट']],
   ],
   alt: [
+    ['jumpsuit', ['tulum', 'jumpsuit', 'mono ', 'kombinezon', 'جمبسوت', 'overall', 'combinaison', 'комбинезон', '连体裤', 'オールインワン', 'サロペット', '점프수트', 'जंपसूट']],
     ['dress', ['elbise', 'dress', 'vestido', 'sukienka', 'فستان', 'kleid', 'robe', 'платье', 'don', '连衣裙', 'ワンピース', '원피스', 'ड्रेस']],
     ['skirt', ['etek', 'skirt', 'falda', 'spódnica', 'تنورة', 'rock', 'jupe', 'юбка', 'ətək', '半身裙', '裙', 'スカート', '스커트', '치마', 'स्कर्ट']],
     ['shorts', ['şort', 'short', 'pantalón corto', 'szorty', 'شورت', 'шорты', 'şort', '短裤', 'ショートパンツ', '반바지', 'शॉर्ट्स']],
@@ -304,16 +368,27 @@ const KEYWORDS = {
   ],
   ayak: [
     ['boot', ['bot', 'çizme', 'boot', 'bota', 'kozaki', 'buty zimowe', 'حذاء طويل', 'stiefel', 'botte', 'ботинки', 'сапоги', 'çəkmə', '靴子', 'ブーツ', '부츠', 'बूट']],
-    ['sandal', ['sandalet', 'terlik', 'sandal', 'flip', 'chancla', 'sandał', 'صندل', 'sandale', 'sandale', 'tong', 'сандалии', 'шлёпанцы', 'səndəl', '凉鞋', '拖鞋', 'サンダル', '샌들', 'सैंडल']],
-    ['loafer', ['makosen', 'loafer', 'oxford', 'mokasyn', 'mocasín', 'babet', 'mocassin', 'лоферы', '乐福', 'ローファー', '로퍼', 'लोफ़र']],
+    ['chelsea', ['chelsea', 'челси', '切尔西', 'チェルシー', '첼시', 'चेल्सी']],
+    ['heel', ['topuklu', 'stiletto', 'heel', 'pump', 'tacón', 'tacones', 'szpilki', 'obcas', 'كعب', 'absatz', 'talon', 'escarpin', 'каблук', 'dabanlı', '高跟', 'ヒール', 'パンプス', '힐', '펌프스', 'हील']],
+    ['flat', ['babet', 'ballet flat', 'flats', 'bailarina', 'baleriny', 'باليرينا', 'ballerina', 'ballerine', 'балетки', 'baletka', '芭蕾', 'バレエシューズ', '플랫', 'फ़्लैट', 'बैले']],
+    ['espadrille', ['espadril', 'alpargata', 'espadryl', 'إسبادريل', 'эспадрильи', '草编鞋', 'エスパドリーユ', '에스파드리유', 'एस्पैड्रिल']],
+    ['slide', ['terlik', 'slide', 'flip-flop', 'flip flop', 'chancla', 'klapki', 'شبشب', 'pantolette', 'badelatschen', 'claquette', 'tong', 'шлёпанцы', 'шлепанцы', 'şap-şap', 'шлепки', '拖鞋', 'スライドサンダル', 'ビーチサンダル', '슬리퍼', '쪼리', 'स्लिपर', 'चप्पल']],
+    ['sandal', ['sandalet', 'sandal', 'sandał', 'صندل', 'sandale', 'сандалии', 'səndəl', '凉鞋', 'サンダル', '샌들', 'सैंडल']],
+    ['loafer', ['makosen', 'loafer', 'oxford', 'mokasyn', 'mocasín', 'mocassin', 'лоферы', '乐福', 'ローファー', '로퍼', 'लोफ़र']],
     ['sneaker', ['spor ayakkabı', 'sneaker', 'trainer', 'zapatilla', 'tenis', 'adidasy', 'ayakkabı', 'shoe', 'turnschuh', 'schuh', 'basket', 'chaussure', 'кроссовки', 'кеды', 'ayaqqabı', '运动鞋', '鞋', 'スニーカー', '靴', '운동화', '신발', 'स्नीकर्स', 'जूते']],
   ],
   yanina: [
     ['sunglasses', ['güneş gözlüğü', 'gözlük', 'sunglasses', 'shades', 'gafas de sol', 'okulary', 'نظارة', 'sonnenbrille', 'lunettes', 'очки', 'eynək', '太阳镜', '墨镜', 'サングラス', '선글라스', 'चश्मा']],
     ['umbrella', ['şemsiye', 'umbrella', 'paraguas', 'parasol', 'مظلة', 'schirm', 'parapluie', 'зонт', 'çətir', '伞', '傘', '우산', 'छाता']],
+    ['tote', ['bez çanta', 'tote', 'bolsa de tela', 'torba płócienna', 'حقيبة قماش', 'stoffbeutel', 'sac cabas', 'cabas', 'шоппер', 'parça çanta', '帆布包', 'トートバッグ', '에코백', 'टोट']],
+    ['crossbody', ['çapraz çanta', 'omuz çantası', 'crossbody', 'shoulder bag', 'bandolera', 'listonoszka', 'حقيبة كتف', 'umhängetasche', 'bandoulière', 'через плечо', 'çiyin çantası', '斜挎包', 'ショルダーバッグ', '크로스백', 'क्रॉसबॉडी']],
+    ['strawhat', ['hasır şapka', 'straw hat', 'sombrero de paja', 'słomkowy', 'قبعة قش', 'strohhut', 'chapeau de paille', 'соломенная', 'həsir şlyapa', '草帽', '麦わら', '밀짚모자', 'स्ट्रॉ हैट']],
+    ['bucket', ['bucket', 'balıkçı şapka', 'gorro de pescador', 'kapelusz typu bucket', 'قبعة باكيت', 'fischerhut', 'bob ', 'панама', 'panama', '渔夫帽', 'バケットハット', '버킷햇', 'बकेट हैट']],
+    ['belt', ['kemer', 'belt', 'cinturón', 'pasek', 'حزام', 'gürtel', 'ceinture', 'ремень', 'kəmər', '腰带', 'ベルト', '벨트', 'बेल्ट']],
+    ['watch', ['kol saati', 'saat', 'watch', 'reloj', 'zegarek', 'ساعة', 'armbanduhr', 'uhr', 'montre', 'часы', '手表', '腕時計', '시계', 'घड़ी']],
     ['bag', ['çanta', 'bag', 'bolso', 'torba', 'حقيبة', 'tasche', 'sac', 'сумка', 'çanta', '包', 'バッグ', '가방', 'बैग']],
     ['beanie', ['bere', 'beanie', 'gorro', 'czapka', 'mütze', 'bonnet', 'шапка', 'papaq', '毛线帽', 'ニット帽', '비니', 'टोपी']],
-    ['cap', ['şapka', 'kasket', 'cap', 'gorra', 'kappe', 'casquette', 'кепка', 'kepka', '棒球帽', 'キャップ', '캡', 'कैप']],
+    ['cap', ['şapka', 'kasket', 'kep', 'cap', 'gorra', 'kappe', 'casquette', 'кепка', 'kepka', '棒球帽', 'キャップ', '캡', 'कैप']],
     ['scarf', ['atkı', 'şal', 'scarf', 'bufanda', 'szalik', 'وشاح', 'schal', 'écharpe', 'шарф', 'şərf', '围巾', 'マフラー', '머플러', '목도리', 'मफ़लर']],
   ],
 };
@@ -337,6 +412,10 @@ export function garmentVariant(category, text = '', warmth = 3) {
   }
   // "Kot şort" / "denim shorts": the cut (shorts) matters more than the fabric.
   if (best === 'jeans' && /şort|short|szorty|شورت/.test(lower)) return 'shorts';
+  // "Kot mini etek" / "denim skirt": a skirt made of denim.
+  if (best === 'jeans' && /etek|skirt|falda|spódnica|jupe|юбк|ətək|裙|スカート|스커트|치마|स्कर्ट/.test(lower)) return 'skirt';
+  // "Alçak topuklu bot" / "heeled boots": the boot is the shoe, the heel is a detail.
+  if (best === 'heel' && /bot|boot|stiefel|botte|ботин|сапог|çəkmə|靴子|ブーツ|부츠|बूट/.test(lower)) return 'boot';
   if (best === 'shirt' && /kısa kol|short-sleeve|short sleeve|manga corta|krótki rękaw/.test(lower)) return 'shortshirt';
   // Light-weather trousers read better as beige chinos than dark formal pants.
   if (best === 'trousers' && warmth <= 2) return 'chinos';
@@ -351,14 +430,29 @@ export function garmentVariant(category, text = '', warmth = 3) {
   }
 }
 
+// Every accessory a row's text mentions, in the order it mentions them
+// ("Sunglasses and a straw hat" -> ['sunglasses', 'strawhat']).
+export function accessoryArts(text = '') {
+  const lower = String(text || '').toLocaleLowerCase('tr');
+  const found = [];
+  for (const [variant, words] of KEYWORDS.yanina) {
+    const pos = Math.min(...words.map(w => { const i = lower.indexOf(w); return i === -1 ? Infinity : i; }));
+    if (pos < Infinity) found.push([pos, variant]);
+  }
+  // A longer, more specific name hides the plain one inside it ("bez çanta" is not also a "çanta").
+  const arts = found.sort((a, b) => a[0] - b[0]).map(f => f[1]);
+  return arts.filter((a, i) => !(a === 'bag' && arts.some(o => ['tote', 'crossbody'].includes(o))) && !(a === 'cap' && arts.some(o => ['strawhat', 'bucket'].includes(o))) && arts.indexOf(a) === i);
+}
+export const ONE_PIECE = ['dress', 'jumpsuit'];
+
 // Which drawings make sense for each wardrobe category (the editor's style picker).
 export const STYLE_OPTIONS = {
   ust: ['tee', 'longsleeve', 'sweater', 'sweatshirt', 'hoodie', 'shirt', 'shortshirt', 'blouse', 'polo', 'tank'],
   ustune: ['cardigan', 'sweater', 'fleece', 'hoodie', 'sweatshirt', 'vest', 'shirt'],
   dis: ['jacket', 'puffer', 'coat', 'trench', 'windbreaker', 'bomber', 'blazer', 'vest', 'parka', 'wrapcoat', 'pufferw', 'cropjacket', 'blazerw'],
-  alt: ['trousers', 'chinos', 'jeans', 'leggings', 'shorts', 'minishorts', 'skirt', 'dress'],
-  ayak: ['sneaker', 'boot', 'sandal', 'loafer'],
-  yanina: ['umbrella', 'bag', 'beanie', 'cap', 'scarf', 'sunglasses', 'catglasses'],
+  alt: ['trousers', 'chinos', 'jeans', 'leggings', 'shorts', 'minishorts', 'skirt', 'dress', 'jumpsuit'],
+  ayak: ['sneaker', 'boot', 'chelsea', 'sandal', 'slide', 'espadrille', 'loafer', 'flat', 'heel'],
+  yanina: ['umbrella', 'bag', 'tote', 'crossbody', 'beanie', 'cap', 'bucket', 'strawhat', 'scarf', 'sunglasses', 'catglasses', 'belt', 'watch'],
 };
 export const PATTERN_TYPES = ['solid', 'stripes', 'checks', 'dots', 'floral', 'print'];
 export const DETAIL_KEYS = ['hood', 'zip', 'buttons', 'pocket', 'logo'];
@@ -394,32 +488,94 @@ const LABELS = {
     cardigan: 'Hırka', fleece: 'Polar', vest: 'Yelek', jacket: 'Ceket', puffer: 'Şişme mont', coat: 'Kaban', trench: 'Trençkot', windbreaker: 'Rüzgarlık', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Pantolon', chinos: 'Chino', jeans: 'Kot', shorts: 'Şort', skirt: 'Etek', dress: 'Elbise',
     sneaker: 'Spor ayakkabı', boot: 'Bot', sandal: 'Sandalet', loafer: 'Makosen', umbrella: 'Şemsiye', bag: 'Çanta', beanie: 'Bere', cap: 'Şapka', scarf: 'Atkı',
-    shortshirt: 'Kısa kollu gömlek', blouse: 'Bluz', parka: 'Parka', wrapcoat: 'Kuşaklı kaban', pufferw: 'Uzun şişme mont', cropjacket: 'Kısa ceket', blazerw: 'Uzun blazer', leggings: 'Tayt', minishorts: 'Kadın şortu', sunglasses: 'Güneş gözlüğü', catglasses: 'Kedi göz gözlük' },
+    shortshirt: 'Kısa kollu gömlek', blouse: 'Bluz', parka: 'Parka', wrapcoat: 'Kuşaklı kaban', pufferw: 'Uzun şişme mont', cropjacket: 'Kısa ceket', blazerw: 'Uzun blazer', leggings: 'Tayt', minishorts: 'Kadın şortu', sunglasses: 'Güneş gözlüğü', catglasses: 'Kedi göz gözlük',
+    heel: "Topuklu", flat: "Babet", chelsea: "Chelsea bot", slide: "Terlik", espadrille: "Espadril", jumpsuit: "Tulum", strawhat: "Hasır şapka", bucket: "Bucket şapka", tote: "Bez çanta", crossbody: "Çapraz çanta", belt: "Kemer", watch: "Saat" },
   en: { tee: 'T-shirt', longsleeve: 'Long sleeve', sweater: 'Sweater', sweatshirt: 'Sweatshirt', hoodie: 'Hoodie', shirt: 'Shirt', polo: 'Polo', tank: 'Tank top',
     cardigan: 'Cardigan', fleece: 'Fleece', vest: 'Vest', jacket: 'Jacket', puffer: 'Puffer', coat: 'Coat', trench: 'Trench coat', windbreaker: 'Windbreaker', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Trousers', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Skirt', dress: 'Dress',
     sneaker: 'Sneakers', boot: 'Boots', sandal: 'Sandals', loafer: 'Loafers', umbrella: 'Umbrella', bag: 'Bag', beanie: 'Beanie', cap: 'Cap', scarf: 'Scarf',
-    shortshirt: 'Short-sleeve shirt', blouse: 'Blouse', parka: 'Parka', wrapcoat: 'Wrap coat', pufferw: 'Long puffer', cropjacket: 'Cropped jacket', blazerw: 'Long blazer', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses' },
+    shortshirt: 'Short-sleeve shirt', blouse: 'Blouse', parka: 'Parka', wrapcoat: 'Wrap coat', pufferw: 'Long puffer', cropjacket: 'Cropped jacket', blazerw: 'Long blazer', leggings: 'Leggings', minishorts: "Women's shorts", sunglasses: 'Sunglasses', catglasses: 'Cat-eye sunglasses',
+    heel: "Heels", flat: "Ballet flats", chelsea: "Chelsea boots", slide: "Slides", espadrille: "Espadrilles", jumpsuit: "Jumpsuit", strawhat: "Straw hat", bucket: "Bucket hat", tote: "Tote bag", crossbody: "Crossbody bag", belt: "Belt", watch: "Watch" },
   es: { tee: 'Camiseta', longsleeve: 'Manga larga', sweater: 'Jersey', sweatshirt: 'Sudadera', hoodie: 'Sudadera con capucha', shirt: 'Camisa', polo: 'Polo', tank: 'Camiseta de tirantes',
     cardigan: 'Chaqueta de punto', fleece: 'Forro polar', vest: 'Chaleco', jacket: 'Chaqueta', puffer: 'Plumífero', coat: 'Abrigo', trench: 'Gabardina', windbreaker: 'Cortavientos', bomber: 'Bomber', blazer: 'Blazer',
     trousers: 'Pantalón', chinos: 'Chinos', jeans: 'Vaqueros', shorts: 'Pantalón corto', skirt: 'Falda', dress: 'Vestido',
     sneaker: 'Zapatillas', boot: 'Botas', sandal: 'Sandalias', loafer: 'Mocasines', umbrella: 'Paraguas', bag: 'Bolso', beanie: 'Gorro', cap: 'Gorra', scarf: 'Bufanda',
-    shortshirt: 'Camisa de manga corta', blouse: 'Blusa', parka: 'Parka', wrapcoat: 'Abrigo cruzado', pufferw: 'Plumífero largo', cropjacket: 'Chaqueta corta', blazerw: 'Blazer larga', leggings: 'Mallas', minishorts: 'Shorts de mujer', sunglasses: 'Gafas de sol', catglasses: 'Gafas cat-eye' },
+    shortshirt: 'Camisa de manga corta', blouse: 'Blusa', parka: 'Parka', wrapcoat: 'Abrigo cruzado', pufferw: 'Plumífero largo', cropjacket: 'Chaqueta corta', blazerw: 'Blazer larga', leggings: 'Mallas', minishorts: 'Shorts de mujer', sunglasses: 'Gafas de sol', catglasses: 'Gafas cat-eye',
+    heel: "Tacones", flat: "Bailarinas", chelsea: "Botines Chelsea", slide: "Chanclas", espadrille: "Alpargatas", jumpsuit: "Mono", strawhat: "Sombrero de paja", bucket: "Gorro de pescador", tote: "Bolsa de tela", crossbody: "Bandolera", belt: "Cinturón", watch: "Reloj" },
   pl: { tee: 'T-shirt', longsleeve: 'Długi rękaw', sweater: 'Sweter', sweatshirt: 'Bluza', hoodie: 'Bluza z kapturem', shirt: 'Koszula', polo: 'Polo', tank: 'Koszulka na ramiączkach',
     cardigan: 'Kardigan', fleece: 'Polar', vest: 'Kamizelka', jacket: 'Kurtka', puffer: 'Kurtka puchowa', coat: 'Płaszcz', trench: 'Trencz', windbreaker: 'Wiatrówka', bomber: 'Bomberka', blazer: 'Marynarka',
     trousers: 'Spodnie', chinos: 'Chinosy', jeans: 'Dżinsy', shorts: 'Szorty', skirt: 'Spódnica', dress: 'Sukienka',
     sneaker: 'Sneakersy', boot: 'Kozaki', sandal: 'Sandały', loafer: 'Mokasyny', umbrella: 'Parasol', bag: 'Torba', beanie: 'Czapka', cap: 'Czapka z daszkiem', scarf: 'Szalik',
-    shortshirt: 'Koszula z krótkim rękawem', blouse: 'Bluzka', parka: 'Parka', wrapcoat: 'Płaszcz z paskiem', pufferw: 'Długa puchówka', cropjacket: 'Krótka kurtka', blazerw: 'Długa marynarka', leggings: 'Legginsy', minishorts: 'Szorty damskie', sunglasses: 'Okulary przeciwsłoneczne', catglasses: 'Okulary kocie oko' },
+    shortshirt: 'Koszula z krótkim rękawem', blouse: 'Bluzka', parka: 'Parka', wrapcoat: 'Płaszcz z paskiem', pufferw: 'Długa puchówka', cropjacket: 'Krótka kurtka', blazerw: 'Długa marynarka', leggings: 'Legginsy', minishorts: 'Szorty damskie', sunglasses: 'Okulary przeciwsłoneczne', catglasses: 'Okulary kocie oko',
+    heel: "Szpilki", flat: "Baleriny", chelsea: "Sztyblety", slide: "Klapki", espadrille: "Espadryle", jumpsuit: "Kombinezon", strawhat: "Kapelusz słomkowy", bucket: "Kapelusz bucket", tote: "Torba płócienna", crossbody: "Listonoszka", belt: "Pasek", watch: "Zegarek" },
   ar: { tee: 'تيشيرت', longsleeve: 'أكمام طويلة', sweater: 'كنزة', sweatshirt: 'سويت شيرت', hoodie: 'هودي', shirt: 'قميص', polo: 'بولو', tank: 'قميص بلا أكمام',
     cardigan: 'كارديغان', fleece: 'فليس', vest: 'صديري', jacket: 'جاكيت', puffer: 'جاكيت منفوخ', coat: 'معطف', trench: 'ترنش كوت', windbreaker: 'جاكيت واقٍ من الريح', bomber: 'بومبر', blazer: 'بليزر',
     trousers: 'بنطال', chinos: 'تشينو', jeans: 'جينز', shorts: 'شورت', skirt: 'تنورة', dress: 'فستان',
     sneaker: 'حذاء رياضي', boot: 'بوت', sandal: 'صندل', loafer: 'لوفر', umbrella: 'مظلة', bag: 'حقيبة', beanie: 'قبعة صوف', cap: 'قبعة', scarf: 'وشاح',
-    shortshirt: 'قميص بأكمام قصيرة', blouse: 'بلوزة', parka: 'باركا', wrapcoat: 'معطف بحزام', pufferw: 'معطف منفوخ طويل', cropjacket: 'جاكيت قصير', blazerw: 'بليزر طويل', leggings: 'ليقنز', minishorts: 'شورت نسائي', sunglasses: 'نظارة شمسية', catglasses: 'نظارة عين القطة' },
+    shortshirt: 'قميص بأكمام قصيرة', blouse: 'بلوزة', parka: 'باركا', wrapcoat: 'معطف بحزام', pufferw: 'معطف منفوخ طويل', cropjacket: 'جاكيت قصير', blazerw: 'بليزر طويل', leggings: 'ليقنز', minishorts: 'شورت نسائي', sunglasses: 'نظارة شمسية', catglasses: 'نظارة عين القطة',
+    heel: "كعب عالٍ", flat: "حذاء باليرينا", chelsea: "بوت تشيلسي", slide: "شبشب", espadrille: "إسبادريل", jumpsuit: "جمبسوت", strawhat: "قبعة قش", bucket: "قبعة باكيت", tote: "حقيبة قماش", crossbody: "حقيبة كتف", belt: "حزام", watch: "ساعة" },
   de: { tee: 'T-Shirt', longsleeve: 'Langarmshirt', sweater: 'Pullover', sweatshirt: 'Sweatshirt', hoodie: 'Hoodie', shirt: 'Hemd', polo: 'Poloshirt', tank: 'Tanktop',
     cardigan: 'Strickjacke', fleece: 'Fleece', vest: 'Weste', jacket: 'Jacke', puffer: 'Daunenjacke', coat: 'Mantel', trench: 'Trenchcoat', windbreaker: 'Windjacke', bomber: 'Bomberjacke', blazer: 'Blazer',
     trousers: 'Hose', chinos: 'Chinos', jeans: 'Jeans', shorts: 'Shorts', skirt: 'Rock', dress: 'Kleid',
     sneaker: 'Sneaker', boot: 'Stiefel', sandal: 'Sandalen', loafer: 'Loafer', umbrella: 'Regenschirm', bag: 'Tasche', beanie: 'Mütze', cap: 'Cap', scarf: 'Schal',
-    shortshirt: 'Kurzarmhemd', blouse: 'Bluse', parka: 'Parka', wrapcoat: 'Wickelmantel', pufferw: 'Lange Daunenjacke', cropjacket: 'Kurze Jacke', blazerw: 'Langer Blazer', leggings: 'Leggings', minishorts: 'Damenshorts', sunglasses: 'Sonnenbrille', catglasses: 'Cat-Eye-Sonnenbrille' },
+    shortshirt: 'Kurzarmhemd', blouse: 'Bluse', parka: 'Parka', wrapcoat: 'Wickelmantel', pufferw: 'Lange Daunenjacke', cropjacket: 'Kurze Jacke', blazerw: 'Langer Blazer', leggings: 'Leggings', minishorts: 'Damenshorts', sunglasses: 'Sonnenbrille', catglasses: 'Cat-Eye-Sonnenbrille',
+    heel: "Pumps", flat: "Ballerinas", chelsea: "Chelsea-Boots", slide: "Pantoletten", espadrille: "Espadrilles", jumpsuit: "Jumpsuit", strawhat: "Strohhut", bucket: "Fischerhut", tote: "Stoffbeutel", crossbody: "Umhängetasche", belt: "Gürtel", watch: "Armbanduhr" },
+  fr: {
+    tee: "T-shirt", longsleeve: "Manches longues", sweater: "Pull", sweatshirt: "Sweat", hoodie: "Sweat à capuche", shirt: "Chemise", polo: "Polo", tank: "Débardeur",
+    cardigan: "Gilet", fleece: "Polaire", vest: "Doudoune sans manches", jacket: "Veste", puffer: "Doudoune", coat: "Manteau", trench: "Trench", windbreaker: "Coupe-vent",
+    bomber: "Bomber", blazer: "Blazer", trousers: "Pantalon", chinos: "Chino", jeans: "Jean", shorts: "Short", skirt: "Jupe", dress: "Robe",
+    sneaker: "Baskets", boot: "Bottes", sandal: "Sandales", loafer: "Mocassins", umbrella: "Parapluie", bag: "Sac", beanie: "Bonnet", cap: "Casquette",
+    scarf: "Écharpe", shortshirt: "Chemise à manches courtes", blouse: "Blouse", parka: "Parka", wrapcoat: "Manteau ceinturé", pufferw: "Doudoune longue", cropjacket: "Veste courte", blazerw: "Blazer long",
+    leggings: "Legging", minishorts: "Short femme", sunglasses: "Lunettes de soleil", catglasses: "Lunettes œil-de-chat", heel: "Escarpins", flat: "Ballerines", chelsea: "Chelsea boots", slide: "Claquettes",
+    espadrille: "Espadrilles", jumpsuit: "Combinaison", strawhat: "Chapeau de paille", bucket: "Bob", tote: "Tote bag", crossbody: "Sac bandoulière", belt: "Ceinture", watch: "Montre" },
+  ru: {
+    tee: "Футболка", longsleeve: "Лонгслив", sweater: "Свитер", sweatshirt: "Свитшот", hoodie: "Худи", shirt: "Рубашка", polo: "Поло", tank: "Майка",
+    cardigan: "Кардиган", fleece: "Флиска", vest: "Жилет", jacket: "Куртка", puffer: "Пуховик", coat: "Пальто", trench: "Тренч", windbreaker: "Ветровка",
+    bomber: "Бомбер", blazer: "Пиджак", trousers: "Брюки", chinos: "Чиносы", jeans: "Джинсы", shorts: "Шорты", skirt: "Юбка", dress: "Платье",
+    sneaker: "Кроссовки", boot: "Ботинки", sandal: "Сандалии", loafer: "Лоферы", umbrella: "Зонт", bag: "Сумка", beanie: "Шапка", cap: "Кепка",
+    scarf: "Шарф", shortshirt: "Рубашка с коротким рукавом", blouse: "Блузка", parka: "Парка", wrapcoat: "Пальто с поясом", pufferw: "Длинный пуховик", cropjacket: "Короткая куртка", blazerw: "Длинный жакет",
+    leggings: "Легинсы", minishorts: "Женские шорты", sunglasses: "Солнцезащитные очки", catglasses: "Очки «кошачий глаз»", heel: "Туфли на каблуке", flat: "Балетки", chelsea: "Челси", slide: "Шлёпанцы",
+    espadrille: "Эспадрильи", jumpsuit: "Комбинезон", strawhat: "Соломенная шляпа", bucket: "Панама", tote: "Шоппер", crossbody: "Сумка через плечо", belt: "Ремень", watch: "Часы" },
+  az: {
+    tee: "Futbolka", longsleeve: "Uzunqol", sweater: "Sviter", sweatshirt: "Svitşot", hoodie: "Kapüşonlu", shirt: "Köynək", polo: "Polo", tank: "Mayka",
+    cardigan: "Jaket", fleece: "Flis", vest: "Jilet", jacket: "Gödəkçə", puffer: "Puxovik", coat: "Palto", trench: "Trençkot", windbreaker: "Külək gödəkçəsi",
+    bomber: "Bomber", blazer: "Pencək", trousers: "Şalvar", chinos: "Çinos", jeans: "Cins", shorts: "Şort", skirt: "Ətək", dress: "Don",
+    sneaker: "İdman ayaqqabısı", boot: "Çəkmə", sandal: "Səndəl", loafer: "Lofer", umbrella: "Çətir", bag: "Çanta", beanie: "Papaq", cap: "Kepka",
+    scarf: "Şərf", shortshirt: "Qısaqol köynək", blouse: "Bluzka", parka: "Parka", wrapcoat: "Kəmərli palto", pufferw: "Uzun puxovik", cropjacket: "Qısa gödəkçə", blazerw: "Uzun pencək",
+    leggings: "Leqqinq", minishorts: "Qadın şortu", sunglasses: "Günəş eynəyi", catglasses: "Pişikgözü eynək", heel: "Dabanlı tufli", flat: "Baletka", chelsea: "Chelsea çəkmə", slide: "Şap-şap",
+    espadrille: "Espadril", jumpsuit: "Kombinezon", strawhat: "Həsir şlyapa", bucket: "Panama", tote: "Parça çanta", crossbody: "Çiyin çantası", belt: "Kəmər", watch: "Saat" },
+  zh: {
+    tee: "T恤", longsleeve: "长袖", sweater: "毛衣", sweatshirt: "卫衣", hoodie: "连帽卫衣", shirt: "衬衫", polo: "Polo衫", tank: "背心",
+    cardigan: "开衫", fleece: "抓绒", vest: "马甲", jacket: "夹克", puffer: "羽绒服", coat: "大衣", trench: "风衣", windbreaker: "防风外套",
+    bomber: "飞行员夹克", blazer: "西装外套", trousers: "长裤", chinos: "卡其裤", jeans: "牛仔裤", shorts: "短裤", skirt: "半身裙", dress: "连衣裙",
+    sneaker: "运动鞋", boot: "靴子", sandal: "凉鞋", loafer: "乐福鞋", umbrella: "雨伞", bag: "包", beanie: "毛线帽", cap: "棒球帽",
+    scarf: "围巾", shortshirt: "短袖衬衫", blouse: "女式衬衫", parka: "派克大衣", wrapcoat: "系带大衣", pufferw: "长款羽绒服", cropjacket: "短款外套", blazerw: "长款西装",
+    leggings: "打底裤", minishorts: "女式短裤", sunglasses: "太阳镜", catglasses: "猫眼墨镜", heel: "高跟鞋", flat: "芭蕾平底鞋", chelsea: "切尔西靴", slide: "拖鞋",
+    espadrille: "草编鞋", jumpsuit: "连体裤", strawhat: "草帽", bucket: "渔夫帽", tote: "帆布包", crossbody: "斜挎包", belt: "腰带", watch: "手表" },
+  ja: {
+    tee: "Tシャツ", longsleeve: "長袖", sweater: "ニット", sweatshirt: "スウェット", hoodie: "パーカー", shirt: "シャツ", polo: "ポロシャツ", tank: "タンクトップ",
+    cardigan: "カーディガン", fleece: "フリース", vest: "ベスト", jacket: "ジャケット", puffer: "ダウン", coat: "コート", trench: "トレンチコート", windbreaker: "ウインドブレーカー",
+    bomber: "ボンバー", blazer: "ブレザー", trousers: "パンツ", chinos: "チノパン", jeans: "ジーンズ", shorts: "ショートパンツ", skirt: "スカート", dress: "ワンピース",
+    sneaker: "スニーカー", boot: "ブーツ", sandal: "サンダル", loafer: "ローファー", umbrella: "傘", bag: "バッグ", beanie: "ニット帽", cap: "キャップ",
+    scarf: "マフラー", shortshirt: "半袖シャツ", blouse: "ブラウス", parka: "モッズコート", wrapcoat: "ベルト付きコート", pufferw: "ロングダウン", cropjacket: "ショート丈ジャケット", blazerw: "ロングジャケット",
+    leggings: "レギンス", minishorts: "レディースショーツ", sunglasses: "サングラス", catglasses: "キャットアイ", heel: "パンプス", flat: "バレエシューズ", chelsea: "サイドゴアブーツ", slide: "スライドサンダル",
+    espadrille: "エスパドリーユ", jumpsuit: "オールインワン", strawhat: "麦わら帽子", bucket: "バケットハット", tote: "トートバッグ", crossbody: "ショルダーバッグ", belt: "ベルト", watch: "腕時計" },
+  ko: {
+    tee: "티셔츠", longsleeve: "긴팔", sweater: "니트", sweatshirt: "맨투맨", hoodie: "후디", shirt: "셔츠", polo: "폴로", tank: "민소매",
+    cardigan: "카디건", fleece: "플리스", vest: "조끼", jacket: "재킷", puffer: "패딩", coat: "코트", trench: "트렌치코트", windbreaker: "바람막이",
+    bomber: "봄버", blazer: "블레이저", trousers: "바지", chinos: "치노", jeans: "청바지", shorts: "반바지", skirt: "스커트", dress: "원피스",
+    sneaker: "운동화", boot: "부츠", sandal: "샌들", loafer: "로퍼", umbrella: "우산", bag: "가방", beanie: "비니", cap: "캡모자",
+    scarf: "머플러", shortshirt: "반팔 셔츠", blouse: "블라우스", parka: "파카", wrapcoat: "벨트 코트", pufferw: "롱패딩", cropjacket: "크롭 재킷", blazerw: "롱 블레이저",
+    leggings: "레깅스", minishorts: "여성 반바지", sunglasses: "선글라스", catglasses: "캣아이 선글라스", heel: "힐", flat: "플랫슈즈", chelsea: "첼시 부츠", slide: "슬리퍼",
+    espadrille: "에스파드리유", jumpsuit: "점프수트", strawhat: "밀짚모자", bucket: "버킷햇", tote: "에코백", crossbody: "크로스백", belt: "벨트", watch: "시계" },
+  hi: {
+    tee: "टी-शर्ट", longsleeve: "फ़ुल स्लीव", sweater: "स्वेटर", sweatshirt: "स्वेटशर्ट", hoodie: "हुडी", shirt: "शर्ट", polo: "पोलो", tank: "टैंक टॉप",
+    cardigan: "कार्डिगन", fleece: "फ़्लीस", vest: "वेस्ट", jacket: "जैकेट", puffer: "पफ़र जैकेट", coat: "कोट", trench: "ट्रेंच कोट", windbreaker: "विंडब्रेकर",
+    bomber: "बॉम्बर", blazer: "ब्लेज़र", trousers: "पैंट", chinos: "चिनोज़", jeans: "जींस", shorts: "शॉर्ट्स", skirt: "स्कर्ट", dress: "ड्रेस",
+    sneaker: "स्नीकर्स", boot: "बूट", sandal: "सैंडल", loafer: "लोफ़र", umbrella: "छाता", bag: "बैग", beanie: "ऊनी टोपी", cap: "कैप",
+    scarf: "मफ़लर", shortshirt: "हाफ़ स्लीव शर्ट", blouse: "ब्लाउज़", parka: "पार्का", wrapcoat: "बेल्ट वाला कोट", pufferw: "लंबी पफ़र जैकेट", cropjacket: "छोटी जैकेट", blazerw: "लंबा ब्लेज़र",
+    leggings: "लेगिंग्स", minishorts: "महिलाओं के शॉर्ट्स", sunglasses: "धूप का चश्मा", catglasses: "कैट-आई चश्मा", heel: "हील्स", flat: "बैले फ़्लैट्स", chelsea: "चेल्सी बूट", slide: "चप्पल",
+    espadrille: "एस्पैड्रिल", jumpsuit: "जंपसूट", strawhat: "स्ट्रॉ हैट", bucket: "बकेट हैट", tote: "टोट बैग", crossbody: "क्रॉसबॉडी बैग", belt: "बेल्ट", watch: "घड़ी" },
 };
 export function styleLabel(name, lang) {
   return (LABELS[lang] || (lang === 'tr' ? LABELS.tr : LABELS.en))[name] || name;
@@ -556,11 +712,13 @@ const WAIST_TOP = { trousers: 14, chinos: 14, jeans: 14, leggings: 14, shorts: 2
 const SHOE = {
   sneaker: { sole: 99, ankle: 36, top: 47 }, boot: { sole: 103, ankle: 42.5, top: 20 },
   sandal: { sole: 100, ankle: 40, top: 62 }, loafer: { sole: 99, ankle: 44, top: 63 },
+  heel: { sole: 100, ankle: 30, top: 56 }, flat: { sole: 96, ankle: 38, top: 73 }, chelsea: { sole: 103, ankle: 42.5, top: 12 },
+  slide: { sole: 100, ankle: 40, top: 62 }, espadrille: { sole: 99, ankle: 42, top: 65 },
 };
 // Middle of each leg (x) for bottoms whose legs aren't the standard trouser width.
 const LEG_X = { leggings: [46, 74] };
 // Lowest point of short bottoms inside their own drawing.
-const SHORT_HEM = { shorts: 89, minishorts: 70, skirt: 100, dress: 108 };
+const SHORT_HEM = { shorts: 89, minishorts: 70, skirt: 100, dress: 108, jumpsuit: 109 };
 const FIG = { s: 1.3, w: 220, y0: 10, waistInTop: 92, legLen: 93, legL: 41, legR: 79 };
 
 function placed(kind, look, x, y, scale) {
@@ -575,14 +733,15 @@ function placed(kind, look, x, y, scale) {
 export function figurePartsFromRows(rows) {
   const by = k => rows.find(r => r.slotKey === k) || null;
   const bottom = by('alt');
-  const isDress = bottom && bottom.art === 'dress';
+  const isDress = bottom && ONE_PIECE.includes(bottom.art);
   let uppers = [by('dis'), by('ustune'), isDress ? null : by('ust')].filter(Boolean);
   while (uppers.length > 1 && !uppers[0].fromWardrobe && uppers.slice(1).some(r => r.fromWardrobe)) uppers = uppers.slice(1);
   const outer = uppers[0] || null;
   const inner = uppers.length > 1 ? uppers[uppers.length - 1] : null;
   const mid = uppers.length > 2 ? uppers[1] : null;
   const look = r => (r ? r.look : null);
-  return { outer: look(outer), mid: look(mid), inner: look(inner), bottom: look(bottom), feet: look(by('ayak')), acc: look(by('yanina')) };
+  const accRow = by('yanina');
+  return { outer: look(outer), mid: look(mid), inner: look(inner), bottom: look(bottom), feet: look(by('ayak')), acc: look(accRow), accArts: accRow ? ((accRow.look && accRow.look.accArts) || accessoryArts(accRow.item)) : [] };
 }
 
 // parts: { outer, inner, bottom, feet, acc } - each a look ({ art, color, ... }) or null.
@@ -606,7 +765,7 @@ export function outfitFigure(parts) {
     let hem = y0 + 104 * s;
     if (parts.bottom) {
       const art = parts.bottom.art;
-      hem = art === 'dress' ? y0 + (8 + SHORT_HEM.dress) * s : waistY + (SHORT_HEM[art] - (WAIST_TOP[art] ?? 14)) * s;
+      hem = ONE_PIECE.includes(art) ? y0 + (8 + SHORT_HEM[art]) * s : waistY + (SHORT_HEM[art] - (WAIST_TOP[art] ?? 14)) * s;
     }
     for (const up of [parts.outer, parts.inner]) {
       if (up && ZONES[up.art]) hem = Math.max(hem, y0 + ZONES[up.art].bottom * s);
@@ -626,7 +785,7 @@ export function outfitFigure(parts) {
   // 2. Bottoms hang from the waist. A dress hangs from the shoulders instead.
   if (parts.bottom) {
     const art = parts.bottom.art;
-    if (art === 'dress') {
+    if (ONE_PIECE.includes(art)) {
       layers.push(placed(art, parts.bottom, boxX, y0 + 8 * s, s));
     } else {
       const top = WAIST_TOP[art] ?? 14;
@@ -662,13 +821,24 @@ export function outfitFigure(parts) {
     layers.push(placed(parts.inner.art, parts.inner, boxX, y0, s));
   }
 
-  // 4. Accessories: carried items at the right hand, hats in the corner, scarf at the neck.
+  // 4. Accessories: a hat in the top corner (glasses take the other corner when
+  // there's a hat), carried things at the right hand, a scarf at the neck, a belt
+  // at the waist and a watch in the lower corner. Every accessory the row names
+  // is drawn; the row's own color goes to the first one.
   if (parts.acc) {
-    const a = parts.acc.art;
-    if (a === 'scarf') layers.push(placed(a, parts.acc, w / 2 - 60 * 0.75 * s, y0 - 4 * s, 0.75 * s));
-    else if (a === 'beanie' || a === 'cap') layers.push(placed(a, parts.acc, w - 62, -8, 0.55));
-    else if (a === 'sunglasses' || a === 'catglasses') layers.push(placed(a, parts.acc, w - 64, -14, 0.55));
-    else layers.push(`<g transform="rotate(10 ${w - 30} ${waistY})">${placed(a, parts.acc, w - 66, waistY - 52, 0.6)}</g>`);
+    const main = parts.acc.art;
+    const arts = [main, ...(parts.accArts || []).filter(a => a !== main)];
+    const lookOf = a => (a === main ? parts.acc : { art: a, color: null, lens: parts.acc.lens });
+    const HEAD = ['beanie', 'cap', 'bucket', 'strawhat'], EYES = ['sunglasses', 'catglasses'], CARRY = ['umbrella', 'bag', 'tote', 'crossbody'];
+    const head = arts.find(a => HEAD.includes(a));
+    const eyes = arts.find(a => EYES.includes(a));
+    const carry = arts.find(a => CARRY.includes(a));
+    if (head) layers.push(placed(head, lookOf(head), w - 62, head === 'strawhat' ? -12 : -8, head === 'strawhat' ? 0.58 : 0.55));
+    if (eyes) layers.push(head ? placed(eyes, lookOf(eyes), -4, -14, 0.5) : placed(eyes, lookOf(eyes), w - 64, -14, 0.55));
+    if (arts.includes('scarf')) layers.push(placed('scarf', lookOf('scarf'), w / 2 - 60 * 0.75 * s, y0 - 4 * s, 0.75 * s));
+    if (arts.includes('belt') && !(parts.bottom && ONE_PIECE.includes(parts.bottom.art))) layers.push(placed('belt', lookOf('belt'), w / 2 - 60 * 0.5 * s, waistY - 64 * 0.5 * s, 0.5 * s));
+    if (arts.includes('watch')) layers.push(placed('watch', lookOf('watch'), 2, waistY - 20, 0.42));
+    if (carry) layers.push(`<g transform="rotate(10 ${w - 30} ${waistY})">${placed(carry, lookOf(carry), w - 66, waistY - 52, 0.6)}</g>`);
   }
 
   const height = Math.ceil(Math.max(soleY + 6, y0 + 120 * s));

@@ -22,6 +22,7 @@ import ZH from './outfit_text_zh.js';
 import JA from './outfit_text_ja.js';
 import KO from './outfit_text_ko.js';
 import HI from './outfit_text_hi.js';
+import MORE from './outfit_text_more.js';
 
 // The newer packs are lists in the order of outfit_text_keys.js. Languages
 // that don't put spaces between sentences (or use their own full stop and
@@ -39,6 +40,10 @@ const PACKS = {
   ja: fromList(JA, { '.': '。', ', ': '、', ' ': '' }),
   hi: fromList(HI, { '.': '।' }),
 };
+// Newer sentences live in one file with every language side by side.
+for (const [en, byLang] of Object.entries(MORE)) {
+  for (const [lang, text] of Object.entries(byLang)) if (PACKS[lang] && !(en in PACKS[lang])) PACKS[lang][en] = text;
+}
 const KEYS = {};
 // '.' before ' ' so a note keeps its own leading space (" Wear thermal leggings underneath.").
 const JOINERS = ['.', ', ', ' '];

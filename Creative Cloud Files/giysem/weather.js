@@ -224,7 +224,7 @@ export async function fetchForecast(lat, lon) {
   const url = `${FORECAST_URL}?latitude=${lat}&longitude=${lon}`
     + `&current=temperature_2m,apparent_temperature,wind_speed_10m,precipitation_probability,weather_code,is_day`
     + `&hourly=apparent_temperature,wind_speed_10m,precipitation_probability`
-    + `&daily=weather_code,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,wind_speed_10m_max`
+    + `&daily=weather_code,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,wind_speed_10m_max,uv_index_max`
     + `&forecast_days=7&timezone=auto`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('forecast failed');
@@ -318,8 +318,12 @@ export function buildDayView(raw, dayOffset, lang = 'tr') {
     };
   }
 
+  // The day's peak UV index (sunglasses from 3, a hat from 6), or null if unknown.
+  const di = raw.daily && raw.daily.time ? raw.daily.time.indexOf(targetDate) : -1;
+  const uvRaw = di >= 0 && raw.daily.uv_index_max ? raw.daily.uv_index_max[di] : null;
   return {
     date: targetDate,
+    uvMax: typeof uvRaw === 'number' ? uvRaw : null,
     hero,
     parts,
     maxRainToday: maxRain,
@@ -344,6 +348,7 @@ export function buildWeekView(raw, lang = 'tr') {
       kind: skyKind(d.weather_code[i]),
       rain: d.precipitation_probability_max[i] ?? 0,
       wind: Math.round(d.wind_speed_10m_max[i] ?? 0),
+      uvMax: d.uv_index_max && typeof d.uv_index_max[i] === 'number' ? d.uv_index_max[i] : null,
     };
   });
 }

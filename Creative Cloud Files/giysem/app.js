@@ -722,7 +722,7 @@ function computeOutfitFor(dayOffset) {
     { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang,
       comfort: comfortOffset(state.profile) + learned, shift: -3 * (adjust ? adjust.warmth : 0),
       vibe: (adjust && adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'), seed: dayView.date, kind: dayView.hero.kind,
-      wardrobeOnly: state.wardrobeMode === 'mine', memory: memory ? memory.answer : null, adjust, late },
+      wardrobeOnly: state.wardrobeMode === 'mine', memory: memory ? memory.answer : null, adjust, late, uv: dayView.uvMax },
     outfitWardrobe(),
     dayOffset === 0 ? state.outfitLocks : {}
   );
@@ -800,7 +800,7 @@ function computeWeekOutfits() {
     const outfit = generateOutfit(
       { feelsLike: day.feelsLike, wind: day.wind, rainMax: day.rain, gender: state.gender, lang: state.lang,
         comfort: comfortOffset(state.profile) + learnedOffset(state.feedback, day.feelsLike, day.wind, day.date),
-        vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeMode === 'mine',
+        vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeMode === 'mine', uv: day.uvMax,
         memory: (findMemory(state.feedback, day.feelsLike, day.date) || {}).answer || null },
       outfitWardrobe()
     );

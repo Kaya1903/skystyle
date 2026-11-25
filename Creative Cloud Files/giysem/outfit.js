@@ -1,5 +1,5 @@
 import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH } from './wardrobe.js';
-import { garmentVariant, itemLook, garmentDefaultColor, shade } from './visuals.js';
+import { garmentVariant, itemLook, garmentDefaultColor, shade, ONE_PIECE, accessoryArts } from './visuals.js';
 import { VARIANTS, EXTRAS, GENDERED, INTENSITY, LAYER_SPLIT } from './outfit_variants.js';
 import { COLORS, isValidColor, pairScore, colorName } from './colors.js';
 import { t } from './i18n.js';
@@ -483,7 +483,7 @@ function coldLevel(temp) {
   return 0;
 }
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false, memory = null, adjust = null, shift = 0, late = false }, allItems = [], locks = {}) {
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false, memory = null, adjust = null, shift = 0, late = false, uv = null }, allItems = [], locks = {}) {
   const adj = adjust || {};
   // Turkish and English have their own wording; every other language runs on
   // the English rules and is translated on the way out (outfit_i18n.js).
@@ -520,7 +520,13 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const rainy = rainMax >= 50 && !snowFall;
   const freezing = bandKey === 'dondurucu' || snowy;
   // `late`: it's already evening where they are, so no sunglasses or sun hat.
-  const sunny = !late && !rainy && (bandKey === 'cok_sicak' || (bandKey === 'sicak' && (kind === 'clear' || kind === 'partly')));
+  // The day's UV index decides the sun gear when we have it: 3+ means sunglasses,
+  // 6+ (or 3+ in a heatwave) a hat as well. Without it, the sky and heat decide.
+  const hasUv = typeof uv === 'number' && isFinite(uv);
+  const sunny = !late && !rainy && (hasUv
+    ? uv >= 6 || (bandKey === 'cok_sicak' && uv >= 3)
+    : bandKey === 'cok_sicak' || (bandKey === 'sicak' && (kind === 'clear' || kind === 'partly')));
+  const lightSun = !late && !rainy && !sunny && (hasUv ? uv >= 3 : kind === 'clear' && (bandKey === 'serin' || bandKey === 'ilik'));
   const fixed = new Set(); // slots whose text the weather rules set; variants don't override them
 
   // Wind: with no jacket in the base outfit, add a thin windproof one. If there
@@ -542,14 +548,36 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     rows.ayak = { ...rows.ayak, item: pickShoe(alts), swappable: true };
   }
   if (snowy) { rows.ayak = { item: pickShoe(X.snow_shoes), reason: () => X.snow_shoe[1], swappable: true }; fixed.add('ayak'); }
+  // One accessory from a pool: the user's style first (minimal borrows elegant),
+  // only pieces for their gender, changing by day; the swap button steps through all.
+  const pickAccessory = pool => {
+    const wantVibe = vibe === 'minimal' ? 'elegant' : vibe || 'casual';
+    // After dark a style pick is never a hat.
+    const fits = (pool || []).filter(([, item, , g]) => (!g || g === genderKey) && !(late && accessoryArts(item).some(a => ['cap', 'bucket', 'strawhat'].includes(a))));
+    const mine = fits.filter(([v]) => v === wantVibe);
+    const ordered = mine.concat(fits.filter(e => !mine.includes(e)));
+    if (!ordered.length) return null;
+    const roll = (adj.reroll || 0) + ((adj.slotRolls || {}).yanina || 0);
+    const start = mine.length ? hashStr(`${seed}|acc`) % mine.length : 0;
+    const [, item, reason] = ordered[(start + roll) % ordered.length];
+    return { item, reason: () => reason, swappable: true };
+  };
   // Accessories for the conditions: umbrella (rain), beanie/scarf/gloves (freezing), cap (strong sun).
   let accKinds = null;
   if (freezing && rainy) { rows.yanina = { item: X.cold_rain_acc[0], reason: () => X.cold_rain_acc[1] }; accKinds = ['umbrella']; }
   else if (rainy) accKinds = ['umbrella'];
   else if (freezing) { rows.yanina = { item: X.cold_acc[0], reason: () => X.cold_acc[1] }; fixed.add('yanina'); accKinds = ['beanie', 'scarf']; }
-  else if (sunny) { rows.yanina = { item: X.sun_acc[0], reason: () => X.sun_acc[1] }; fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses', 'cap']; }
-  // A clear but cool day still has low, glaring sun: sunglasses (dark frame).
-  else if (!late && kind === 'clear' && (bandKey === 'serin' || bandKey === 'ilik') && !rows.yanina) { rows.yanina = { item: X.cool_sun_acc[0], reason: () => X.cool_sun_acc[1] }; fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses']; }
+  else if (sunny) { rows.yanina = pickAccessory(X.sun_accs); fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses', 'cap', 'bucket', 'strawhat']; }
+  // Sun that's bright but not strong: sunglasses, with a bag or belt on warm days.
+  // On cooler days it's the low, glaring sun: just sunglasses (dark frame).
+  else if (lightSun && !rows.yanina && (WARM_BANDS.includes(bandKey) || bandKey === 'serin')) {
+    rows.yanina = bandKey === 'serin' ? { item: X.cool_sun_acc[0], reason: () => X.cool_sun_acc[1] } : pickAccessory(X.sun_light);
+    fixed.add('yanina'); accKinds = ['sunglasses', 'catglasses'];
+  }
+  // Otherwise on a mild or warm day: one accessory that finishes the look.
+  else if (WARM_BANDS.includes(bandKey) && !rows.yanina) {
+    rows.yanina = pickAccessory(X.style_acc); fixed.add('yanina'); accKinds = ['bag', 'tote', 'crossbody', 'belt', 'watch', 'cap', 'bucket'];
+  }
 
   const ctx = { feelsLike, wind, rainMax };
   const needsRain = rainy || snowy;
@@ -610,7 +638,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const bottomArt = ownBottom || (rows.alt ? garmentVariant('alt', rows.alt.item, BAND_WARMTH[bandKey]) : null);
   // A dress is a whole look: no top with it when it's mild or warm (owned or
   // suggested), and in the cold the top becomes the layer worn under the dress.
-  if (bottomArt === 'dress' && rows.ust) {
+  if (ONE_PIECE.includes(bottomArt) && rows.ust) {
     if (WARM_BANDS.includes(bandKey) || bandKey === 'serin') { delete rows.ust; delete picks.ust; }
     // Only for an owned dress: a suggested winter dress already comes with its tights.
     else if (ownBottom === 'dress' && !picks.ust) rows.ust = { item: X.dress_cold_top[0], reason: () => X.dress_cold_top[1] };
@@ -704,6 +732,11 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     if (!match && adj.tone && !GLASSES.includes(look.art)) look.color = toneColor(adj.tone, look.color || garmentDefaultColor(look.art), pal, colorHash);
     // Glasses follow the weather: light frame and warm tint in the heat, dark otherwise.
     if (GLASSES.includes(look.art)) look = { ...look, lens: WARM_BANDS.includes(bandKey) && bandKey !== 'ilik' ? 'light' : 'dark' };
+    // A suggested accessory row can name two things ("sunglasses and a straw hat"): draw both.
+    if (key === 'yanina' && !match) {
+      const g = GENDER_ART[genderKey] || {};
+      look = { ...look, accArts: accessoryArts(item).map(a => g[a] || a) };
+    }
     if (match) color = look.color;
     const art = look.art;
     // Suggestions: translate the finished English/Turkish text, then fill in the numbers.

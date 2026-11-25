@@ -31,7 +31,7 @@ VISION_MODEL = os.environ.get('ANTHROPIC_VISION_MODEL', 'claude-sonnet-5-5')
 SITE_PASSWORD = os.environ.get('SITE_PASSWORD')
 ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 
-GARMENT_KINDS = 'tee, longsleeve, sweater, sweatshirt, hoodie, shirt, shortshirt, blouse, polo, tank, cardigan, fleece, vest, jacket, puffer, coat, trench, windbreaker, bomber, blazer, parka, wrapcoat, pufferw, cropjacket, blazerw, trousers, chinos, jeans, leggings, shorts, minishorts, skirt, dress, sneaker, boot, sandal, loafer, umbrella, bag, beanie, cap, scarf, sunglasses, catglasses'
+GARMENT_KINDS = 'tee, longsleeve, sweater, sweatshirt, hoodie, shirt, shortshirt, blouse, polo, tank, cardigan, fleece, vest, jacket, puffer, coat, trench, windbreaker, bomber, blazer, parka, wrapcoat, pufferw, cropjacket, blazerw, trousers, chinos, jeans, leggings, shorts, minishorts, skirt, dress, jumpsuit, sneaker, boot, chelsea, sandal, slide, espadrille, loafer, flat, heel, umbrella, bag, tote, crossbody, beanie, cap, bucket, strawhat, scarf, sunglasses, catglasses, belt, watch'
 
 def _load_stylist_guide():
     """The shared stylist guide (cloudflare/stylist_guide.js), sent as a cached system prompt."""
@@ -91,9 +91,9 @@ ANALYZE_PROMPT = (
     'ustune -> cardigan | sweater | fleece | hoodie | sweatshirt | vest | shirt; '
     'dis -> jacket | puffer | coat | trench | windbreaker | bomber | blazer | vest | parka | wrapcoat | pufferw | cropjacket | blazerw '
     '(wrapcoat = belted women\'s coat, pufferw = long cinched women\'s puffer, cropjacket = short fitted women\'s jacket, blazerw = long women\'s blazer); '
-    'alt -> trousers | chinos | jeans | leggings | shorts | minishorts | skirt | dress; '
-    'ayak -> sneaker | boot | sandal | loafer; '
-    'yanina -> umbrella | bag | beanie | cap | scarf | sunglasses | catglasses, '
+    'alt -> trousers | chinos | jeans | leggings | shorts | minishorts | skirt | dress | jumpsuit; '
+    'ayak -> sneaker | boot | chelsea | sandal | slide | espadrille | loafer | flat | heel (flat = ballet flats, heel = heeled shoes or heeled sandals, slide = slides or flip-flops); '
+    'yanina -> umbrella | bag | tote | crossbody | beanie | cap | bucket | strawhat | scarf | sunglasses | catglasses | belt | watch, '
     '"details": {"hood": boolean, "zip": boolean (front zipper), "buttons": boolean (front buttons), '
     '"pocket": boolean (visible front pockets), "logo": boolean (small chest logo)}} '
     'The photo may be taken at an angle, folded, on a hanger or in poor light: judge the garment itself, '
