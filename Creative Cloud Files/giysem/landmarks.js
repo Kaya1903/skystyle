@@ -1,7 +1,7 @@
 // City skyline scenes for the Today hero.
 //
 // Two tiers:
-//  1. ~50 major cities get a hand-drawn silhouette of their best-known landmark
+//  1. ~100 cities get a hand-drawn silhouette of their best-known landmark
 //     (Eiffel Tower, Palace of Culture, Hagia Sophia, ...), matched by coordinates
 //     so it works whatever language the geocoder returns the name in.
 //  2. Every other place gets a regional scene (European old town, Ottoman mosque,
@@ -11,7 +11,8 @@
 //
 // Drawings live in a 200x150 box with the ground at y=150. An element is either a
 // path string (solid), or { d, eo } (with holes), { d, o } (fainter, for depth),
-// { s, w } (stroke only), or { text, x, y, size, rot }.
+// { s, w } (stroke only), { text, x, y, size, rot }, or { float: [elements], dur, delay }
+// for a group that drifts slowly up and down.
 
 // ---------- shape helpers ----------
 const R = (x, y, w, h) => `M${x} ${y}h${w}v${h}h${-w}z`;
@@ -63,7 +64,139 @@ function windows(x, y, w, h, cols, rows, ww = 3, wh = 4) {
   return d;
 }
 
-// ---------- the 50 cities ----------
+// Gentle waves across part of the width.
+function waves(y, from = 0, to = 200, step = 20) {
+  let d = `M${from} ${y}`;
+  for (let x = from; x < to; x += step) d += `Q${x + step / 4} ${y - 3} ${x + step / 2} ${y}T${x + step} ${y}`;
+  return d;
+}
+
+// A small sailboat sitting on the water line y.
+function sailboat(x, y, s = 1) {
+  return [
+    P(`${x - 14 * s} ${y - 4 * s}, ${x + 14 * s} ${y - 4 * s}, ${x + 10 * s} ${y}, ${x - 10 * s} ${y}`),
+    R(x - 0.6 * s, y - 30 * s, 1.2 * s, 26 * s),
+    P(`${x + 1.5 * s} ${y - 6 * s}, ${x + 1.5 * s} ${y - 29 * s}, ${x + 13 * s} ${y - 6 * s}`),
+    P(`${x - 1.5 * s} ${y - 6 * s}, ${x - 1.5 * s} ${y - 24 * s}, ${x - 10 * s} ${y - 6 * s}`),
+  ].join('');
+}
+
+// Hot-air balloon centred on (cx, cy): envelope with two gore cut-outs, ropes and a basket.
+function balloon(cx, cy, r) {
+  const env = `M${cx - r} ${cy}A${r} ${r * 1.05} 0 1 1 ${cx + r} ${cy}Q${cx + r * 0.9} ${cy + r * 0.85} ${cx + r * 0.3} ${cy + r * 1.3}L${cx - r * 0.3} ${cy + r * 1.3}Q${cx - r * 0.9} ${cy + r * 0.85} ${cx - r} ${cy}Z`;
+  const gore = k => `M${cx + k * r * 0.42} ${cy - r * 0.95}Q${cx + k * r * 0.72} ${cy} ${cx + k * r * 0.2} ${cy + r * 1.22}Q${cx + k * r * 0.6} ${cy} ${cx + k * r * 0.36} ${cy - r * 0.95}Z`;
+  return [
+    { d: env + gore(-1) + gore(1), eo: true },
+    { s: `M${cx - r * 0.3} ${cy + r * 1.3}L${cx - r * 0.2} ${cy + r * 1.62}M${cx + r * 0.3} ${cy + r * 1.3}L${cx + r * 0.2} ${cy + r * 1.62}`, w: Math.max(0.5, r * 0.06) },
+    R(cx - r * 0.24, cy + r * 1.6, r * 0.48, r * 0.38),
+  ];
+}
+
+// Pointed conifer of height h standing at x on ground y.
+function conifer(x, y, h) {
+  const w = h * 0.42;
+  return P(`${x - w / 2} ${y - h * 0.1}, ${x} ${y - h}, ${x + w / 2} ${y - h * 0.1}`) + R(x - h * 0.04, y - h * 0.12, h * 0.08, h * 0.12);
+}
+
+// Classic windmill: tapered tower, conical cap and four sails.
+function windmill(x, y, h) {
+  const w = h * 0.36;
+  const hub = [x, y - h * 0.86];
+  const sail = a => {
+    const c = Math.cos(a), s = Math.sin(a), L = h * 0.62;
+    const tx = hub[0] + c * L, ty = hub[1] + s * L;
+    const px = -s * h * 0.09, py = c * h * 0.09;
+    return `M${hub[0].toFixed(1)} ${hub[1].toFixed(1)}L${tx.toFixed(1)} ${ty.toFixed(1)}L${(tx + px).toFixed(1)} ${(ty + py).toFixed(1)}L${(hub[0] + c * h * 0.18 + px).toFixed(1)} ${(hub[1] + s * h * 0.18 + py).toFixed(1)}Z`;
+  };
+  return [
+    { d: P(`${x - w / 2} ${y}, ${x - w * 0.36} ${y - h * 0.78}, ${x + w * 0.36} ${y - h * 0.78}, ${x + w / 2} ${y}`) + ARCH(x - w * 0.12, y, w * 0.24, h * 0.22), eo: true },
+    P(`${x - w * 0.44} ${y - h * 0.78}, ${x} ${y - h * 0.98}, ${x + w * 0.44} ${y - h * 0.78}`),
+    [0.35, 1.92, 3.49, 5.06].map(sail).join(''),
+  ];
+}
+
+// Fairy chimney: a tapering rock cone with a darker cap and a few cave windows.
+function chimney(x, h, w) {
+  const top = 150 - h;
+  return [
+    { d: `M${x - w / 2} 150Q${x - w * 0.36} ${150 - h * 0.45} ${x - w * 0.16} ${top + w * 0.12}L${x + w * 0.16} ${top + w * 0.12}Q${x + w * 0.36} ${150 - h * 0.45} ${x + w / 2} 150Z` +
+      ARCH(x - w * 0.12, 150 - h * 0.28, w * 0.18, w * 0.22) + R(x + w * 0.06, 150 - h * 0.52, w * 0.1, w * 0.12), eo: true },
+    DOME(x, top + w * 0.14, w * 0.3, w * 0.22),
+  ];
+}
+
+// Gabled town house: body with windows and a pointed roof.
+function gableHouse(x, w, h, roof = 0.5) {
+  const top = 150 - h;
+  return { d: P(`${x} 150, ${x} ${top}, ${x + w / 2} ${top - w * roof}, ${x + w} ${top}, ${x + w} 150`) + windows(x + 2, top + 4, w - 4, h - 12, Math.max(1, Math.round(w / 9)), Math.max(1, Math.round(h / 12)), 2.4, 3.6), eo: true };
+}
+
+// Crenellated top for a tower or wall from x to x + w at height y.
+function crenels(x, y, w, n) {
+  const step = w / (n * 2 - 1);
+  return range(0, n - 1, 1).map(i => R(x + i * step * 2, y - step * 0.9, step, step * 0.9)).join('');
+}
+
+// Rounded tree crown with a few fruit cut-outs (apricots, olives).
+function fruitTree(x, r) {
+  const cy = 150 - r * 1.7;
+  return [R(x - r * 0.12, cy, r * 0.24, 150 - cy), { d: C(x, cy, r) + C(x - r * 0.4, cy - r * 0.2, r * 0.12) + C(x + r * 0.35, cy + r * 0.15, r * 0.12) + C(x + r * 0.05, cy - r * 0.5, r * 0.11) + C(x - r * 0.2, cy + r * 0.45, r * 0.11), eo: true }];
+}
+
+// Scenes shared by more than one point on the map (a city and its best-known spot).
+function uzungol() {
+  return [
+    { d: 'M0 150V54L22 30L44 60L64 112L76 150Z', o: 0.42 },
+    { d: 'M124 150L144 92L166 34L184 22L200 40V150Z', o: 0.42 },
+    [[10, 70, 26], [24, 56, 22], [36, 86, 24], [52, 110, 20], [150, 84, 24], [164, 60, 26], [178, 44, 22], [188, 74, 26], [172, 104, 20]]
+      .map(([x, y, h]) => conifer(x, y, h)).join(''),
+    { d: R(30, 112, 16, 12) + R(156, 116, 18, 12), o: 0.8 }, { d: P('28 112, 38 104, 48 112') + P('154 116, 165 108, 176 116'), o: 0.8 },
+    { d: R(84, 104, 34, 26) + ARCH(97, 130, 8, 14) + R(88, 110, 4, 6) + R(110, 110, 4, 6), eo: true }, DOME(101, 104, 11, 10), R(100.4, 88, 1.2, 6),
+    R(78, 62, 4, 68), R(77, 82, 6, 2), SPIRE(80, 62, 4, 12), R(120, 62, 4, 68), R(119, 82, 6, 2), SPIRE(122, 62, 4, 12),
+    { s: 'M18 136H182M8 142H192M0 148H200', w: 0.8, o: 0.7 },
+  ];
+}
+
+function cappadocia() {
+  return [
+    { d: 'M0 150V116Q30 104 60 110Q100 96 140 108Q172 100 200 112V150Z', o: 0.3 },
+    ...chimney(18, 58, 24), ...chimney(44, 82, 28), ...chimney(70, 52, 22), ...chimney(128, 68, 26), ...chimney(156, 96, 30), ...chimney(184, 60, 24),
+    { d: 'M86 150Q96 128 106 126Q116 130 120 150Z', o: 0.85 },
+    { float: balloon(96, 46, 15), dur: 8, delay: 0 },
+    { float: balloon(150, 18, 10), dur: 7, delay: -2.5 },
+    { float: balloon(36, 26, 9), dur: 9, delay: -4 },
+    { float: [{ d: balloon(178, 50, 6)[0].d, eo: true, o: 0.7 }, R(176.6, 59.6, 2.9, 2.3)], dur: 6.5, delay: -1 },
+    { float: [{ d: balloon(66, 8, 5)[0].d, eo: true, o: 0.6 }, R(64.8, 16, 2.4, 1.9)], dur: 7.5, delay: -3 },
+  ];
+}
+
+function aegeanCoast() {
+  return [
+    { d: 'M0 150V96Q30 80 64 88Q84 92 96 106L110 150Z', o: 0.35 },
+    ...windmill(18, 92, 34), ...windmill(46, 86, 30), ...windmill(74, 96, 26),
+    { d: R(60, 120, 22, 30) + R(84, 112, 18, 38) + R(104, 124, 20, 26) + R(66, 128, 4, 6) + R(90, 120, 4, 6) + R(110, 132, 4, 6) + ARCH(74, 150, 5, 9) + ARCH(93, 150, 5, 9), eo: true },
+    { d: R(150, 64, 22, 74) + R(156, 78, 3, 8) + R(164, 78, 3, 8) + R(130, 108, 70, 30), eo: true }, crenels(150, 64, 22, 4), crenels(130, 108, 20, 3) + crenels(178, 108, 22, 3),
+    { s: waves(142, 0, 200) + waves(148, 0, 200), w: 1.3 },
+    { d: 'M100 138Q120 144 146 138L142 132H104Z', o: 0.95 }, R(122.4, 104, 1.2, 28), P('124 106, 124 130, 140 130'), P('121 110, 121 130, 108 130'),
+  ];
+}
+
+// İzmir's Clock Tower: four tiers with horseshoe arches, fountains at its feet, palms and the bay.
+function izmir() {
+  return [
+    R(66, 140, 68, 10),
+    { d: R(54, 126, 14, 14) + R(132, 126, 14, 14) + ARCH(58, 140, 6, 9) + ARCH(136, 140, 6, 9), eo: true }, DOME(61, 126, 7, 6) + DOME(139, 126, 7, 6),
+    { d: R(78, 104, 44, 36) + ARCH(82, 140, 10, 22) + ARCH(95, 140, 10, 26) + ARCH(108, 140, 10, 22), eo: true }, R(74, 100, 52, 4),
+    { d: R(83, 76, 34, 24) + ARCH(88, 98, 9, 16) + ARCH(103, 98, 9, 16), eo: true }, R(79, 72, 42, 4),
+    { d: R(87, 50, 26, 22) + C(100, 61, 7.5), eo: true }, { s: 'M100 61V56M100 61L104 63', w: 1.1 }, R(83, 46, 34, 4),
+    { d: R(91, 32, 18, 14) + ARCH(96, 46, 8, 11), eo: true }, R(88, 29, 24, 3),
+    DOME(100, 29, 9, 9), R(99.4, 12, 1.2, 9), C(100, 11, 2),
+    ...palm(30, 78, -4), ...palm(166, 82, 5),
+    { s: waves(146, 140, 200), w: 1.2 }, { d: R(178, 132, 20, 6) + R(182, 126, 10, 6), o: 0.85 },
+  ];
+}
+
+// ---------- featured cities ----------
 const CITIES = [
   // Europe
   ['paris', 48.8566, 2.3522, () => [
@@ -302,15 +435,122 @@ const CITIES = [
     R(28, 64, 144, 10), R(40, 58, 120, 6),
     { s: 'M186 136V36', w: 1.4 }, P('186 36, 200 42, 186 48'),
   ]],
-  ['izmir', 38.4192, 27.1287, () => [
-    { d: R(76, 124, 48, 26) + ARCH(80, 150, 10, 16) + ARCH(95, 150, 10, 18) + ARCH(110, 150, 10, 16), eo: true },
-    { d: R(82, 90, 36, 34) + ARCH(88, 120, 8, 18) + ARCH(104, 120, 8, 18), eo: true },
-    { d: R(87, 62, 26, 28) + C(100, 76, 7), eo: true },
-    { d: R(91, 42, 18, 20) + ARCH(96, 58, 8, 12), eo: true },
-    R(78, 88, 44, 3) + R(84, 60, 32, 3) + R(88, 40, 24, 3),
-    DOME(100, 40, 10, 10), R(99.4, 22, 1.2, 9), C(100, 21, 2),
-    ...palm(40, 70, -4), ...palm(160, 76, 5), ...palm(182, 52, -3),
+  ['izmir', 38.4192, 27.1287, izmir],
+  // Uludağ behind, the cable car climbing to it, and the Grand Mosque's rows of small domes.
+  ['bursa', 40.1885, 29.061, () => [
+    { d: 'M0 150V112L36 92L62 76L84 84L110 54L132 68L152 60L200 104V150Z', o: 0.32 },
+    { d: 'M102 62L110 54L118 61L112 64L107 61Z M146 64L152 60L158 65L153 66Z', o: 0.55 },
+    { s: 'M0 104L200 40', w: 0.8, o: 0.75 },
+    { s: 'M44 90V94M150 56V60', w: 0.8 }, R(40, 94, 8, 6), R(146, 60, 8, 6),
+    { d: R(30, 112, 140, 38) + range(38, 160, 12).map(x => ARCH(x, 146, 6, 20)).join(''), eo: true },
+    R(28, 108, 144, 4),
+    [44, 72, 100, 128, 156].map(x => DOME(x, 108, 12, 11)).join(''),
+    [44, 72, 100, 128, 156].map(x => R(x - 0.5, 91, 1, 6) + C(x, 90, 1.4)).join(''),
+    ...minaret(20, 44), ...minaret(180, 44),
   ]],
+  // Hadrian's Gate, the Beydağları behind, palms and a sailboat on the bay.
+  ['antalya', 36.8969, 30.7133, () => [
+    { d: 'M0 150V104L26 84L48 96L76 72L104 90L132 78L160 94L184 82L200 90V150Z', o: 0.3 },
+    { d: R(30, 64, 16, 86) + range(33, 41, 4).map(x => R(x, 72, 2, 6)).join('') + R(118, 64, 16, 86), eo: true },
+    crenels(30, 64, 16, 3) + crenels(118, 64, 16, 3),
+    { d: R(44, 92, 76, 58) + ARCH(49, 150, 18, 38) + ARCH(73, 150, 18, 38) + ARCH(97, 150, 18, 38), eo: true },
+    R(40, 84, 84, 8) + R(44, 80, 76, 4),
+    [46, 70, 94, 118].map(x => R(x - 1.5, 92, 3, 58)).join(''),
+    ...palm(150, 84, 4), ...palm(14, 66, -3),
+    { s: waves(140, 136, 200) + waves(146, 128, 200), w: 1.3 },
+    sailboat(176, 136, 0.8),
+  ]],
+  // The Red Tower by the harbour, castle walls climbing the hill, a beach umbrella.
+  ['alanya', 36.5438, 31.9998, () => [
+    { d: 'M86 150Q112 92 150 66Q172 54 200 62V150Z', o: 0.4 },
+    { s: 'M98 136L118 106L136 86L160 70L186 64', w: 2.6, o: 0.8 },
+    { d: R(114, 98, 8, 10) + R(132, 78, 8, 10) + R(156, 62, 8, 10) + R(182, 56, 8, 10), o: 0.8 },
+    { d: P('44 150, 44 74, 52 66, 82 66, 90 74, 90 150') + R(56, 84, 3, 9) + R(75, 84, 3, 9) + R(65, 104, 4, 12) + ARCH(60, 150, 14, 20), eo: true },
+    crenels(44, 66, 46, 6),
+    { s: 'M10 124V146', w: 1.4 }, 'M-2 126Q10 110 22 126Q10 122 -2 126Z',
+    { s: waves(140, 0, 200) + waves(146, 0, 200), w: 1.3 },
+    sailboat(158, 136, 0.9),
+  ]],
+  // Uzungöl: steep green slopes full of spruces, wooden houses and the lakeside mosque.
+  ['trabzon', 41.0027, 39.7168, uzungol],
+  ['trabzon', 40.6189, 40.2906, uzungol],
+  // Cappadocia: fairy chimneys and hot-air balloons drifting over them.
+  ['nevsehir', 38.6244, 34.7239, cappadocia],
+  ['nevsehir', 38.6431, 34.8289, cappadocia],
+  ['nevsehir', 38.6305, 34.9118, cappadocia],
+  // Mardin: honey-stone houses stacked up the hill, ribbed domes and the old minaret.
+  ['mardin', 37.3212, 40.7245, () => [
+    { d: 'M0 150V96Q60 70 120 66Q170 64 200 78V150Z', o: 0.3 },
+    { d: R(8, 122, 44, 28) + R(54, 116, 40, 34) + R(96, 124, 42, 26) + R(140, 118, 52, 32) +
+      range(12, 48, 9).map(x => ARCH(x, 146, 4, 10)).join('') + range(58, 90, 9).map(x => ARCH(x, 140, 4, 10)).join('') +
+      range(100, 134, 9).map(x => ARCH(x, 146, 4, 9)).join('') + range(144, 188, 9).map(x => ARCH(x, 142, 4, 10)).join(''), eo: true },
+    { d: R(20, 98, 40, 22) + R(62, 94, 46, 20) + R(112, 100, 36, 22) + range(26, 54, 9).map(x => ARCH(x, 116, 4, 9)).join('') + range(68, 102, 9).map(x => ARCH(x, 110, 4, 9)).join('') + range(118, 142, 9).map(x => ARCH(x, 118, 4, 9)).join(''), eo: true },
+    { d: R(36, 80, 34, 16) + R(74, 76, 30, 16) + ARCH(44, 94, 5, 9) + ARCH(56, 94, 5, 9) + ARCH(84, 90, 5, 9), eo: true },
+    { d: DOME(54, 80, 11, 11) + DOME(88, 76, 10, 10), eo: true }, { s: 'M50 70V80M58 70V80M85 67V76M91 67V76', w: 0.7, o: 0.5 },
+    { d: R(158, 46, 12, 72) + R(156, 70, 16, 3) + R(161, 54, 2, 8) + R(165, 54, 2, 8), eo: true }, R(159, 38, 10, 8), DOME(164, 38, 6, 7), R(163.4, 26, 1.2, 6),
+  ]],
+  // Bodrum and the Muğla coast: windmills on the hill, white cube houses, the castle and a gulet.
+  ['mugla', 37.2153, 28.3636, aegeanCoast],
+  ['mugla', 37.0344, 27.4305, aegeanCoast],
+  ['mugla', 36.855, 28.2707, aegeanCoast],
+  ['mugla', 36.6216, 29.1164, aegeanCoast],
+  // Konya: the green fluted dome of the Mevlana Museum and two whirling dervishes.
+  ['konya', 37.8746, 32.4932, () => {
+    const dervish = (x, s) => [
+      `M${x - 17 * s} 150Q${x - 12 * s} ${150 - 26 * s} ${x - 4 * s} ${150 - 34 * s}L${x + 4 * s} ${150 - 34 * s}Q${x + 12 * s} ${150 - 26 * s} ${x + 17 * s} 150Z`,
+      R(x - 4 * s, 150 - 50 * s, 8 * s, 17 * s), C(x, 150 - 54 * s, 4 * s), R(x - 3 * s, 150 - 70 * s, 6 * s, 13 * s),
+      { s: `M${x - 3 * s} ${150 - 46 * s}L${x - 14 * s} ${150 - 60 * s}M${x + 3 * s} ${150 - 46 * s}L${x + 13 * s} ${150 - 40 * s}`, w: 2.6 * s },
+    ];
+    return [
+      { d: R(56, 104, 90, 46) + range(62, 138, 12).map(x => ARCH(x, 146, 7, 18)).join(''), eo: true },
+      DOME(74, 104, 12, 10) + DOME(128, 104, 12, 10),
+      { d: R(88, 62, 26, 42) + range(92, 110, 5).map(x => R(x, 68, 1.8, 30)).join(''), eo: true },
+      { d: P('86 64, 101 14, 116 64') + range(92, 112, 5).map(x => P(`${x} 60, ${x + 1.5} 30, ${x + 2.2} 60`)).join(''), eo: true },
+      R(100.4, 4, 1.2, 12), C(101, 4, 1.8),
+      ...minaret(156, 50),
+      ...dervish(24, 1), ...dervish(184, 0.8),
+    ];
+  }],
+  // Malatya: apricot orchards, the clock tower and the mountains of the Euphrates basin.
+  ['malatya', 38.3552, 38.3095, () => [
+    { d: 'M0 150V104L34 80L58 94L90 70L124 90L156 72L200 98V150Z', o: 0.3 },
+    { d: R(88, 56, 24, 94) + C(100, 72, 6) + ARCH(95, 150, 10, 18) + R(93, 92, 4, 10) + R(103, 92, 4, 10), eo: true },
+    R(85, 52, 30, 4), P('86 52, 100 24, 114 52'), R(99.4, 14, 1.2, 10),
+    ...fruitTree(24, 15), ...fruitTree(56, 12), ...fruitTree(142, 13), ...fruitTree(176, 16),
+  ]],
+  // Sivas: the Double Minaret Madrasa, a monumental portal topped by two fluted minarets.
+  ['sivas', 39.7477, 37.0179, () => [
+    { d: R(12, 110, 54, 40) + R(134, 110, 54, 40), o: 0.55 },
+    { d: R(58, 70, 84, 80) + 'M80 150V104Q80 84 100 74Q120 84 120 104V150Z' + range(84, 112, 7).map(x => ARCH(x, 108, 4, 8)).join('') + R(64, 80, 8, 60) + R(128, 80, 8, 60), eo: true },
+    R(54, 66, 92, 5),
+    { d: R(62, 16, 12, 50) + range(64, 72, 3).map(x => R(x, 22, 1.2, 38)).join('') + R(126, 16, 12, 50) + range(128, 136, 3).map(x => R(x, 22, 1.2, 38)).join(''), eo: true },
+    R(60, 30, 16, 3) + R(124, 30, 16, 3), SPIRE(68, 16, 12, 12) + SPIRE(132, 16, 12, 12),
+  ]],
+  // Çorum: the Lion Gate of Hattusa, two stone lions guarding the Hittite capital.
+  ['corum', 40.5506, 34.9556, () => {
+    const lion = (x, dir) => [{
+      d: `M${x - dir * 8} 150V100Q${x - dir * 8} 84 ${x + dir * 4} 80Q${x + dir * 16} 78 ${x + dir * 20} 88L${x + dir * 22} 96L${x + dir * 16} 98L${x + dir * 18} 104Q${x + dir * 10} 110 ${x + dir * 6} 118L${x + dir * 6} 150Z` +
+        C(x + dir * 12, 88, 1.6) + E(x - dir * 1, 96, 1.3, 7) + E(x + dir * 4, 108, 1.1, 5),
+      eo: true,
+    }];
+    return [
+      { d: 'M0 150V112Q40 104 70 110L80 104L130 104L140 110Q170 104 200 112V150Z', o: 0.35 },
+      { d: R(30, 64, 140, 86) + 'M70 150V106Q70 66 100 60Q130 66 130 106V150Z' + range(34, 166, 22).map(x => R(x, 84, 20, 0.8)).join('') + range(34, 166, 26).map(x => R(x, 112, 24, 0.8)).join(''), eo: true, o: 0.55 },
+      ...lion(70, 1), ...lion(130, -1),
+      { d: R(30, 58, 140, 6), o: 0.85 },
+    ];
+  }],
+  // Eskişehir: Odunpazarı's bay-windowed Ottoman houses, the stacked-timber museum, the tram.
+  ['eskisehir', 39.7767, 30.5206, () => {
+    const house = (x, w, h) => ({ d: R(x, 150 - h * 0.45, w, h * 0.45) + R(x - 4, 150 - h, w + 8, h * 0.56) + windows(x - 2, 150 - h + 4, w + 4, h * 0.42, Math.round(w / 7), 2, 3, 5) + ARCH(x + w / 2 - 3, 150, 6, 12), eo: true });
+    return [
+      house(12, 26, 66), P('4 84, 25 70, 46 84'),
+      house(54, 24, 56), P('46 94, 66 82, 86 94'),
+      { d: R(112, 120, 30, 30) + R(120, 96, 38, 26) + R(108, 76, 30, 22) + R(130, 58, 26, 20) + R(150, 108, 30, 42) + range(114, 176, 8).map(x => R(x, 124, 1, 22)).join(''), eo: true },
+      { d: R(0, 138, 70, 10) + windows(4, 140, 62, 6, 6, 1, 6, 4), eo: true }, { s: 'M30 138L36 130H48M36 130L42 138', w: 1 },
+      { s: 'M0 149H200', w: 1.2 },
+    ];
+  }],
   // Middle East & Africa
   ['dubai', 25.2048, 55.2708, () => [
     { d: R(98, 92, 12, 58) + R(112, 102, 10, 48) + R(20, 100, 14, 50) + R(36, 112, 12, 38), o: 0.5 },
@@ -526,6 +766,345 @@ const CITIES = [
     { d: P('93 150, 93 28, 100 10, 107 28, 107 150') + R(98.5, 34, 3, 4), eo: true },
     ...tree(82, 8), ...tree(118, 8),
   ]],
+  // ---- Cities in the app's newer languages ----
+  // Baku: the three Flame Towers above the Maiden Tower and the Caspian.
+  ['baku', 40.4093, 49.8671, () => {
+    const flame = (x, w, h, lean) => ({ d: `M${x - w / 2} 150V${150 - h * 0.5}Q${x - w / 2} ${150 - h * 0.86} ${x + lean} ${150 - h}Q${x + w / 2} ${150 - h * 0.78} ${x + w / 2} ${150 - h * 0.42}V150Z` + range(150 - h * 0.7, 144, 7).map(y => R(x - w / 2 + 3, y, w - 6, 1)).join(''), eo: true });
+    return [
+      { d: 'M0 150V120Q60 110 120 116Q170 110 200 118V150Z', o: 0.3 },
+      flame(116, 26, 124, 4), flame(146, 22, 104, -3), flame(172, 22, 90, 2),
+      { d: 'M28 150V74Q28 66 46 64Q64 66 64 74V150Z' + 'M64 150V100Q76 108 80 150Z' + R(42, 84, 3, 9) + R(50, 104, 3, 9) + ARCH(40, 150, 10, 16), eo: true },
+      crenels(28, 70, 36, 5),
+      { s: waves(146, 0, 200), w: 1.2 },
+    ];
+  }],
+  // St Petersburg: the Peter and Paul needle, a raised bridge over the Neva, onion domes.
+  ['stpetersburg', 59.9311, 30.3609, () => [
+    { d: R(30, 100, 40, 40) + range(34, 66, 8).map(x => ARCH(x, 132, 4, 14)).join(''), eo: true }, R(36, 82, 28, 18), R(42, 66, 16, 16),
+    P('44 66, 50 2, 56 66'), { s: 'M50 2V-4M47 0L53 -2', w: 1 },
+    { d: 'M74 132L94 84L99 86L82 136Z' + 'M126 132L106 84L101 86L118 136Z', o: 0.9 }, R(70, 132, 16, 8) + R(114, 132, 16, 8),
+    { d: R(136, 104, 54, 36) + ARCH(152, 140, 10, 20) + ARCH(168, 140, 10, 20), eo: true },
+    R(156, 84, 14, 20), ONION(163, 84, 16, 22), R(162.4, 56, 1.2, 8),
+    R(140, 92, 8, 12) + ONION(144, 92, 10, 14) + R(178, 92, 8, 12) + ONION(182, 92, 10, 14),
+    { s: waves(146, 0, 200) + waves(142, 0, 70) + waves(142, 130, 200), w: 1.2 },
+  ]],
+  // Kazan: the Kul Sharif mosque with its four slender minarets and the leaning Söyembikä tower.
+  ['kazan', 55.7887, 49.1221, () => [
+    { d: R(12, 82, 22, 68) + R(18, 92, 3, 8) + R(25, 92, 3, 8), eo: true }, R(15, 64, 16, 18), R(18, 50, 10, 14), P('17 50, 23 26, 29 50'),
+    { d: R(76, 104, 60, 46) + range(82, 130, 10).map(x => ARCH(x, 146, 5, 18)).join(''), eo: true },
+    'M80 104Q80 74 106 60Q132 74 132 104Z', R(105.4, 42, 1.2, 18), C(106, 41, 2),
+    [62, 150].map(x => R(x - 2.6, 40, 5.2, 110) + R(x - 4, 72, 8, 2.4) + R(x - 4, 100, 8, 2.4) + SPIRE(x, 40, 5.2, 22)).join(''),
+    [86, 126].map(x => R(x - 2, 66, 4, 38) + SPIRE(x, 66, 4, 14)).join(''),
+  ]],
+  // Osaka: the castle on its stone base and the Tsutenkaku tower.
+  ['osaka', 34.6937, 135.5023, () => {
+    const roof = (cx, y, w) => `M${cx - w / 2 - 8} ${y + 4}Q${cx - w / 2} ${y + 1} ${cx - w / 2 + 4} ${y - 6}H${cx + w / 2 - 4}Q${cx + w / 2} ${y + 1} ${cx + w / 2 + 8} ${y + 4}Z`;
+    return [
+      P('40 150, 48 116, 132 116, 140 150'),
+      { d: R(56, 98, 68, 18) + windows(60, 102, 60, 10, 6, 1, 4, 5), eo: true }, roof(90, 98, 76),
+      { d: R(64, 80, 52, 14) + windows(68, 83, 44, 8, 4, 1, 4, 4), eo: true }, roof(90, 80, 60),
+      { d: R(72, 62, 36, 14) + windows(76, 65, 28, 8, 3, 1, 4, 4), eo: true }, roof(90, 62, 44),
+      R(78, 48, 24, 12), roof(90, 48, 30), P('84 42, 90 34, 96 42'),
+      'M156 150L162 108H184L190 150H182Q173 128 164 150Z', R(165, 58, 16, 50), R(161, 50, 24, 8), R(172.4, 30, 1.2, 20),
+    ];
+  }],
+  // Kyoto: the Yasaka pagoda and a tunnel of torii gates.
+  ['kyoto', 35.0116, 135.7681, () => {
+    const torii = (x, h, o) => ({ d: R(x - h * 0.34, 150 - h, h * 0.08, h) + R(x + h * 0.26, 150 - h, h * 0.08, h) + R(x - h * 0.42, 150 - h * 0.8, h * 0.84, h * 0.06) +
+      `M${x - h * 0.52} ${150 - h * 0.98}Q${x} ${150 - h * 1.02} ${x + h * 0.52} ${150 - h * 0.98}L${x + h * 0.48} ${150 - h * 1.08}Q${x} ${150 - h * 1.12} ${x - h * 0.48} ${150 - h * 1.08}Z`, o });
+    const tiers = range(0, 4, 1).map(i => {
+      const y = 140 - i * 20, w = 54 - i * 7, cx = 138;
+      return R(cx - (w - 18) / 2, y - 10, w - 18, 10) + `M${cx - w / 2 - 6} ${y - 10}Q${cx - w / 2} ${y - 14} ${cx - w / 2 + 6} ${y - 20}H${cx + w / 2 - 6}Q${cx + w / 2} ${y - 14} ${cx + w / 2 + 6} ${y - 10}Z`;
+    }).join('');
+    return [
+      R(114, 140, 48, 10), tiers, R(137.3, 22, 1.4, 22), range(28, 40, 4).map(y => R(135, y, 6, 1.2)).join(''),
+      torii(70, 30, 0.45), torii(62, 42, 0.6), torii(52, 58, 0.8), torii(38, 80, 1),
+    ];
+  }],
+  // Busan: the Gwangan Bridge across the bay and Busan Tower on its hill.
+  ['busan', 35.1796, 129.0756, () => {
+    const cable = (a, b, top, low) => `M${a} ${top}Q${(a + b) / 2} ${low} ${b} ${top}`;
+    return [
+      { d: 'M120 150Q140 104 168 96Q188 94 200 104V150Z', o: 0.5 },
+      R(161, 40, 4, 60), R(156, 34, 14, 6), R(158, 30, 10, 4), R(162.4, 14, 1.2, 16),
+      R(0, 112, 150, 3.5),
+      R(40, 64, 4, 86) + R(48, 64, 4, 86) + R(96, 64, 4, 86) + R(104, 64, 4, 86), R(40, 72, 12, 2) + R(96, 72, 12, 2),
+      { s: cable(46, 102, 66, 108) + cable(-10, 46, 98, 112) + cable(102, 150, 66, 112), w: 1.6 },
+      { s: range(54, 96, 6).map(x => { const t = (x - 46) / 56; const y = (1 - t) ** 2 * 66 + 2 * t * (1 - t) * 150 + t * t * 66; return `M${x} ${(y / 2 + 33).toFixed(1)}V112`; }).join(''), w: 0.6 },
+      { s: waves(140, 0, 200) + waves(146, 0, 200), w: 1.2 },
+    ];
+  }],
+  // Guangzhou: the twisted lattice of the Canton Tower over the Pearl River.
+  ['guangzhou', 23.1291, 113.2644, () => [
+    { d: R(10, 104, 18, 46) + R(30, 92, 16, 58) + R(150, 96, 20, 54) + R(172, 108, 18, 42), o: 0.5 },
+    { d: 'M78 150Q96 96 90 52L86 30H114L110 52Q104 96 122 150Z' + range(40, 140, 9).map(y => { const k = (y - 30) / 120; const half = 14 - 9 * Math.sin(k * Math.PI * 0.9) + 8 * k; return `M${(100 - half + 2).toFixed(1)} ${y}L${(100 + half - 2).toFixed(1)} ${y + 4}L${(100 + half - 2).toFixed(1)} ${y + 5.2}L${(100 - half + 2).toFixed(1)} ${y + 1.2}Z`; }).join(''), eo: true },
+    R(98.6, 0, 2.8, 30), R(88, 28, 24, 3),
+    { s: waves(146, 0, 200), w: 1.2 },
+  ]],
+  // Agra: the Taj Mahal with its four minarets.
+  ['agra', 27.1767, 78.0081, () => [
+    R(24, 138, 152, 12),
+    { d: R(64, 92, 72, 46) + ARCH(88, 138, 24, 40) + ARCH(70, 132, 10, 16) + ARCH(120, 132, 10, 16) + ARCH(70, 112, 10, 14) + ARCH(120, 112, 10, 14), eo: true },
+    R(84, 86, 32, 6), 'M80 88Q74 60 100 44Q126 60 120 88Z', R(99.4, 30, 1.2, 14), C(100, 29, 1.8),
+    DOME(72, 92, 7, 7) + DOME(128, 92, 7, 7) + R(69, 86, 6, 6) + R(125, 86, 6, 6),
+    [36, 164].map(x => R(x - 3, 66, 6, 72) + R(x - 4.5, 84, 9, 2) + R(x - 4.5, 104, 9, 2) + R(x - 4.5, 64, 9, 2) + DOME(x, 64, 5, 6) + R(x - 0.5, 52, 1, 6)).join(''),
+  ]],
+  // Marseille: Notre-Dame de la Garde on its hill above the Old Port.
+  ['marseille', 43.2965, 5.3698, () => [
+    { d: 'M30 150Q60 96 100 92Q140 96 176 150Z', o: 0.45 },
+    { d: R(82, 70, 40, 24) + ARCH(88, 94, 6, 12) + ARCH(110, 94, 6, 12), eo: true }, DOME(94, 70, 10, 10),
+    { d: R(108, 34, 14, 36) + ARCH(112, 56, 6, 12), eo: true }, R(106, 30, 18, 4), R(113, 18, 4, 12), C(115, 15, 3),
+    { d: R(10, 110, 24, 32) + R(14, 118, 3, 8), eo: true }, crenels(10, 110, 24, 4),
+    [140, 156, 172, 188].map((x, i) => P(`${x - 7} 140, ${x + 7} 140, ${x + 5} 144, ${x - 5} 144`) + R(x - 0.5, 112 + i * 3, 1, 28 - i * 3)).join(''),
+    { s: waves(146, 0, 200), w: 1.2 },
+  ]],
+  // Montreal: the Biosphere's geodesic globe and the leaning Olympic tower.
+  ['montreal', 45.5017, -73.5673, () => [
+    { s: C(46, 108, 32) + E(46, 108, 32, 12) + E(46, 108, 32, 24) + E(46, 108, 12, 32) + E(46, 108, 24, 32) + 'M14 108H78', w: 1.4 },
+    'M80 150Q90 116 132 112Q164 114 172 150Z',
+    P('164 150, 182 150, 150 40, 140 42'), P('136 38, 156 34, 158 46, 138 50'),
+    { s: 'M146 56L122 112M148 66L104 114M150 78L90 118', w: 0.7 },
+  ]],
+  // ---- Poland ----
+  // Gdańsk: the medieval port crane and narrow gabled houses along the Motława.
+  ['gdansk', 54.352, 18.6466, () => [
+    { d: R(34, 70, 64, 72) + ARCH(56, 142, 18, 30) + R(42, 82, 4, 10) + R(86, 82, 4, 10), eo: true },
+    { d: R(22, 40, 70, 30) + range(26, 88, 6).map(x => R(x, 44, 1, 22)).join(''), eo: true }, P('18 42, 57 12, 96 42'),
+    gableHouse(108, 16, 60, 0.7), gableHouse(126, 14, 68, 0.8), gableHouse(142, 16, 56, 0.7), gableHouse(160, 14, 64, 0.8), gableHouse(176, 18, 54, 0.6),
+    { s: waves(146, 0, 200), w: 1.2 },
+  ]],
+  // Wrocław: the Gothic town hall with its stepped gables and tower, and a little bronze dwarf.
+  ['wroclaw', 51.1079, 17.0385, () => [
+    { d: R(30, 94, 110, 56) + range(36, 134, 12).map(x => ARCH(x, 140, 6, 26)).join(''), eo: true },
+    P('30 94, 30 80, 36 80, 36 72, 42 72, 42 64, 48 64, 48 56, 54 56, 54 64, 60 64, 60 72, 66 72, 66 80, 72 80, 72 94'),
+    P('98 94, 98 80, 104 80, 104 70, 110 70, 110 60, 116 60, 116 70, 122 70, 122 80, 128 80, 128 94'),
+    { d: R(76, 46, 16, 48) + C(84, 60, 4), eo: true }, P('74 46, 84 12, 94 46'), R(83.4, 4, 1.2, 8),
+    [36, 66, 104, 134].map(x => SPIRE(x, 94, 3, 10)).join(''),
+    P('168 150, 172 132, 182 132, 186 150'), C(177, 128, 5), P('170 126, 177 108, 184 126'), 'M172 130Q177 140 182 130Z',
+  ]],
+  // Poznań: the Renaissance town hall with its loggias, tower and the two butting goats.
+  ['poznan', 52.4064, 16.9252, () => [
+    { d: R(36, 82, 128, 68) + range(42, 156, 14).map(x => ARCH(x, 104, 9, 16) + ARCH(x, 126, 9, 16) + ARCH(x, 148, 9, 18)).join(''), eo: true },
+    R(34, 76, 132, 6), [40, 72, 128, 160].map(x => R(x - 3, 66, 6, 10) + DOME(x, 66, 3, 3)).join(''),
+    R(90, 40, 20, 36), R(88, 36, 24, 4), R(94, 22, 12, 14), DOME(100, 22, 6, 8), R(99.4, 4, 1.2, 10), P('96 6, 100 2, 104 6'),
+    'M90 62Q92 58 96 59L98 62L96 66H92Z', 'M110 62Q108 58 104 59L102 62L104 66H108Z',
+  ]],
+  // Łódź: the red-brick Manufaktura mills and their tall chimneys.
+  ['lodz', 51.7592, 19.456, () => [
+    { d: R(12, 92, 128, 58) + windows(16, 98, 120, 44, 12, 3, 4, 8), eo: true },
+    range(12, 136, 16).map(x => P(`${x} 92, ${x + 8} 84, ${x + 16} 92`)).join(''),
+    P('150 150, 152 26, 160 26, 162 150'), R(149, 22, 14, 5),
+    P('176 150, 177 50, 183 50, 184 150'), R(175, 46, 10, 4),
+    { s: 'M190 150V112M186 112H194', w: 1.4 }, C(190, 110, 2.6),
+  ]],
+  // Szczecin: the Chrobry Embankment terraces and the port cranes on the Oder.
+  ['szczecin', 53.4285, 14.5528, () => [
+    { d: R(70, 82, 100, 30) + windows(74, 86, 92, 22, 10, 2, 4, 6), eo: true }, R(124, 40, 20, 42), DOME(134, 40, 10, 10), R(133.4, 24, 1.2, 8),
+    R(56, 112, 128, 6), R(46, 118, 148, 4),
+    { d: range(60, 180, 10).map(x => R(x, 122, 6, 14)).join(''), o: 0.85 },
+    { s: 'M14 150V64M14 64L52 76M14 70L42 60M48 76V96', w: 2 }, R(8, 140, 12, 10),
+    { s: waves(146, 0, 200), w: 1.2 },
+  ]],
+  // Lublin: the castle with its round keep and the baroque Kraków Gate.
+  ['lublin', 51.2465, 22.5684, () => [
+    { d: R(14, 100, 116, 50) + range(20, 124, 10).map(x => ARCH(x, 132, 5, 14)).join(''), eo: true }, crenels(14, 100, 116, 10),
+    { d: R(60, 70, 26, 30) + ARCH(66, 100, 14, 22), eo: true }, crenels(60, 70, 26, 4),
+    R(98, 52, 22, 48), crenels(98, 52, 22, 4),
+    { d: R(148, 72, 30, 78) + ARCH(155, 150, 16, 26) + R(160, 86, 6, 10), eo: true },
+    'M146 72Q148 54 163 46Q178 54 180 72Z', R(159, 32, 8, 14), DOME(163, 32, 5, 5), R(162.4, 20, 1.2, 8),
+  ]],
+  // Katowice: the flying-saucer Spodek arena and a coal-mine headframe.
+  ['katowice', 50.2649, 19.0238, () => [
+    'M24 118L58 96H140L174 118L150 126H48Z', { s: 'M50 126L42 150M150 126L158 150M78 126L74 150M122 126L126 150', w: 2.4 },
+    { d: R(58, 92, 82, 4), o: 0.8 },
+    { d: P('176 150, 184 52, 190 52, 198 150') + P('182 120, 187 70, 192 120'), eo: true },
+    { d: C(187, 50, 7) + C(187, 50, 3), eo: true }, R(10, 132, 14, 18), R(28, 138, 12, 12),
+  ]],
+  // Toruń: Gothic brick churches, the town hall tower, the Vistula and Copernicus.
+  ['torun', 53.0138, 18.5984, () => [
+    { d: R(16, 92, 56, 58) + range(22, 66, 10).map(x => ARCH(x, 140, 5, 30)).join(''), eo: true }, P('14 94, 44 54, 74 94'),
+    R(30, 40, 16, 34), P('28 40, 38 18, 48 40'),
+    { d: R(88, 36, 22, 114) + ARCH(94, 72, 10, 18) + ARCH(94, 104, 10, 18), eo: true }, P('86 36, 99 8, 112 36'),
+    R(146, 118, 20, 32), R(152, 110, 8, 8), C(156, 104, 4), 'M150 112L156 82L162 112Z', { s: 'M162 96L172 86', w: 1.6 }, C(173, 84, 3),
+    { s: waves(146, 0, 140) + waves(146, 170, 200), w: 1.2 },
+  ]],
+  // ---- Much-visited cities ----
+  // Venice: the Rialto Bridge, the San Marco bell tower and a gondola.
+  ['venice', 45.4408, 12.3155, () => [
+    { d: R(150, 34, 16, 106) + R(153, 42, 3, 10) + R(160, 42, 3, 10), o: 0.55, eo: true }, { d: P('148 34, 158 12, 168 34'), o: 0.55 },
+    { d: 'M14 140Q100 92 186 140V146H14Z' + 'M58 146Q100 114 142 146Z', eo: true },
+    { d: R(82, 96, 36, 20) + ARCH(94, 116, 12, 16), eo: true }, P('80 96, 100 86, 120 96'),
+    R(40, 110, 24, 10) + R(136, 110, 24, 10),
+    'M20 146Q50 152 96 142Q78 148 34 150Z', P('96 142, 102 134, 100 142'), R(58, 128, 3, 14), C(59.5, 125, 2.4), { s: 'M60 134L74 150', w: 1.2 },
+    { s: waves(148, 0, 200), w: 1 },
+  ]],
+  // Florence: Brunelleschi's dome, Giotto's bell tower and the cathedral.
+  ['florence', 43.7696, 11.2558, () => [
+    { d: R(28, 112, 120, 38) + range(34, 142, 12).map(x => ARCH(x, 140, 6, 16)).join(''), eo: true },
+    { d: R(68, 88, 64, 24) + range(74, 126, 9).map(x => C(x + 2, 100, 2.4)).join(''), eo: true },
+    { d: 'M70 88Q70 52 100 40Q130 52 130 88Z' + 'M84 86Q84 56 98 44L100 44Q88 58 88 86Z' + 'M112 86Q112 56 102 44L100 44Q112 58 116 86Z', eo: true },
+    R(95, 28, 10, 12), P('95 28, 100 18, 105 28'), C(100, 16, 2),
+    { d: R(156, 34, 22, 116) + ARCH(161, 64, 12, 16) + ARCH(161, 92, 12, 16) + ARCH(161, 120, 12, 16), eo: true }, R(154, 30, 26, 4),
+  ]],
+  // Seville: the Giralda bell tower, the Torre del Oro on the Guadalquivir and palms.
+  ['seville', 37.3891, -5.9845, () => [
+    { d: R(76, 46, 28, 104) + R(82, 60, 4, 12) + R(94, 60, 4, 12) + R(82, 90, 4, 12) + R(94, 90, 4, 12), eo: true },
+    { d: R(80, 26, 20, 20) + ARCH(83, 44, 6, 12) + ARCH(91, 44, 6, 12), eo: true }, R(83, 18, 14, 8), R(86, 10, 8, 8), DOME(90, 10, 4, 4), R(89.4, 0, 1.2, 6),
+    { d: R(136, 92, 30, 50) + R(144, 104, 4, 10) + R(154, 104, 4, 10), eo: true }, crenels(136, 92, 30, 5), R(142, 72, 18, 20), crenels(142, 72, 18, 3), R(146, 60, 10, 12), DOME(151, 60, 5, 5),
+    ...palm(30, 70, -4), ...palm(186, 60, 4),
+    { s: waves(146, 110, 200), w: 1.2 },
+  ]],
+  // Porto: the Dom Luís I iron bridge over the Douro, the Clérigos tower and a rabelo boat.
+  ['porto', 41.1579, -8.6291, () => [
+    { d: 'M0 150V100Q20 90 40 94L50 150Z', o: 0.4 }, { d: 'M150 150L164 92Q184 86 200 92V150Z', o: 0.4 },
+    R(20, 58, 8, 36), P('18 58, 24 40, 30 58'), C(24, 38, 2),
+    R(0, 60, 200, 4), { s: 'M30 150Q100 20 170 150', w: 5 },
+    { s: range(46, 156, 12).map(x => { const t = (x - 30) / 140; const y = (1 - t) ** 2 * 150 + 2 * t * (1 - t) * 20 + t * t * 150; return y > 64 ? `M${x} 64V${(y / 2 + 42).toFixed(1)}` : ''; }).join(''), w: 1 },
+    R(0, 120, 200, 3),
+    'M72 144Q100 150 128 144L124 138H76Z', R(99.4, 112, 1.2, 26), R(90, 114, 20, 18),
+    { s: waves(148, 0, 200), w: 1 },
+  ]],
+  // Edinburgh: the castle on its volcanic rock and the Gothic spire of the Scott Monument.
+  ['edinburgh', 55.9533, -3.1883, () => [
+    { d: 'M0 150V112L20 96L34 98L50 84L80 82L96 92L110 150Z', o: 0.75 },
+    { d: R(22, 70, 70, 16) + windows(26, 72, 62, 10, 7, 1, 3, 5), eo: true }, crenels(22, 70, 70, 9),
+    R(36, 56, 14, 14), crenels(36, 56, 14, 3), R(70, 50, 16, 20), crenels(70, 50, 16, 3), R(77.4, 38, 1.2, 12), P('78 38, 86 42, 78 46'),
+    P('132 150, 136 104, 164 104, 168 150'), { d: 'M138 104L142 70H158L162 104Z' + ARCH(145, 104, 10, 22), eo: true },
+    P('142 70, 145 46, 155 46, 158 70'), P('145 46, 150 10, 155 46'), [134, 166, 140, 160].map((x, i) => SPIRE(x, i < 2 ? 104 : 70, 3, 14)).join(''),
+  ]],
+  // Reykjavík: Hallgrímskirkja's basalt-column steps, Mount Esja and the Sun Voyager.
+  ['reykjavik', 64.1466, -21.9426, () => {
+    const steps = dir => range(1, 7, 1).map(i => R(dir > 0 ? 100 + 8 + (i - 1) * 9 : 100 - 8 - i * 9, 150 - (64 - i * 8), 9, 64 - i * 8)).join('');
+    return [
+      { d: 'M0 150V110Q40 88 90 96Q140 84 200 104V150Z', o: 0.3 },
+      { d: R(92, 20, 16, 130) + R(96, 44, 3, 10) + R(101, 44, 3, 10) + C(100, 64, 3.5), eo: true }, P('92 20, 100 4, 108 20'),
+      steps(1), steps(-1),
+      { s: 'M150 140Q170 134 192 140M154 140L160 122M166 138L170 118M178 138L180 120M188 140L192 124', w: 1.6 },
+    ];
+  }],
+  // Oslo: the Opera House sloping into the fjord and the Holmenkollen ski jump on the hill.
+  ['oslo', 59.9139, 10.7522, () => [
+    { d: 'M100 150Q130 80 200 64V150Z', o: 0.35 },
+    { s: 'M150 82Q166 74 178 88Q186 100 200 104', w: 2.4 }, R(146, 78, 6, 10),
+    'M6 146L58 112H136L170 146Z', { d: R(100, 96, 26, 16) + range(103, 124, 4).map(x => R(x, 99, 1, 11)).join(''), eo: true },
+    { s: waves(148, 0, 200), w: 1 },
+  ]],
+  // Zürich: the Grossmünster's twin towers, the Fraumünster spire, the lake and the Alps.
+  ['zurich', 47.3769, 8.5417, () => [
+    { d: 'M0 150V96L24 78L40 88L62 62L84 84L110 70L136 90L160 66L184 82L200 74V150Z', o: 0.3 },
+    { d: 'M58 66L62 62L66 66Z M156 70L160 66L164 70Z', o: 0.6 },
+    { d: R(40, 104, 70, 46) + range(46, 104, 10).map(x => ARCH(x, 142, 5, 16)).join(''), eo: true },
+    { d: R(46, 52, 16, 52) + R(86, 52, 16, 52) + ARCH(50, 76, 8, 12) + ARCH(90, 76, 8, 12), eo: true },
+    R(44, 48, 20, 4) + R(84, 48, 20, 4), DOME(54, 48, 8, 12) + DOME(94, 48, 8, 12), R(53.4, 28, 1.2, 8) + R(93.4, 28, 1.2, 8),
+    R(140, 74, 12, 76), P('138 74, 146 26, 154 74'), R(145.4, 18, 1.2, 8),
+    { s: waves(146, 0, 200), w: 1.2 }, sailboat(178, 142, 0.6),
+  ]],
+  // Dubrovnik: the city walls with the round Minčeta tower, tiled roofs and the Adriatic.
+  ['dubrovnik', 42.6507, 18.0944, () => [
+    { d: 'M0 150V96Q60 84 120 90L200 100V150Z', o: 0.3 },
+    { d: R(30, 52, 30, 64) + R(40, 70, 3, 9) + R(48, 70, 3, 9), eo: true }, crenels(28, 52, 34, 5),
+    R(0, 112, 200, 26), crenels(0, 112, 200, 22),
+    ...[[68, 16, 18], [86, 14, 22], [102, 18, 16], [122, 14, 20], [138, 16, 14], [156, 18, 18]].map(([x, w, h]) => ({ d: R(x, 112 - h, w, h) + P(`${x - 1} ${112 - h}, ${x + w / 2} ${106 - h}, ${x + w + 1} ${112 - h}`) + R(x + w / 2 - 1.5, 116 - h, 3, 4), eo: true })),
+    R(150, 60, 6, 52), P('148 60, 153 46, 158 60'),
+    { s: waves(146, 0, 200), w: 1.2 },
+  ]],
+  // Santorini: white cube houses down the caldera cliff, blue-domed churches and a windmill.
+  ['santorini', 36.4168, 25.4317, () => [
+    { d: 'M0 150V70Q40 60 90 66L120 110L140 150Z', o: 0.4 },
+    { d: R(10, 70, 26, 18) + R(40, 76, 22, 16) + R(22, 92, 28, 16) + R(56, 96, 22, 14) + R(70, 112, 26, 16) + R(36, 112, 30, 18) +
+      R(16, 76, 4, 6) + R(46, 82, 4, 6) + R(30, 98, 4, 6) + R(62, 102, 4, 6) + R(80, 118, 4, 6) + R(44, 118, 4, 6), eo: true },
+    DOME(52, 76, 8, 8) + DOME(82, 112, 9, 9), R(51.4, 62, 1.2, 6), R(81.4, 96, 1.2, 7),
+    { d: R(104, 80, 14, 26) + ARCH(107, 94, 8, 10), eo: true }, P('104 80, 111 72, 118 80'),
+    ...windmill(178, 120, 34),
+    { s: waves(146, 100, 200), w: 1.2 }, sailboat(140, 144, 0.7),
+  ]],
+  // Las Vegas: the Strat tower, the famous welcome sign and the Strip.
+  ['lasvegas', 36.1699, -115.1398, () => [
+    { d: R(20, 90, 18, 60) + R(40, 70, 22, 80) + R(64, 98, 16, 52) + R(170, 84, 20, 66) + windows(42, 74, 18, 70, 3, 9, 3, 4), o: 0.5, eo: true },
+    R(146, 30, 8, 120), 'M136 40Q150 26 164 40L160 48H140Z', R(149.4, 4, 1.2, 26),
+    { s: 'M96 150V112M120 150V112', w: 2 },
+    { d: 'M84 104L108 84L132 104L108 124Z' + 'M92 104L108 91L124 104L108 117Z', eo: true }, P('108 78, 110 82, 114 82, 111 85, 112 89, 108 86, 104 89, 105 85, 102 82, 106 82'),
+  ]],
+  // Miami: Art Deco hotels with their neon fins, palms and a lifeguard tower on the beach.
+  ['miami', 25.7617, -80.1918, () => [
+    { d: R(18, 80, 46, 56) + R(20, 76, 42, 4) + R(38, 56, 6, 24) + windows(22, 86, 38, 44, 4, 4, 5, 4), eo: true },
+    { d: 'M70 136V88H104Q112 88 112 96V136Z' + R(84, 66, 8, 22) + windows(74, 94, 34, 36, 3, 4, 6, 3), eo: true },
+    ...palm(128, 84, 4), ...palm(146, 66, -3),
+    P('164 128, 170 116, 190 116, 196 128'), R(166, 128, 28, 4), { s: 'M168 132L164 150M192 132L196 150M178 132V150', w: 1.6 },
+    { s: waves(146, 0, 200), w: 1 }, R(0, 136, 160, 2),
+  ]],
+  // Honolulu: Diamond Head behind Waikiki, the Aloha Tower, palms and surfboards.
+  ['honolulu', 21.3069, -157.8583, () => [
+    { d: 'M60 150L96 92Q118 80 140 86Q170 96 200 122V150Z', o: 0.45 },
+    { d: R(36, 62, 18, 88) + C(45, 74, 4.5), eo: true }, R(33, 58, 24, 4), P('34 58, 45 38, 56 58'), R(44.4, 26, 1.2, 12),
+    ...palm(84, 88, -5), ...palm(102, 70, 4),
+    E(150, 124, 4, 22) + E(162, 126, 4, 20) + E(174, 122, 4, 24),
+    { s: waves(148, 0, 200), w: 1 },
+  ]],
+  // Vancouver: the North Shore mountains, the Harbour Centre tower and the sails of Canada Place.
+  ['vancouver', 49.2827, -123.1207, () => [
+    { d: 'M0 150V84L30 56L54 74L84 44L110 66L140 50L170 70L200 58V150Z', o: 0.3 },
+    { d: 'M26 60L30 56L34 60L30 62Z M80 48L84 44L88 48L84 50Z M136 54L140 50L144 54Z', o: 0.6 },
+    { d: R(40, 96, 16, 54) + R(60, 84, 18, 66) + R(152, 92, 20, 58) + R(176, 104, 18, 46), o: 0.6 },
+    R(110, 52, 14, 98), 'M100 54Q117 36 134 54L130 60H104Z', R(116.4, 26, 1.2, 14),
+    P('70 138, 82 112, 94 138') + P('88 138, 100 108, 112 138') + P('106 138, 118 114, 130 138') + P('124 138, 134 118, 144 138'), R(66, 138, 82, 4),
+    { s: waves(148, 0, 200), w: 1 },
+  ]],
+  // Havana: El Capitolio's dome, a palm and a classic 1950s car.
+  ['havana', 23.1136, -82.3666, () => [
+    { d: R(30, 98, 140, 40) + range(36, 164, 10).map(x => R(x, 104, 4, 28)).join(''), eo: true }, R(26, 94, 148, 4), P('76 94, 100 82, 124 94'),
+    R(82, 62, 36, 20), 'M82 64Q82 36 100 28Q118 36 118 64Z', R(97, 16, 6, 12), C(100, 14, 2.4),
+    ...palm(14, 74, -3),
+    'M112 150V140Q114 132 126 132L138 126H160L172 134Q186 134 190 140V150Z', { d: C(128, 149, 5) + C(176, 149, 5), o: 0.95 },
+  ]],
+  // Cusco and Machu Picchu: Huayna Picchu, stone terraces, ruins and a llama.
+  ['cusco', -13.532, -71.9675, () => [
+    { d: 'M76 150Q100 70 124 22Q140 36 150 70Q166 110 190 150Z', o: 0.45 },
+    { d: 'M0 150V120Q40 112 80 118L110 150Z' + range(122, 146, 6).map(y => `M0 ${y}H${(y - 110) * 2.2}V${y + 1}H0Z`).join(''), eo: true },
+    ...[[20, 110], [36, 106], [52, 108]].map(([x, y]) => ({ d: R(x, y, 12, 10) + R(x + 4, y + 3, 3, 4), eo: true })), P('19 110, 26 103, 33 110') + P('35 106, 42 99, 49 106') + P('51 108, 58 101, 65 108'),
+    'M146 150V128H144V120Q144 116 148 116Q150 104 152 100L156 100L156 108Q158 112 154 114V124H176Q180 124 180 130V150H176V136H172V150H168V136H154V150Z',
+  ]],
+  // Doha: the Doha Tower, the Museum of Islamic Art and a dhow on the bay.
+  ['doha', 25.2854, 51.531, () => [
+    { d: R(150, 88, 16, 62) + R(170, 76, 14, 74), o: 0.5 },
+    { d: 'M118 150V50Q118 28 128 22Q138 28 138 50V150Z' + range(34, 146, 8).map(y => R(122, y, 12, 1.2)).join(''), eo: true }, R(127.4, 8, 1.2, 14),
+    { d: R(24, 104, 64, 34) + R(36, 84, 40, 20) + R(46, 68, 20, 16) + ARCH(50, 138, 12, 20), eo: true }, P('46 68, 56 60, 66 68'),
+    'M60 146Q80 152 108 144L104 140H66Z', { s: 'M84 140V108M72 112Q90 104 104 132', w: 1.4 }, P('84 110, 84 138, 102 136'),
+    { s: waves(148, 0, 200), w: 1 },
+  ]],
+  // Abu Dhabi: the Sheikh Zayed Grand Mosque's white domes and four minarets.
+  ['abudhabi', 24.4539, 54.3773, () => [
+    { d: R(30, 104, 140, 34) + range(36, 166, 10).map(x => ARCH(x, 134, 5, 16)).join(''), eo: true },
+    'M74 104Q74 70 100 60Q126 70 126 104Z', R(99.4, 46, 1.2, 14), C(100, 45, 2),
+    DOME(56, 104, 10, 11) + DOME(144, 104, 10, 11) + DOME(40, 104, 6, 7) + DOME(160, 104, 6, 7),
+    [22, 178].map(x => R(x - 3, 40, 6, 98) + R(x - 4.5, 70, 9, 2) + R(x - 4.5, 96, 9, 2) + DOME(x, 40, 4, 6) + R(x - 0.5, 28, 1, 8)).join(''),
+    R(24, 138, 152, 4), { s: 'M40 146H160', w: 0.8, o: 0.6 },
+  ]],
+  // Hanoi: the One Pillar Pagoda on its lotus pond and the Turtle Tower on Hoan Kiem Lake.
+  ['hanoi', 21.0278, 105.8342, () => [
+    R(97, 106, 6, 36), { d: R(80, 82, 40, 24) + R(86, 88, 6, 12) + R(108, 88, 6, 12), eo: true },
+    'M68 84Q78 80 84 70H116Q122 80 132 84Z', 'M86 70Q96 60 100 54Q104 60 114 70Z', R(99.4, 46, 1.2, 8),
+    { d: R(150, 108, 22, 26) + ARCH(156, 134, 10, 14), eo: true }, R(152, 96, 18, 12), 'M146 98Q150 94 152 90H170Q172 94 176 98Z', R(155, 84, 12, 6), 'M152 86Q160 78 170 86Z',
+    E(36, 140, 12, 3) + E(56, 142, 9, 2), { s: 'M36 140V128M56 142V132', w: 1 }, E(36, 126, 4, 2.2),
+    { s: waves(146, 0, 200), w: 1.2 },
+  ]],
+  // Bali: a split temple gate, a tiered meru shrine, palms and rice terraces.
+  ['bali', -8.6705, 115.2126, () => {
+    const half = dir => {
+      const x0 = dir < 0 ? 40 : 84;
+      return P(range(0, 5, 1).flatMap(i => {
+        const y = 150 - i * 18, w = 36 - i * 6;
+        const xa = dir < 0 ? x0 + (36 - w) : x0, xb = xa + w;
+        return dir < 0 ? [`${xa} ${y}`, `${xa} ${y - 18}`] : [`${xb} ${y}`, `${xb} ${y - 18}`];
+      }).concat(dir < 0 ? ['76 60', '76 150'] : ['84 60', '84 150']).join(','));
+    };
+    return [
+      { s: 'M0 132Q40 126 80 130T200 128M0 140Q50 134 100 138T200 136', w: 1, o: 0.6 },
+      half(-1), half(1),
+      R(148, 110, 22, 40), range(0, 4, 1).map(i => { const y = 110 - i * 14, w = 40 - i * 7; return `M${159 - w / 2} ${y}Q${159} ${y - 12} ${159 + w / 2} ${y}Z`; }).join(''), R(158.4, 42, 1.2, 14),
+      ...palm(14, 82, -4), ...palm(190, 72, 4),
+    ];
+  }],
   // Oceania
   ['sydney', -33.8688, 151.2093, () => [
     { s: 'M0 96Q56 38 112 96M0 104Q56 62 112 104', w: 3 }, { d: R(0, 104, 124, 4) + R(106, 86, 12, 22), o: 0.65 },
@@ -695,6 +1274,9 @@ function backSkyline(seedStr) {
 
 function elementSvg(el) {
   if (Array.isArray(el)) return el.map(elementSvg).join('');
+  // A group that drifts gently (hot-air balloons, boats): the outer group takes the
+  // entrance animation, the inner one floats.
+  if (el && el.float) return `<g><g class="lm-float" style="animation-duration:${el.dur || 7}s;animation-delay:${el.delay || 0}s">${el.float.map(elementSvg).join('')}</g></g>`;
   if (typeof el === 'string') return `<path d="${el}"/>`;
   if (el.text) return `<text x="${el.x}" y="${el.y}" font-size="${el.size}" transform="rotate(${el.rot || 0} ${el.x} ${el.y})" class="lm-text">${el.text}</text>`;
   if (el.s) return `<path class="lm-stroke" d="${el.s}" stroke-width="${el.w || 2}"${el.o ? ` stroke-opacity="${el.o}"` : ''}/>`;
