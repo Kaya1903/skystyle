@@ -693,7 +693,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     }
 
     // Skip a note the suggestion already covers (e.g. "...altına termal tayt").
-    if (notes[key] && !(key === 'alt' && /termal|thermal|tayt|tights|leggings/i.test(item + reason)) && !(key === 'ayak' && /yün çorap|wool socks/i.test(item + reason))) reason = (reason && !/[.!?]$/.test(reason) ? reason + '.' : reason) + (match ? L(notes[key]) : notes[key]);
+    if (notes[key] && !(key === 'alt' && /termal|thermal|tayt|tights|leggings/i.test(item + reason)) && !(key === 'ayak' && /yün çorap|wool socks/i.test(item + reason))) reason = (reason && !/[.!?。！？।]$/.test(reason) ? reason + (match ? L('.') : '.') : reason) + (match ? L(notes[key]) : notes[key]);
 
     // Wardrobe pieces draw from their own stored look; suggestions guess from the text.
     let look = match ? itemLook(match) : { art: garmentVariant(key, item, BAND_WARMTH[bandKey]), color: null, color2: null, patternType: 'solid', details: {} };
@@ -742,7 +742,7 @@ function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked =
     if (needsRain && slotKey === 'ayak') bits.push(L(item.rainOk ? 'handles rain' : 'not waterproof'));
     if (needsWind && slotKey === 'dis' && item.windproof) bits.push(L('blocks wind'));
     if (partner) bits.push(L('{c} pairs well with your {n}').replace('{c}', colorName(item.color, outLang).toLocaleLowerCase(outLang)).replace('{n}', partner.name));
-    return bits.join(L(', ')) + '.';
+    return bits.join(L(', ')) + L('.');
   }
   const bits = [isAcc ? 'Bugüne uygun' : diff < -1 ? `Hissedilen ${ctx.feelsLike}° için biraz ince kalabilir` : diff > 1 ? `Hissedilen ${ctx.feelsLike}° için biraz kalın` : `Hissedilen ${ctx.feelsLike}° için kalınlığı tam`];
   if (needsRain && slotKey === 'ayak') bits.push(item.rainOk ? 'yağmura dayanıklı' : 'su geçirmez değil');

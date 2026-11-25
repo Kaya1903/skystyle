@@ -31,6 +31,13 @@ const COLOR_NAMES = {
   pl: { siyah: 'Czarny', beyaz: 'Biały', gri: 'Szary', lacivert: 'Granatowy', bej: 'Beżowy', kahve: 'Brązowy', denim: 'Denim', haki: 'Khaki', yesil: 'Zielony', mavi: 'Niebieski', kirmizi: 'Czerwony', bordo: 'Bordowy', pembe: 'Różowy', mor: 'Fioletowy', sari: 'Żółty', turuncu: 'Pomarańczowy' },
   ar: { siyah: 'أسود', beyaz: 'أبيض', gri: 'رمادي', lacivert: 'كحلي', bej: 'بيج', kahve: 'بني', denim: 'دنيم', haki: 'كاكي', yesil: 'أخضر', mavi: 'أزرق', kirmizi: 'أحمر', bordo: 'عنابي', pembe: 'وردي', mor: 'بنفسجي', sari: 'أصفر', turuncu: 'برتقالي' },
   de: { siyah: 'Schwarz', beyaz: 'Weiß', gri: 'Grau', lacivert: 'Marineblau', bej: 'Beige', kahve: 'Braun', denim: 'Denim', haki: 'Khaki', yesil: 'Grün', mavi: 'Blau', kirmizi: 'Rot', bordo: 'Bordeaux', pembe: 'Rosa', mor: 'Lila', sari: 'Gelb', turuncu: 'Orange' },
+  fr: { siyah: "Noir", beyaz: "Blanc", gri: "Gris", lacivert: "Bleu marine", bej: "Beige", kahve: "Marron", denim: "Denim", haki: "Kaki", yesil: "Vert", mavi: "Bleu", kirmizi: "Rouge", bordo: "Bordeaux", pembe: "Rose", mor: "Violet", sari: "Jaune", turuncu: "Orange" },
+  ru: { siyah: "Чёрный", beyaz: "Белый", gri: "Серый", lacivert: "Тёмно-синий", bej: "Бежевый", kahve: "Коричневый", denim: "Деним", haki: "Хаки", yesil: "Зелёный", mavi: "Синий", kirmizi: "Красный", bordo: "Бордовый", pembe: "Розовый", mor: "Фиолетовый", sari: "Жёлтый", turuncu: "Оранжевый" },
+  az: { siyah: "Qara", beyaz: "Ağ", gri: "Boz", lacivert: "Lacivərd", bej: "Bej", kahve: "Qəhvəyi", denim: "Cins", haki: "Xaki", yesil: "Yaşıl", mavi: "Mavi", kirmizi: "Qırmızı", bordo: "Tünd qırmızı", pembe: "Çəhrayı", mor: "Bənövşəyi", sari: "Sarı", turuncu: "Narıncı" },
+  zh: { siyah: "黑色", beyaz: "白色", gri: "灰色", lacivert: "藏青色", bej: "米色", kahve: "棕色", denim: "牛仔蓝", haki: "卡其色", yesil: "绿色", mavi: "蓝色", kirmizi: "红色", bordo: "酒红色", pembe: "粉色", mor: "紫色", sari: "黄色", turuncu: "橙色" },
+  ja: { siyah: "ブラック", beyaz: "ホワイト", gri: "グレー", lacivert: "ネイビー", bej: "ベージュ", kahve: "ブラウン", denim: "デニム", haki: "カーキ", yesil: "グリーン", mavi: "ブルー", kirmizi: "レッド", bordo: "ボルドー", pembe: "ピンク", mor: "パープル", sari: "イエロー", turuncu: "オレンジ" },
+  ko: { siyah: "블랙", beyaz: "화이트", gri: "그레이", lacivert: "네이비", bej: "베이지", kahve: "브라운", denim: "데님", haki: "카키", yesil: "그린", mavi: "블루", kirmizi: "레드", bordo: "버건디", pembe: "핑크", mor: "퍼플", sari: "옐로", turuncu: "오렌지" },
+  hi: { siyah: "काला", beyaz: "सफ़ेद", gri: "ग्रे", lacivert: "गहरा नीला", bej: "बेज", kahve: "भूरा", denim: "डेनिम", haki: "खाकी", yesil: "हरा", mavi: "नीला", kirmizi: "लाल", bordo: "मैरून", pembe: "गुलाबी", mor: "बैंगनी", sari: "पीला", turuncu: "नारंगी" },
 };
 
 export function colorName(key, lang) {

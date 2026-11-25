@@ -87,6 +87,13 @@ const WMO_TEXT = {
     95: 'Gewitter', 96: 'Gewitter mit Hagel', 99: 'Schweres Gewitter mit Hagel',
     default: 'Wechselhaft',
   },
+  fr: { 0: "Dégagé", 1: "Plutôt dégagé", 2: "Partiellement nuageux", 3: "Couvert", 45: "Brouillard", 48: "Brouillard, risque de verglas", 51: "Bruine légère", 53: "Bruine", 55: "Pluie faible", 56: "Bruine, risque de verglas", 57: "Pluie, risque de verglas", 61: "Pluie faible", 63: "Pluie", 65: "Forte pluie", 66: "Pluie, risque de verglas", 67: "Forte pluie, risque de verglas", 71: "Neige faible", 73: "Neige", 75: "Forte neige", 77: "Neige faible", 80: "Averses", 81: "Fortes averses", 82: "Averses violentes", 85: "Averses de neige", 86: "Fortes averses de neige", 95: "Orage", 96: "Orage avec grêle", 99: "Violent orage avec grêle", default: "Temps variable" },
+  ru: { 0: "Ясно", 1: "Преимущественно ясно", 2: "Переменная облачность", 3: "Пасмурно", 45: "Туман", 48: "Туман, возможна гололедица", 51: "Слабая морось", 53: "Морось", 55: "Небольшой дождь", 56: "Морось, возможна гололедица", 57: "Дождь, возможна гололедица", 61: "Небольшой дождь", 63: "Дождь", 65: "Сильный дождь", 66: "Дождь, возможна гололедица", 67: "Сильный дождь, возможна гололедица", 71: "Небольшой снег", 73: "Снег", 75: "Сильный снег", 77: "Небольшой снег", 80: "Ливень", 81: "Сильный ливень", 82: "Очень сильный ливень", 85: "Снегопад", 86: "Сильный снегопад", 95: "Гроза", 96: "Гроза с градом", 99: "Сильная гроза с градом", default: "Переменная погода" },
+  az: { 0: "Açıq", 1: "Əsasən açıq", 2: "Qismən buludlu", 3: "Tutqun", 45: "Dumanlı", 48: "Dumanlı, buzlaşma riski", 51: "Yüngül çiskin", 53: "Çiskin", 55: "Yüngül yağış", 56: "Çiskin və buzlaşma riski", 57: "Yağışlı, buzlaşma riski", 61: "Yüngül yağış", 63: "Yağışlı", 65: "Güclü yağış", 66: "Yağışlı, buzlaşma riski", 67: "Güclü yağış, buzlaşma riski", 71: "Yüngül qar", 73: "Qarlı", 75: "Güclü qar", 77: "Yüngül qar", 80: "Leysan", 81: "Güclü leysan", 82: "Şiddətli leysan", 85: "Qar leysanı", 86: "Güclü qar leysanı", 95: "Tufan", 96: "Dolulu tufan", 99: "Şiddətli dolulu tufan", default: "Dəyişkən hava" },
+  zh: { 0: "晴", 1: "晴间多云", 2: "局部多云", 3: "阴", 45: "雾", 48: "雾，路面可能结冰", 51: "小毛毛雨", 53: "毛毛雨", 55: "小雨", 56: "毛毛雨，路面可能结冰", 57: "有雨，路面可能结冰", 61: "小雨", 63: "中雨", 65: "大雨", 66: "有雨，路面可能结冰", 67: "大雨，路面可能结冰", 71: "小雪", 73: "中雪", 75: "大雪", 77: "小雪", 80: "阵雨", 81: "强阵雨", 82: "暴雨", 85: "阵雪", 86: "强阵雪", 95: "雷暴", 96: "雷暴伴有冰雹", 99: "强雷暴伴有冰雹", default: "天气多变" },
+  ja: { 0: "晴れ", 1: "おおむね晴れ", 2: "ところどころ曇り", 3: "曇り", 45: "霧", 48: "霧、路面凍結のおそれ", 51: "弱い霧雨", 53: "霧雨", 55: "小雨", 56: "霧雨、路面凍結のおそれ", 57: "雨、路面凍結のおそれ", 61: "小雨", 63: "雨", 65: "強い雨", 66: "雨、路面凍結のおそれ", 67: "強い雨、路面凍結のおそれ", 71: "小雪", 73: "雪", 75: "大雪", 77: "小雪", 80: "にわか雨", 81: "強いにわか雨", 82: "激しいにわか雨", 85: "にわか雪", 86: "強いにわか雪", 95: "雷雨", 96: "ひょうを伴う雷雨", 99: "ひょうを伴う激しい雷雨", default: "変わりやすい天気" },
+  ko: { 0: "맑음", 1: "대체로 맑음", 2: "구름 조금", 3: "흐림", 45: "안개", 48: "안개, 결빙 주의", 51: "약한 이슬비", 53: "이슬비", 55: "약한 비", 56: "이슬비, 결빙 주의", 57: "비, 결빙 주의", 61: "약한 비", 63: "비", 65: "강한 비", 66: "비, 결빙 주의", 67: "강한 비, 결빙 주의", 71: "약한 눈", 73: "눈", 75: "많은 눈", 77: "약한 눈", 80: "소나기", 81: "강한 소나기", 82: "매우 강한 소나기", 85: "눈 소나기", 86: "강한 눈 소나기", 95: "뇌우", 96: "우박을 동반한 뇌우", 99: "우박을 동반한 강한 뇌우", default: "변덕스러운 날씨" },
+  hi: { 0: "साफ़", 1: "ज़्यादातर साफ़", 2: "आंशिक बादल", 3: "बादल छाए", 45: "कोहरा", 48: "कोहरा, फिसलन का ख़तरा", 51: "हल्की फुहार", 53: "फुहार", 55: "हल्की बारिश", 56: "फुहार और फिसलन का ख़तरा", 57: "बारिश, फिसलन का ख़तरा", 61: "हल्की बारिश", 63: "बारिश", 65: "तेज़ बारिश", 66: "बारिश, फिसलन का ख़तरा", 67: "तेज़ बारिश, फिसलन का ख़तरा", 71: "हल्की बर्फ़बारी", 73: "बर्फ़बारी", 75: "भारी बर्फ़बारी", 77: "हल्की बर्फ़बारी", 80: "बौछारें", 81: "तेज़ बौछारें", 82: "बहुत तेज़ बौछारें", 85: "बर्फ़ की बौछारें", 86: "तेज़ बर्फ़ की बौछारें", 95: "आंधी-तूफ़ान", 96: "ओलों के साथ तूफ़ान", 99: "ओलों के साथ तेज़ तूफ़ान", default: "बदलता मौसम" },
 };
 
 // Collapses a WMO weather code into the handful of sky "moods" the UI animates.
@@ -245,6 +252,13 @@ const CONDITION_HEURISTIC = {
   pl: { high: 'Duża szansa na deszcz', mid: 'Możliwe częściowe zachmurzenie', low: 'Zapowiada się pogodnie i sucho' },
   ar: { high: 'احتمال كبير للمطر', mid: 'قد يكون غائمًا جزئيًا', low: 'يبدو صافيًا وجافًا' },
   de: { high: 'Hohe Regenwahrscheinlichkeit', mid: 'Möglicherweise teilweise bewölkt', low: 'Sieht klar und trocken aus' },
+  fr: { high: "Fort risque de pluie", mid: "Peut-être partiellement nuageux", low: "Temps sec et dégagé" },
+  ru: { high: "Высокая вероятность осадков", mid: "Возможна переменная облачность", low: "Похоже, будет ясно и сухо" },
+  az: { high: "Yağış ehtimalı yüksəkdir", mid: "Qismən buludlu ola bilər", low: "Açıq və quraq görünür" },
+  zh: { high: "降雨概率高", mid: "可能局部多云", low: "看起来晴朗干燥" },
+  ja: { high: "雨の可能性が高い", mid: "ところどころ曇りそう", low: "晴れて乾いた天気になりそう" },
+  ko: { high: "비 올 확률 높음", mid: "구름이 조금 낄 수 있음", low: "맑고 건조할 것 같아요" },
+  hi: { high: "बारिश की संभावना ज़्यादा", mid: "आंशिक बादल हो सकते हैं", low: "साफ़ और सूखा लग रहा है" },
 };
 
 // Builds a normalized view of the forecast for a given day offset (0 = today, 1 = tomorrow)
@@ -383,6 +397,62 @@ const EVENING = {
     wind: w => `Heute Abend frischt der Wind auf ${w} km/h auf. Nimm etwas Winddichtes mit, auch wenn es dünn ist.`,
     colder: t => `Heute Abend fühlt es sich wie ${t}° an. Nimm eine Schicht mehr mit, wenn du rausgehst.`,
     calm: 'Der Abend sieht ruhig aus, du brauchst nichts extra.',
+  },
+  fr: {
+    none: "Pas de prévision séparée pour ce soir, habille-toi selon la météo de la journée.",
+    snow: r => `Risque de neige ce soir : ${r} %. Des bottes imperméables à semelle antidérapante, c’est le plus sûr.`,
+    rain: r => `Risque de pluie ce soir : ${r} %. Prends un petit parapluie avec toi.`,
+    wind: w => `Ce soir, le vent monte à ${w} km/h. Prends quelque chose de coupe-vent, même fin.`,
+    colder: t => `Ce soir, il fera ${t}° ressentis. Prends une couche de plus en sortant.`,
+    calm: "La soirée s’annonce calme, rien de plus à prévoir.",
+  },
+  ru: {
+    none: "Отдельного прогноза на вечер нет, одевайся по дневной погоде.",
+    snow: r => `Вечером вероятность снега ${r}%. Лучше всего непромокаемые ботинки с нескользящей подошвой.`,
+    rain: r => `Вечером вероятность дождя ${r}%. Возьми с собой небольшой зонт.`,
+    wind: w => `Вечером ветер усилится до ${w} км/ч. Возьми что-нибудь непродуваемое, пусть даже тонкое.`,
+    colder: t => `Вечером будет ощущаться как ${t}°. Возьми с собой ещё один слой.`,
+    calm: "Вечер обещает быть спокойным, ничего дополнительно брать не нужно.",
+  },
+  az: {
+    none: "Axşam üçün ayrıca proqnoz yoxdur, gündüz havasına görə hazırlaşa bilərsən.",
+    snow: r => `Axşam qar ehtimalı %${r}. Sürüşməyən altlıqlı, su keçirməyən çəkmə yaxşı olar.`,
+    rain: r => `Axşam yağış ehtimalı %${r}. Yanına kiçik bir çətir götürməyi unutma.`,
+    wind: w => `Axşam külək ${w} km/saata çatır. Nazik olsa da, külək kəsən bir şey götür.`,
+    colder: t => `Axşam hiss olunan temperatur ${t}° olacaq. Çıxanda yanına əlavə bir qat götür.`,
+    calm: "Axşam hava sakitdir, əlavə bir şey götürməyə ehtiyac yoxdur.",
+  },
+  zh: {
+    none: "没有单独的晚间预报，按白天的天气穿就好。",
+    snow: r => `晚上降雪概率 ${r}%。防水、防滑鞋底的靴子最稳妥。`,
+    rain: r => `晚上降雨概率 ${r}%。记得带把小伞。`,
+    wind: w => `晚上风力增强到 ${w} km/h。带件防风的外套，薄的也行。`,
+    colder: t => `晚上体感 ${t}°。出门时多带一层。`,
+    calm: "晚上天气平稳，不用额外带东西。",
+  },
+  ja: {
+    none: "夜の予報は特にないので、日中の天気に合わせて大丈夫です。",
+    snow: r => `夜の降雪確率は ${r}%。防水で滑りにくい靴底のブーツが安心です。`,
+    rain: r => `夜の降水確率は ${r}%。小さな傘を持っていきましょう。`,
+    wind: w => `夜は風が ${w} km/h まで強まります。薄手でもいいので風を防げるものを持っていきましょう。`,
+    colder: t => `夜は体感 ${t}° になります。出かけるときは一枚多めに持っていきましょう。`,
+    calm: "夜は穏やかそうなので、特に何もいりません。",
+  },
+  ko: {
+    none: "저녁 예보가 따로 없어요. 낮 날씨에 맞춰 입으면 돼요.",
+    snow: r => `저녁 눈 올 확률 ${r}%. 미끄럼 방지 밑창의 방수 부츠가 가장 안전해요.`,
+    rain: r => `저녁 비 올 확률 ${r}%. 작은 우산을 챙기세요.`,
+    wind: w => `저녁엔 바람이 ${w} km/h까지 강해져요. 얇더라도 바람을 막아 줄 옷을 챙기세요.`,
+    colder: t => `저녁 체감 온도는 ${t}°예요. 나갈 때 한 겹 더 챙기세요.`,
+    calm: "저녁은 잔잔할 것 같아요. 따로 챙길 건 없어요.",
+  },
+  hi: {
+    none: "शाम का अलग पूर्वानुमान नहीं है, दिन के मौसम के हिसाब से तैयार हो जाओ।",
+    snow: r => `शाम को बर्फ़ की संभावना ${r}% है। फिसलन-रोधी तले वाले वॉटरप्रूफ़ बूट सबसे सुरक्षित रहेंगे।`,
+    rain: r => `शाम को बारिश की संभावना ${r}% है। एक छोटा छाता साथ रख लो।`,
+    wind: w => `शाम को हवा ${w} किमी/घं तक तेज़ हो जाएगी। कुछ हवा रोकने वाला साथ रखो, भले ही पतला हो।`,
+    colder: t => `शाम को तापमान ${t}° जैसा महसूस होगा। निकलते समय एक परत और साथ रखो।`,
+    calm: "शाम शांत लग रही है, कुछ अलग से लेने की ज़रूरत नहीं।",
   },
 };
 

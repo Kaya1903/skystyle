@@ -14,8 +14,31 @@ import ES from './outfit_text_es.js';
 import PL from './outfit_text_pl.js';
 import AR from './outfit_text_ar.js';
 import DE from './outfit_text_de.js';
+import KEYS_EN from './outfit_text_keys.js';
+import FR from './outfit_text_fr.js';
+import RU from './outfit_text_ru.js';
+import AZ from './outfit_text_az.js';
+import ZH from './outfit_text_zh.js';
+import JA from './outfit_text_ja.js';
+import KO from './outfit_text_ko.js';
+import HI from './outfit_text_hi.js';
 
-const PACKS = { es: ES, pl: PL, ar: AR, de: DE };
+// The newer packs are lists in the order of outfit_text_keys.js. Languages
+// that don't put spaces between sentences (or use their own full stop and
+// comma) also say how the joining pieces look.
+function fromList(list, joiners = {}) {
+  const dict = {};
+  KEYS_EN.forEach((k, i) => { if (typeof list[i] === 'string') dict[k] = list[i]; });
+  return Object.assign(dict, joiners);
+}
+
+const PACKS = {
+  es: ES, pl: PL, ar: AR, de: DE,
+  fr: fromList(FR), ru: fromList(RU), az: fromList(AZ), ko: fromList(KO),
+  zh: fromList(ZH, { '.': '。', ', ': '，', ' ': '' }),
+  ja: fromList(JA, { '.': '。', ', ': '、', ' ': '' }),
+  hi: fromList(HI, { '.': '।' }),
+};
 const KEYS = {};
 // '.' before ' ' so a note keeps its own leading space (" Wear thermal leggings underneath.").
 const JOINERS = ['.', ', ', ' '];

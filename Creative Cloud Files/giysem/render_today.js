@@ -8,8 +8,8 @@ import { renderLandmark } from './landmarks.js';
 import { cityLabel } from './weather.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows, wornPieces } from './visuals.js';
 
-// Turkish writes the percent sign first (%20); German and Spanish leave a space (20 %); others 20%.
-const pct = (n, lang) => (lang === 'tr' ? `%${n}` : lang === 'de' || lang === 'es' ? `${n} %` : `${n}%`);
+// Turkish and Azerbaijani write the percent sign first (%20); German, Spanish and French leave a space (20 %); others 20%.
+const pct = (n, lang) => (['tr', 'az'].includes(lang) ? `%${n}` : ['de', 'es', 'fr'].includes(lang) ? `${n} %` : `${n}%`);
 
 function cityRow(s) {
   const city = s.city;

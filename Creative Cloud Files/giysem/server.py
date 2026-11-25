@@ -60,7 +60,8 @@ def outfit_line(rows):
                      for r in (rows or [])[:8] if isinstance(r, dict))
 
 
-LANG_NAMES = {'tr': 'Turkish', 'en': 'English', 'es': 'Spanish', 'pl': 'Polish', 'ar': 'Arabic', 'de': 'German'}
+LANG_NAMES = {'tr': 'Turkish', 'en': 'English', 'es': 'Spanish', 'pl': 'Polish', 'ar': 'Arabic', 'de': 'German',
+              'fr': 'French', 'ru': 'Russian', 'az': 'Azerbaijani', 'zh': 'Simplified Chinese', 'ja': 'Japanese', 'ko': 'Korean', 'hi': 'Hindi'}
 
 ANALYZE_PROMPT = (
     'You are looking at a photo of a single clothing item. Reply with ONLY a compact '

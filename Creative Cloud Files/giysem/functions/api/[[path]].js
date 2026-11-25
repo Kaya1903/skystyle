@@ -22,7 +22,10 @@ const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const DEFAULT_MODEL = 'claude-haiku-5-5';
 const VISION_MODEL = 'claude-sonnet-5-5';
 const SYSTEM = [{ type: 'text', text: STYLIST_GUIDE, cache_control: { type: 'ephemeral' } }];
-const LANG_NAMES = { tr: 'Turkish', en: 'English', es: 'Spanish', pl: 'Polish', ar: 'Arabic', de: 'German' };
+const LANG_NAMES = {
+  tr: 'Turkish', en: 'English', es: 'Spanish', pl: 'Polish', ar: 'Arabic', de: 'German',
+  fr: 'French', ru: 'Russian', az: 'Azerbaijani', zh: 'Simplified Chinese', ja: 'Japanese', ko: 'Korean', hi: 'Hindi',
+};
 
 const ANALYZE_PROMPT =
   'You are looking at a photo of a single clothing item. Reply with ONLY a compact ' +
