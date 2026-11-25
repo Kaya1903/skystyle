@@ -1,4 +1,4 @@
-import { colorName, isValidColor } from './colors.js';
+import { colorName, isValidColor, nearestColorKey, COLORS } from './colors.js';
 import { setSky } from './sky.js';
 import { unlockSound, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
 import { skyKind } from './weather.js';
@@ -7,7 +7,7 @@ import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, init
 import { generateOutfit } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile, comfortOffset } from './profile.js';
-import { getSmartTip, askOutfitChange } from './ai.js';
+import { getSmartTip, askOutfitChange, askStylist } from './ai.js';
 import { loadFeedback, saveFeedback, markWorn, unmarkWorn, answerDay, clearLearning, pendingQuestion, learnedOffset, findMemory, learningSummary } from './feedback.js';
 import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
 import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
@@ -72,6 +72,8 @@ export const state = {
   profileNameError: false,
   toast: null,
   smartTip: null,
+  // The AI stylist's pick for today: { key, status: 'loading' | 'done' | 'error', roll, colors, note }.
+  stylist: null,
   smartTipLoading: false,
   smartTipKey: null,
   avatarPickerOpen: false,
@@ -86,6 +88,7 @@ export const state = {
 
 let toastTimer = null;
 const SMART_TIP_CACHE_KEY = 'giysem_smart_tip_v1';
+const STYLIST_CACHE_KEY = 'giysem_stylist_v1';
 const WEEK_TIP_CACHE_KEY = 'giysem_week_tip_v1';
 
 const screenEl = document.getElementById('screen');
@@ -704,32 +707,158 @@ export function resetProfile() {
 
 // ---------------- Render orchestration ----------------
 
-function computeOutfitFor(dayOffset) {
-  if (!state.forecastRaw) return null;
-  const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
-  const today = dayOffset === 0 ? dayView.date : buildDayView(state.forecastRaw, 0, state.lang).date;
-  // What we learned from this person's answers on days like this one.
+// Everything generateOutfit needs for a day, apart from the user's own changes.
+function outfitParams(dayView, dayOffset, adjust, lang = state.lang) {
   const learned = learnedOffset(state.feedback, dayView.hero.feelsLike, dayView.hero.wind, dayView.date);
   const memory = findMemory(state.feedback, dayView.hero.feelsLike, dayView.date);
-  // The user's own changes apply to today's outfit only. "Warmer" = dress for 3° colder.
-  const adjust = dayOffset === 0 ? todaysAdjust(dayView.date) : null;
   // From 18:00 local time there's no sun left to dress for. A day already
   // marked "I'm wearing this" keeps its outfit as it was.
   const nowIso = state.forecastRaw.current && state.forecastRaw.current.time;
   const hour = nowIso ? parseInt(nowIso.slice(11, 13), 10) : new Date().getHours();
   const late = dayOffset === 0 && hour >= 18 && !state.feedback.days[dayView.date];
-  const outfit = generateOutfit(
-    { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang: state.lang,
+  return {
+    memory,
+    params: { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang,
       comfort: comfortOffset(state.profile) + learned, shift: -3 * (adjust ? adjust.warmth : 0),
       vibe: (adjust && adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'), seed: dayView.date, kind: dayView.hero.kind,
       wardrobeOnly: state.wardrobeMode === 'mine', memory: memory ? memory.answer : null, adjust, late, uv: dayView.uvMax },
-    outfitWardrobe(),
-    dayOffset === 0 ? state.outfitLocks : {}
-  );
+  };
+}
+
+function computeOutfitFor(dayOffset) {
+  if (!state.forecastRaw) return null;
+  const dayView = buildDayView(state.forecastRaw, dayOffset, state.lang);
+  const today = dayOffset === 0 ? dayView.date : buildDayView(state.forecastRaw, 0, state.lang).date;
+  // The user's own changes apply to today's outfit only. "Warmer" = dress for 3° colder.
+  const adjust = dayOffset === 0 ? todaysAdjust(dayView.date) : null;
+  const locks = dayOffset === 0 ? state.outfitLocks : {};
+  const { memory, params } = outfitParams(dayView, dayOffset, adjust);
+  // Today, unless the user is steering the outfit themselves, the AI stylist
+  // picks among a few weather-safe versions and may recolor suggested pieces.
+  const steering = !!adjust || Object.keys(locks).length > 0;
+  const stylist = dayOffset === 0 && !steering ? stylistFor(dayView) : null;
+  let outfit;
+  if (stylist && stylist.status === 'done') {
+    outfit = applyStylist(generateOutfit({ ...params, adjust: { reroll: stylist.roll } }, outfitWardrobe(), locks), stylist);
+  } else {
+    outfit = generateOutfit(params, outfitWardrobe(), locks);
+  }
   const tip = eveningTip(dayView, state.lang);
   const worn = dayOffset === 0 ? state.feedback.days[dayView.date] || null : null;
   const pending = dayOffset === 0 ? pendingQuestion(state.feedback, today) : null;
-  return { dayView, outfit, tip, today, memory, worn, pending, adjust };
+  return { dayView, outfit, tip, today, memory, worn, pending, adjust, stylistPending: !!stylist && stylist.status === 'loading' };
+}
+
+// ---------------- AI stylist ----------------
+
+// Garment-friendly tones for the stylist's color names (softer than the swatches).
+const STYLIST_HEX = {
+  siyah: '#23262d', beyaz: '#f4f2ee', gri: '#8a8f96', lacivert: '#2f3e5e', bej: '#d9c7a7', kahve: '#6b4a32',
+  denim: '#3f6496', haki: '#6f6f47', yesil: '#4e7a5a', mavi: '#5b8fc9', kirmizi: '#c0453b', bordo: '#7a2e3b',
+  pembe: '#e8a7b8', mor: '#7a5a9e', sari: '#e8c45a', turuncu: '#e07a3f',
+};
+const EN_TO_KEY = Object.fromEntries(Object.keys(COLORS).map(k => [colorName(k, 'en').toLowerCase(), k]));
+
+// Up to six different weather-safe versions of today's outfit (in English for the AI),
+// each with the roll that reproduces it in any language.
+function stylistCandidates(dayView) {
+  const { params } = outfitParams(dayView, 0, null, 'en');
+  const seen = new Set();
+  const out = [];
+  for (let roll = 0; roll < 10 && out.length < 6; roll++) {
+    const o = generateOutfit({ ...params, adjust: roll ? { reroll: roll } : null }, outfitWardrobe(), {});
+    const sig = o.rows.map(r => `${r.slotKey}:${r.item}`).join('|');
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    out.push({
+      roll,
+      rows: o.rows.map(r => {
+        const hex = r.color || (r.look && r.look.color);
+        return {
+          slot: r.slotKey, item: r.item, kind: r.art, owned: !!r.fromWardrobe, colorRule: r.colorRule || 'free',
+          color: (r.fromWardrobe || r.colorRule === 'fixed') && hex ? colorName(nearestColorKey(hex), 'en').toLowerCase() : null,
+        };
+      }),
+    });
+  }
+  return out;
+}
+
+function loadStylistCache() {
+  try { return JSON.parse(localStorage.getItem(STYLIST_CACHE_KEY) || '{}'); } catch { return {}; }
+}
+function rememberStylist(key, value) {
+  try {
+    const cache = loadStylistCache();
+    cache[key] = value;
+    const keys = Object.keys(cache);
+    while (keys.length > 12) delete cache[keys.shift()];
+    localStorage.setItem(STYLIST_CACHE_KEY, JSON.stringify(cache));
+  } catch { /* a convenience */ }
+}
+
+// Today's stylist state for exactly these options. Starts the request when the
+// options change (new day, city, weather, wardrobe, style); cached for the day.
+function stylistFor(dayView) {
+  const cands = stylistCandidates(dayView);
+  if (cands.length < 2) return null; // nothing to choose between
+  const key = [dayView.date, state.city ? state.city.name : '', state.lang, hashText(JSON.stringify(cands))].join('|');
+  if (state.stylist && state.stylist.key === key) return state.stylist;
+  const cached = loadStylistCache()[key];
+  if (cached) { state.stylist = { key, status: 'done', ...cached }; return state.stylist; }
+  state.stylist = { key, status: 'loading' };
+  const recent = Object.entries(state.feedback.days || {})
+    .filter(([d, v]) => d < dayView.date && v && Array.isArray(v.rows))
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, 5)
+    .map(([d, v]) => `${d}: ${v.rows.map(r => `${r.item}${r.color ? ` (${colorName(nearestColorKey(r.color), 'en').toLowerCase()})` : ''}`).join(', ')}`);
+  const vibe = state.profile ? state.profile.styleVibe || 'casual' : 'casual';
+  askStylist({
+    lang: state.lang,
+    weather: { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rain: dayView.maxRainToday, uv: dayView.uvMax, sky: dayView.hero.kind,
+      evening: eveningTip(dayView, 'en'), late: outfitParams(dayView, 0, null).params.late },
+    person: { gender: state.gender || 'unisex', styleVibe: vibe, ...aiPersonal() },
+    recent,
+    candidates: cands.map(c => ({ rows: c.rows })),
+  }).then(res => {
+    if (!state.stylist || state.stylist.key !== key) return;
+    const pick = Number(res && res.pick);
+    if (!Number.isInteger(pick) || !cands[pick]) throw new Error('bad pick');
+    const colors = {};
+    for (const [slot, name] of Object.entries((res && res.colors) || {})) {
+      const k = EN_TO_KEY[String(name).toLowerCase().trim()];
+      if (k) colors[slot] = k;
+    }
+    const note = typeof res.note === 'string' ? res.note.replace(/[–—]/g, ',').trim().slice(0, 280) : '';
+    const value = { roll: cands[pick].roll, colors, note };
+    rememberStylist(key, value);
+    state.stylist = { key, status: 'done', ...value };
+    state.swappedSlot = 'all';
+    state.quietRender = true;
+    render();
+  }).catch(() => {
+    if (!state.stylist || state.stylist.key !== key) return;
+    state.stylist = { key, status: 'error' };
+    render();
+  });
+  return state.stylist;
+}
+
+// Applies the stylist's colors to suggested pieces whose color isn't fixed by their name.
+function applyStylist(outfit, st) {
+  const rows = outfit.rows.map(r => {
+    const k = st.colors && st.colors[r.slotKey];
+    if (!k || r.fromWardrobe || r.colorRule === 'fixed' || !STYLIST_HEX[k]) return r;
+    if (r.colorRule === 'accent' && COLORS[k].neutral) return r;
+    if (['sunglasses', 'catglasses'].includes(r.art)) return r;
+    return { ...r, look: { ...r.look, color: STYLIST_HEX[k] } };
+  });
+  return { ...outfit, rows, stylistNote: st.note || '' };
+}
+
+function hashText(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(36);
 }
 
 // ---------------- Outfit feedback (feedback.js) ----------------
@@ -1036,7 +1165,8 @@ export function render() {
   withFocusPreserved(screenEl, () => {
     if (state.activeTab === 'today') {
       const data = computeOutfitFor(0);
-      if (data) ensureSmartTip(data.dayView, data.outfit);
+      // The day's note talks about the outfit, so it waits for the stylist's pick.
+      if (data && !data.stylistPending) ensureSmartTip(data.dayView, data.outfit);
       screenEl.innerHTML = renderTodayScreen({ dayOffset: 0, state, data });
       attachTodayHandlers(screenEl);
     } else if (state.activeTab === 'week') {

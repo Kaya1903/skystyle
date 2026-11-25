@@ -726,6 +726,14 @@ p { margin: 0; }
 .memory-note { display: flex; gap: 10px; align-items: flex-start; margin: 8px 6px 4px; padding: 12px 14px; border-radius: 16px;
   background: linear-gradient(120deg, rgba(255, 209, 102, 0.25), rgba(255, 111, 125, 0.18)); color: var(--ink); font-size: 13.5px; line-height: 1.45; font-weight: 600; }
 .memory-note svg { width: 18px; height: 18px; flex-shrink: 0; color: #e8742f; margin-top: 1px; }
+.stylist-note { display: flex; gap: 10px; align-items: flex-start; margin: 8px 6px 4px; padding: 12px 14px; border-radius: 16px;
+  background: linear-gradient(120deg, rgba(122, 90, 158, 0.16), rgba(91, 143, 201, 0.16)); color: var(--ink); font-size: 13.5px; line-height: 1.45; font-weight: 600; }
+.stylist-note svg { width: 18px; height: 18px; flex-shrink: 0; color: #7a5a9e; margin-top: 1px; }
+.stylist-title { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #7a5a9e; margin-bottom: 2px; }
+.stylist-note.is-loading { align-items: center; font-weight: 600; color: var(--ink-soft); background: rgba(122, 90, 158, 0.08); }
+.stylist-dot { width: 8px; height: 8px; border-radius: 50%; background: #7a5a9e; flex-shrink: 0; animation: stylistPulse 1.2s ease-in-out infinite; }
+@keyframes stylistPulse { 0%, 100% { opacity: 0.35; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .stylist-dot { animation: none; } }
 .fb-card { border-radius: var(--radius-lg); padding: 18px; margin-bottom: 16px; }
 .fb-q { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.35; color: var(--ink); margin-bottom: 14px; }
 .fb-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

@@ -39,3 +39,18 @@ export async function askOutfitChange(context) {
   }
   return res.json();
 }
+
+// The AI stylist: picks the best of a few weather-safe outfits, may choose colors
+// for suggested pieces and writes a short styling note ({ pick, colors, note }).
+export async function askStylist(context) {
+  const res = await fetch('/api/stylist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(context),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Stylist request failed');
+  }
+  return res.json();
+}

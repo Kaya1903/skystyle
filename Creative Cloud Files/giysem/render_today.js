@@ -151,6 +151,7 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
     <div class="outfit-layout">
       <div class="board-col">${boardCard(outfit, s)}</div>
       <div class="glass pieces-card rise-in" style="animation-delay:340ms">
+        ${stylistNote(outfit, fb, s)}
         ${memoryNote(fb, s)}
         ${outfit.rows.map((row, i) => `
           <article class="piece-row ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey || s.swappedSlot === 'all' ? 'swapped' : ''}" style="--stag:${s.swappedSlot === 'all' ? i : 0}">
@@ -180,6 +181,14 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
       </div>
     </div>
   `;
+}
+
+// The AI stylist's short note on today's pick (or a quiet line while it looks).
+function stylistNote(outfit, fb, s) {
+  if (fb.stylistPending) return `<div class="stylist-note is-loading"><span class="stylist-dot"></span><span>${t(s.lang, 'stylist_loading')}</span></div>`;
+  if (!outfit.stylistNote) return '';
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return `<div class="stylist-note">${SPARKLE}<div><div class="stylist-title">${t(s.lang, 'stylist_title')}</div><div>${esc(outfit.stylistNote)}</div></div></div>`;
 }
 
 // "Last Tuesday felt like today and you were cold": why today's outfit is warmer/lighter.
@@ -318,8 +327,8 @@ export function renderTodayScreen({ dayOffset, state: s, data }) {
   if (!data) {
     return `${brandHeader(s)}<div class="state-msg">${t(s.lang, 'loading_data')}</div>`;
   }
-  const { dayView, outfit, tip, memory, worn, pending, today, adjust } = data;
-  const fb = { memory, worn, wornSame: !!worn && sameOutfit(worn.rows, outfit.rows), isToday: dayOffset === 0, date: dayView.date, adjust };
+  const { dayView, outfit, tip, memory, worn, pending, today, adjust, stylistPending } = data;
+  const fb = { memory, worn, wornSame: !!worn && sameOutfit(worn.rows, outfit.rows), isToday: dayOffset === 0, date: dayView.date, adjust, stylistPending };
   const kombinLabel = dayOffset === 0 ? t(s.lang, 'kombin_bugun') : t(s.lang, 'kombin_yarin');
   return `
     ${brandHeader(s)}

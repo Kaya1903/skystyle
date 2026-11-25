@@ -374,6 +374,26 @@ const GENDER_PALETTE = {
   },
 };
 const GLASSES = ['sunglasses', 'catglasses'];
+// Color words in Turkish and English item names (the stylist keeps these colors).
+const COLOR_WORD = /siyah|beyaz|gri\b|lacivert|\bbej\b|kahve|haki|yeşil|mavi|kırmızı|bordo|pembe|\bmor\b|sarı|turuncu|krem|pastel|açık renk|koyu renk|\bblack|\bwhite|\bgr[ae]y\b|\bnavy|\bbeige|\bbrown|khaki|\bgreen|\bblue|\bred\b|burgundy|\bpink|purple|yellow|orange|cream|light-colored|dark|denim|\bkot\b/i;
+const ACCENT_WORD = /renkli|canlı|colorful|bright/i;
+// The first color an item's text names, as a garment tone. "Dark"/"light" on
+// jeans mean dark or light denim; on anything else a deep or a pale neutral.
+const TEXT_COLORS = [
+  [/siyah|\bblack/i, '#23262d'], [/beyaz|\bwhite/i, '#f4f2ee'], [/\bgri\b|\bgr[ae]y\b/i, '#8a8f96'],
+  [/lacivert|\bnavy/i, '#2f3e5e'], [/\bbej\b|\bbeige|krem|cream/i, '#e9dccb'], [/kahve|\bbrown/i, '#6b4a32'],
+  [/haki|khaki/i, '#6f6f47'], [/yeşil|\bgreen/i, '#4e7a5a'], [/mavi|\bblue/i, '#5b8fc9'], [/kırmızı|\bred\b/i, '#c0453b'],
+  [/bordo|burgundy/i, '#7a2e3b'], [/pembe|\bpink/i, '#e8a7b8'], [/\bmor\b|purple/i, '#7a5a9e'], [/sarı|yellow/i, '#e8c45a'],
+  [/turuncu|orange/i, '#e07a3f'], [/pastel/i, '#cfe0ee'],
+];
+function namedColor(text, art) {
+  const t = String(text || '');
+  if (/koyu renk|\bdark/i.test(t)) return art === 'jeans' ? '#2a3a5a' : null;
+  if (/açık renk|light-colored|\blight (?:wash|jeans)/i.test(t)) return art === 'jeans' ? '#8fb3d9' : '#efe6da';
+  let best = null, pos = Infinity;
+  for (const [re, hex] of TEXT_COLORS) { const m = t.match(re); if (m && m.index < pos) { pos = m.index; best = hex; } }
+  return best;
+}
 
 function hashStr(str) {
   let h = 2166136261;
@@ -732,6 +752,14 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     if (!match && adj.tone && !GLASSES.includes(look.art)) look.color = toneColor(adj.tone, look.color || garmentDefaultColor(look.art), pal, colorHash);
     // Glasses follow the weather: light frame and warm tint in the heat, dark otherwise.
     if (GLASSES.includes(look.art)) look = { ...look, lens: WARM_BANDS.includes(bandKey) && bandKey !== 'ilik' ? 'light' : 'dark' };
+    // Whether a stylist may recolor a suggested piece: not when the text names its
+    // color ("white linen shirt"), only a bright color when it says "colorful".
+    const colorRule = match ? 'fixed' : COLOR_WORD.test(item) ? 'fixed' : ACCENT_WORD.test(item) ? 'accent' : 'free';
+    // A suggestion that names its color is drawn in that color ("Beyaz ince tişört", "Koyu renk kot").
+    if (!match && colorRule === 'fixed' && !GLASSES.includes(look.art)) {
+      const named = namedColor(item, look.art);
+      if (named) look = { ...look, color: named };
+    }
     // A suggested accessory row can name two things ("sunglasses and a straw hat"): draw both.
     if (key === 'yanina' && !match) {
       const g = GENDER_ART[genderKey] || {};
@@ -746,7 +774,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     // "Feels like {t}°." opening (that stays on the first row).
     if (r.stripLead) reason = reason.replace(/^[^.]*\{t\}°\.\s*/, '');
     reason = fillTemplate(reason, ctx);
-    output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, outLang), item, reason, fromWardrobe, color, patterned, itemId, options, locked: !!(match && locks[key] === match.id), swappable: !match && !!r.swappable });
+    output.push({ slotKey: key, art, look, icon: SLOT_ICON[key], label: slotLabel(key, outLang), item, reason, fromWardrobe, color, patterned, itemId, options, colorRule, locked: !!(match && locks[key] === match.id), swappable: !match && !!r.swappable });
   }
 
   const labelKey = coldWeather >= 2 ? 'extreme_cold' : coldWeather === 1 ? 'very_cold' : feltWeather >= 35 ? 'extreme_hot' : getBand(feltWeather);
