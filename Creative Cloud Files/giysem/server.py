@@ -118,11 +118,34 @@ def extract_text(result):
 
 
 def extract_json_object(text):
-    """Pulls the JSON object out of a reply even if it came wrapped in prose or fences."""
-    start, end = text.find('{'), text.rfind('}')
-    if start == -1 or end <= start:
-        raise ValueError('no JSON object in model reply')
-    return json.loads(text[start:end + 1])
+    """Pulls the JSON object out of a reply even if it came wrapped in prose or fences.
+    If the model wrote more than one object (a draft and a corrected one), the last complete one wins."""
+    objects, depth, start, in_str, esc = [], 0, -1, False, False
+    for i, c in enumerate(text):
+        if in_str:
+            if esc:
+                esc = False
+            elif c == '\\':
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == '{':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif c == '}' and depth > 0:
+            depth -= 1
+            if depth == 0:
+                objects.append(text[start:i + 1])
+    for chunk in reversed(objects):
+        try:
+            return json.loads(chunk)
+        except ValueError:
+            continue
+    raise ValueError('no JSON object in model reply')
 
 
 # Only the app's own front-end files are served: the root page and top-level

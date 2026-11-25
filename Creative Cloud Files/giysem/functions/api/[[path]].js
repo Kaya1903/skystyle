@@ -79,11 +79,22 @@ function extractText(result) {
 }
 
 // Pulls the JSON object out of a reply even if it came wrapped in prose or fences.
+// If the model wrote more than one object (a draft and a corrected one), the last
+// complete one wins.
 function extractJsonObject(text) {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end <= start) throw new Error('no JSON object in model reply');
-  return JSON.parse(text.slice(start, end + 1));
+  const objects = [];
+  let depth = 0, start = -1, inStr = false, esc = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') { if (depth === 0) start = i; depth++; }
+    else if (c === '}' && depth > 0) { depth--; if (depth === 0) objects.push(text.slice(start, i + 1)); }
+  }
+  for (let i = objects.length - 1; i >= 0; i--) {
+    try { return JSON.parse(objects[i]); } catch { /* try the one before */ }
+  }
+  throw new Error('no JSON object in model reply');
 }
 
 class UpstreamError extends Error {

@@ -776,12 +776,18 @@ function stylistCandidates(dayView) {
         const hex = r.color || (r.look && r.look.color);
         return {
           slot: r.slotKey, item: r.item, kind: r.art, owned: !!r.fromWardrobe, colorRule: r.colorRule || 'free',
-          color: (r.fromWardrobe || r.colorRule === 'fixed') && hex ? colorName(nearestColorKey(hex), 'en').toLowerCase() : null,
+          color: (r.fromWardrobe || r.colorRule === 'fixed') && hex ? colorName(ownColorKey(r) || nearestColorKey(hex), 'en').toLowerCase() : null,
         };
       }),
     });
   }
   return out;
+}
+
+// An owned piece's color as the user saved it (the photo's exact shade can sit between swatches).
+function ownColorKey(row) {
+  const item = row.fromWardrobe && row.itemId ? state.wardrobe.find(i => i.id === row.itemId) : null;
+  return item && isValidColor(item.color) ? item.color : null;
 }
 
 function loadStylistCache() {
