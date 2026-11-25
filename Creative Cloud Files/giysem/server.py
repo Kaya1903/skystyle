@@ -151,7 +151,7 @@ def extract_json_object(text):
 # Only the app's own front-end files are served: the root page and top-level
 # .html/.css/.js files. Everything else in the folder (this server's source,
 # dotfiles, spreadsheets, directory listings) gets a 404.
-PUBLIC_FILE = re.compile(r'^/[A-Za-z0-9_-]+\.(?:html|css|js|png|jpg)$')
+PUBLIC_FILE = re.compile(r'^/[A-Za-z0-9_-]+\.(?:html|css|js|png|jpg|webmanifest)$')
 PRIVATE_FILES = {'/server.py'}
 
 
@@ -222,6 +222,8 @@ def stylist_prompt(body):
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map, '.webmanifest': 'application/manifest+json'}
+
     def _site_authorized(self):
         if not SITE_PASSWORD:
             return True

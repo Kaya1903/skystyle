@@ -13,8 +13,8 @@ for f in *.css *.js; do
   esac
   cp "$f" dist/
 done
-# Images the page itself uses: link preview and icons.
-for f in og-image.jpg apple-touch-icon.png favicon.png; do
+# Images and files the page itself uses: link preview, icons and the install manifest.
+for f in og-image.jpg apple-touch-icon.png favicon.png icon-192.png icon-512.png manifest.webmanifest; do
   [ -f "$f" ] && cp "$f" dist/
 done
 cp cloudflare/_headers dist/_headers

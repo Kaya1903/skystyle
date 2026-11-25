@@ -1,4 +1,5 @@
 import { icons } from './icons.js';
+import { installCard, attachInstallHandlers } from './install.js';
 import { t } from './i18n.js';
 import { avatarBackground, avatarContent, AVATARS, AVATAR_KEYS, STYLE_VIBES } from './profile.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
@@ -106,6 +107,7 @@ export function renderProfileScreen(s) {
       <div class="profile-hero-sub">${icons.location}${escapeHtml(cityLabel)} · ${t(s.lang, 'style_' + (profile.styleVibe || 'casual'))}</div>
     </div>
     ${avatarPicker(s)}
+    ${installCard(s)}
 
     <div class="profile-grid">
       <div class="profile-col">
@@ -272,6 +274,7 @@ function escapeHtml(str) {
 }
 
 export function attachProfileHandlers(root) {
+  attachInstallHandlers(root);
   attachHeaderHandlers(root);
 
   root.querySelectorAll('[data-gender]').forEach(btn => {

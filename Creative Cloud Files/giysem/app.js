@@ -15,6 +15,7 @@ import { renderWeekScreen, attachWeekHandlers, updateWeekTipRow } from './render
 import { renderProfileScreen, attachProfileHandlers } from './render_profile.js';
 import { renderCitySheet, attachCitySheetHandlers, refreshCityBody } from './render_city.js';
 import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboarding.js';
+import { initInstall } from './install.js';
 
 const CITY_KEY = 'giysem_city_v1';
 const LANG_KEY = 'giysem_lang_v1';
@@ -1262,3 +1263,5 @@ if (state.screen === 'app') {
 }
 render();
 hydratePhotos();
+// Installable app: service worker, and the install card follows the browser's prompt.
+initInstall(() => { state.quietRender = true; render(); });

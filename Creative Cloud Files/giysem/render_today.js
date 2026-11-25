@@ -1,4 +1,5 @@
 import { icons } from './icons.js';
+import { installCard, attachInstallHandlers } from './install.js';
 import { t } from './i18n.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { state, switchTab, setGender, setWardrobeMode, toggleModeMenu, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
@@ -334,6 +335,7 @@ export function renderTodayScreen({ dayOffset, state: s, data }) {
   const kombinLabel = dayOffset === 0 ? t(s.lang, 'kombin_bugun') : t(s.lang, 'kombin_yarin');
   return `
     ${brandHeader(s)}
+    ${dayOffset === 0 ? installCard(s, { banner: true }) : ''}
     <div class="today-layout" style="--band-color:var(--band-${outfit.bandKey});--band-soft:var(--band-${outfit.bandKey}-soft);">
       <div class="today-top">
         ${heroSection(dayView, s)}
@@ -372,6 +374,7 @@ function animateCounts(root) {
 }
 
 export function attachTodayHandlers(root) {
+  attachInstallHandlers(root);
   attachHeaderHandlers(root);
   root.querySelectorAll('[data-gender]').forEach(btn => {
     btn.addEventListener('click', () => setGender(btn.dataset.gender));

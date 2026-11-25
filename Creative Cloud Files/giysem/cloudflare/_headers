@@ -2,3 +2,6 @@
 # deploy never mixes cached old JS modules with new ones (same as server.py).
 /*
   Cache-Control: no-cache
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
