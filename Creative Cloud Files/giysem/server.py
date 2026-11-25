@@ -213,11 +213,11 @@ def stylist_prompt(body):
         + f'from this list only: {PALETTE_NAMES}. Build one clear color idea with the pieces whose colors are already set (their own pieces and colors named in the text). '
         + 'A row marked "accent" must get a non-neutral color. Shoes and accessories should finish the look. '
         + 'Reply with ONLY a compact JSON object (no prose, no code fences): '
-        + '{"pick": the outfit number, "colors": {"slot code": "color name", ...} for the rows whose color you choose, '
+        + '{"pick": the outfit number, "colors": {"slot code": "color name", ...} for the rows whose color you choose, where each key is the slot code at the start of the row (ust, ustune, dis, alt, ayak or yanina), never the kind in brackets, '
         + f'"note": one or two short sentences in {lang_name} that tell the person the styling idea of this outfit and one small trick to wear it well '
         + '(for example how the colors work together, what to tuck or roll, which piece is the star). '
         + 'Speak about the outfit, never list every piece, never mention other options, outfit numbers, temperatures, percentages or other numbers. '
-        + 'Never use em dashes or en dashes in the note.}'
+        + 'Never use em dashes or en dashes in the note. Check the spelling of every word in the note before you answer.}'
     )
 
 

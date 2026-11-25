@@ -834,9 +834,12 @@ function stylistFor(dayView) {
     const pick = Number(res && res.pick);
     if (!Number.isInteger(pick) || !cands[pick]) throw new Error('bad pick');
     const colors = {};
-    for (const [slot, name] of Object.entries((res && res.colors) || {})) {
+    const chosenRows = cands[pick].rows;
+    for (const [key, name] of Object.entries((res && res.colors) || {})) {
       const k = EN_TO_KEY[String(name).toLowerCase().trim()];
-      if (k) colors[slot] = k;
+      // Keys are slot codes; now and then the model uses the piece's kind instead.
+      const row = chosenRows.find(r => r.slot === key) || chosenRows.find(r => r.kind === key);
+      if (k && row) colors[row.slot] = k;
     }
     const note = typeof res.note === 'string' ? res.note.replace(/[–—]/g, ',').trim().slice(0, 280) : '';
     const value = { roll: cands[pick].roll, colors, note };
