@@ -5,7 +5,7 @@ import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { analyzePhoto } from './ai.js';
 import { COLORS, COLOR_KEYS, colorName, isValidColor, nearestColorKey } from './colors.js';
 import { garmentArt, itemLook, STYLE_OPTIONS, PATTERN_TYPES, DETAIL_KEYS, styleLabel } from './visuals.js';
-import { photoColors } from './wardrobe.js';
+import { photoColors, cropPrint, validPrintBox } from './wardrobe.js';
 import {
   state, openEditor, closeEditor, saveWardrobeItem, deleteWardrobeItem,
   setWardrobeFilter, setWardrobeSearch, newItemId, resizePhoto,
@@ -336,6 +336,15 @@ export function attachEditorHandlers(root) {
       draftItem.patternType = btn.dataset.patternType;
       draftItem.pattern = draftItem.patternType === 'solid' ? 'duz' : 'desenli';
       rerenderEditor(root);
+      // Picked "print" by hand: cut the graphic out of the photo for the drawing.
+      if (draftItem.patternType === 'print' && draftItem.photo && !draftItem.printImg) {
+        const item = draftItem;
+        cropPrint(item.photo, item.printBox).then(img => {
+          if (!img || draftItem !== item) return;
+          item.printImg = img;
+          rerenderEditor(root);
+        });
+      }
     });
   });
   root.querySelectorAll('[data-detail]').forEach(btn => {
@@ -368,6 +377,8 @@ export function attachEditorHandlers(root) {
       draftPhotoPending = true;
       const dataUrl = await resizePhoto(file);
       itemAtSelection.photo = dataUrl;
+      itemAtSelection.printImg = null;
+      itemAtSelection.printBox = null;
       draftPhotoPending = false;
       draftAiState = 'loading';
       rerenderEditor(root);
@@ -383,12 +394,20 @@ export function attachEditorHandlers(root) {
         if (typeof suggestion.rainOk === 'boolean') draftItem.rainOk = suggestion.rainOk;
         if (typeof suggestion.windproof === 'boolean') draftItem.windproof = suggestion.windproof;
         applySuggestion(draftItem, suggestion, measured);
+        draftItem.printBox = validPrintBox(suggestion.printBox);
+        if (draftItem.patternType === 'print') {
+          const img = await cropPrint(dataUrl, draftItem.printBox);
+          if (draftItem !== itemAtSelection) return;
+          draftItem.printImg = img;
+        }
         draftAiState = 'done';
       } catch (err) {
         console.error('[SkyStyle] AI photo analysis failed:', err.message || err);
         if (draftItem !== itemAtSelection) return;
         // Even without the AI, the photo's own colors are still useful.
         applySuggestion(draftItem, {}, await colorsPromise);
+        if (draftItem.patternType === 'print') draftItem.printImg = await cropPrint(dataUrl, null);
+        if (draftItem !== itemAtSelection) return;
         draftAiState = 'error';
       }
       rerenderEditor(root);

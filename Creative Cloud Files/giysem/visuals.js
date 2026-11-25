@@ -433,7 +433,8 @@ export function itemLook(item) {
   const color = item.hex || (isValidColor(item.color) ? COLORS[item.color].hex : null);
   const color2 = item.hex2 || (isValidColor(item.color2) ? COLORS[item.color2].hex : null);
   const patternType = PATTERN_TYPES.includes(item.patternType) ? item.patternType : (item.pattern === 'desenli' ? 'stripes' : 'solid');
-  return { art, color, color2, patternType, details: item.details || {} };
+  const printImg = patternType === 'print' && typeof item.printImg === 'string' && item.printImg.startsWith('data:image/') ? item.printImg : null;
+  return { art, color, color2, patternType, details: item.details || {}, printImg };
 }
 
 function patternDefs(id, type, fill, c2) {
@@ -483,6 +484,27 @@ export function wornPieces(rows, withNames = false) {
     <span class="worn-piece" title="${esc(r.item)}">${garmentArt(r.art, r.color || null, r.look || {}, 'flat')}${withNames ? `<span class="worn-name">${esc(r.item)}</span>` : ''}</span>`).join('')}</div>`;
 }
 
+// The front graphic of a printed top. With the item's own print (cut from its
+// photo) it is laid on the chest and clipped to the garment's outline; without
+// one we draw a simple graphic panel in the print's colors.
+function printArt(id, body, zone, img, fill, c2, dark, light) {
+  const top = zone.neck + (zone.open ? 4 : 6);
+  const h = Math.min(50, zone.bottom - top - 10);
+  const w = zone.open ? 0 : 46;
+  if (!w || h < 16) return '';
+  const x = 60 - w / 2;
+  if (typeof img === 'string' && img.startsWith('data:image/')) {
+    return `<clipPath id="${id}p"><path d="${body}"/></clipPath>
+      <image href="${img}" x="${x}" y="${top}" width="${w}" height="${h}" preserveAspectRatio="xMidYMin meet" clip-path="url(#${id}p)"/>`;
+  }
+  const panel = c2 || light;
+  const ink = isLight(panel) ? dark : shade(fill, 0.7);
+  const pw = 34, ph = Math.min(34, h), px = 60 - pw / 2, py = top + 2;
+  return `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="5" fill="${panel}" stroke="${dark}" stroke-width="1.2"/>
+    <circle cx="60" cy="${py + ph * 0.38}" r="${ph * 0.17}" fill="${ink}" opacity=".85"/>
+    <path d="M${px + 7} ${py + ph * 0.7} h${pw - 14} M${px + 11} ${py + ph * 0.84} h${pw - 22}" stroke="${ink}" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>`;
+}
+
 export function garmentArt(kind, color, opts = {}, extraClass = '') {
   if (typeof opts === 'boolean') opts = { patternType: opts ? 'stripes' : 'solid' };
   const name = GARMENTS[kind] || kind === 'chinos' ? kind : (CATEGORY_DEFAULT[kind] || 'tee');
@@ -503,9 +525,7 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
   const detail = g.detail.replaceAll('{D}', dark).replaceAll('{L}', light).replaceAll('{LENS}', `url(#${id}l)`);
   const over = detailOverlays(name, opts.details || {}, fill, c2, dark, light);
   const zone = ZONES[name];
-  const print = type === 'print' && zone
-    ? `<circle cx="60" cy="${(zone.neck + zone.bottom) / 2}" r="11" fill="${c2 || light}" stroke="${dark}" stroke-width="1.5"/><path d="M53 ${(zone.neck + zone.bottom) / 2} h14 M60 ${(zone.neck + zone.bottom) / 2 - 7} v14" stroke="${dark}" stroke-width="2" stroke-linecap="round"/>`
-    : '';
+  const print = type === 'print' && zone ? printArt(id, g.body, zone, opts.printImg, fill, c2, dark, light) : '';
   return `
     <svg class="garment ${extraClass}" viewBox="0 0 120 120" aria-hidden="true">
       ${defs ? `<defs>${defs}</defs>` : ''}

@@ -155,6 +155,36 @@ export function resizePhoto(file, maxDim = 480) {
   });
 }
 
+// The front graphic of a printed piece, cut out of its photo as a small image
+// for the drawing. `box` is [left, top, width, height] as fractions of the photo
+// (from the AI); without a usable one we take the middle of the photo, where a
+// tee's print usually sits.
+export const DEFAULT_PRINT_BOX = [0.22, 0.2, 0.56, 0.56];
+export function validPrintBox(box) {
+  if (!Array.isArray(box) || box.length !== 4 || !box.every(n => typeof n === 'number' && isFinite(n))) return null;
+  let [x, y, w, h] = box;
+  x = Math.min(Math.max(x, 0), 0.95); y = Math.min(Math.max(y, 0), 0.95);
+  w = Math.min(w, 1 - x); h = Math.min(h, 1 - y);
+  return w >= 0.08 && h >= 0.08 ? [x, y, w, h] : null;
+}
+export function cropPrint(dataUrl, box, maxDim = 112) {
+  const [x, y, w, h] = validPrintBox(box) || DEFAULT_PRINT_BOX;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const sx = x * img.width, sy = y * img.height, sw = w * img.width, sh = h * img.height;
+      const scale = Math.min(1, maxDim / Math.max(sw, sh));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(sw * scale));
+      canvas.height = Math.max(1, Math.round(sh * scale));
+      canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.78));
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
 // Measures the garment's main (and second) color straight from the photo.
 // The background is guessed from the border pixels and ignored; the rest is
 // clustered and the biggest cluster wins. Returns { hex, hex2 } (hex2 may be null).

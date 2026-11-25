@@ -44,6 +44,9 @@ const ANALYZE_PROMPT =
   '"color2": the second most visible color from the same list, or null if the item is basically one color, ' +
   '"patternType": "solid" | "stripes" | "checks" | "dots" | "floral" | "print" ' +
   '(print = a graphic, photo or big logo on the front), ' +
+  '"printBox": only when patternType is "print": the box around the front graphic as [left, top, width, height], ' +
+  'each a fraction of the photo from 0 to 1 (e.g. [0.2, 0.25, 0.6, 0.5]); wrap the whole graphic tightly, ' +
+  'including its text, and leave out the plain fabric around it; otherwise null, ' +
   '"gender": "kadin" | "erkek" | "unisex" (kadin = cut or styled for women, e.g. blouse, skirt, dress, cropped or ' +
   'fitted/belted womenswear; erkek = clearly menswear cut; unisex = plain pieces anyone wears, like a basic tee, ' +
   'hoodie, jeans, sneakers, beanie; when unsure use unisex), ' +

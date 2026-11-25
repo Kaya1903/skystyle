@@ -3,7 +3,7 @@ import { setSky } from './sky.js';
 import { unlockSound, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
 import { skyKind } from './weather.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
-import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe } from './wardrobe.js';
+import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe, cropPrint } from './wardrobe.js';
 import { generateOutfit } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile, comfortOffset } from './profile.js';
@@ -474,6 +474,11 @@ async function hydratePhotos() {
   const hydrated = await initPhotoStore(state.wardrobe);
   const byId = new Map(hydrated.map(i => [i.id, i]));
   state.wardrobe = state.wardrobe.map(i => (i.photo || !byId.get(i.id)?.photo ? i : { ...i, photo: byId.get(i.id).photo, hasPhoto: true }));
+  // Printed pieces saved before the drawing showed the real print: cut it out once.
+  for (const item of state.wardrobe.filter(i => i.patternType === 'print' && i.photo && !i.printImg)) {
+    const img = await cropPrint(item.photo, item.printBox);
+    if (img) state.wardrobe = state.wardrobe.map(i => (i.id === item.id && !i.printImg ? { ...i, printImg: img } : i));
+  }
   saveWardrobe(state.wardrobe);
   render();
 }
@@ -715,7 +720,7 @@ export function wearToday() {
     rows: outfit.rows.map(r => ({
       slot: r.slotKey, item: r.item, art: r.art, fromWardrobe: r.fromWardrobe,
       color: r.color || (r.look && r.look.color) || null,
-      look: r.look ? { patternType: r.look.patternType, color2: r.look.color2, lens: r.look.lens } : null,
+      look: r.look ? { patternType: r.look.patternType, color2: r.look.color2, lens: r.look.lens, printImg: r.look.printImg || null } : null,
     })),
   });
   saveFeedback(state.feedback);
