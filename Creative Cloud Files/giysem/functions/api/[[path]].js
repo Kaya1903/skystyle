@@ -49,6 +49,9 @@ const ANALYZE_PROMPT =
   '"printBox": only when patternType is "print": the box around the front graphic as [left, top, width, height], ' +
   'each a fraction of the photo from 0 to 1 (e.g. [0.2, 0.25, 0.6, 0.5]); wrap the whole graphic tightly, ' +
   'including its text, and leave out the plain fabric around it; otherwise null, ' +
+  '"formality": 1 | 2 | 3 (how dressy the piece is: 1 = relaxed, for home, sport or a lazy day, e.g. hoodie, sweatpants, ' +
+  'slides, a printed tee; 2 = everyday, e.g. jeans, a plain tee or knit, clean sneakers; 3 = smart, fit for the office, ' +
+  'a dinner or an event, e.g. a shirt, blazer, tailored trousers, a dress, leather shoes or boots, a wool coat), ' +
   '"gender": "kadin" | "erkek" | "unisex" (kadin = cut or styled for women, e.g. blouse, skirt, dress, cropped or ' +
   'fitted/belted womenswear; erkek = clearly menswear cut; unisex = plain pieces anyone wears, like a basic tee, ' +
   'hoodie, jeans, sneakers, beanie; when unsure use unisex), ' +

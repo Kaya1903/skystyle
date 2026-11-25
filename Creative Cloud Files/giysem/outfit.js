@@ -1,4 +1,4 @@
-import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH } from './wardrobe.js';
+import { pickWardrobeOutfit, slotOptionIds, BAND_WARMTH, itemFormality, isFormality } from './wardrobe.js';
 import { garmentVariant, itemLook, garmentDefaultColor, shade, ONE_PIECE, accessoryArts } from './visuals.js';
 import { VARIANTS, EXTRAS, GENDERED, INTENSITY, LAYER_SPLIT } from './outfit_variants.js';
 import { REASONS } from './outfit_catalog.js';
@@ -381,7 +381,7 @@ export const OCCASIONS = {
   school: { vibe: 'casual', formality: [1, 2], avoid: ['heel', 'blazerw', 'slide'] },
   date: { vibe: 'elegant', formality: [2, 3], sport: 'no', avoid: ['hoodie', 'sweatshirt', 'fleece', 'slide', 'cap', 'leggings'] },
   event: { vibe: 'elegant', formality: [3, 3], sport: 'no', avoid: ['hoodie', 'sweatshirt', 'fleece', 'tank', 'shorts', 'minishorts', 'slide', 'sneaker', 'cap', 'bucket', 'tote', 'leggings', 'windbreaker'] },
-  sport: { vibe: 'sporty', sport: 'only', avoid: ['heel', 'flat', 'loafer', 'chelsea', 'espadrille', 'blazer', 'blazerw', 'shirt', 'blouse', 'dress', 'skirt', 'jumpsuit', 'coat', 'wrapcoat', 'trench'] },
+  sport: { vibe: 'sporty', sport: 'only', avoid: ['jeans', 'chinos', 'heel', 'flat', 'loafer', 'chelsea', 'espadrille', 'blazer', 'blazerw', 'shirt', 'blouse', 'dress', 'skirt', 'jumpsuit', 'coat', 'wrapcoat', 'trench'] },
   walk: { vibe: null, formality: [1, 2], avoid: ['heel', 'flat', 'loafer', 'slide'], want: ['sneaker'] },
 };
 export const OCCASION_KEYS = Object.keys(OCCASIONS);
@@ -515,6 +515,20 @@ function chooseVariant(base, { language, bandKey, slot, genderKey, vibe, seed, a
 // A piece the user doesn't want is avoided in its women's/men's versions too.
 const AVOID_GROUPS = [['puffer', 'pufferw', 'parka'], ['coat', 'wrapcoat'], ['jacket', 'cropjacket'], ['blazer', 'blazerw'],
   ['shirt', 'shortshirt', 'blouse'], ['shorts', 'minishorts'], ['sunglasses', 'catglasses']];
+// Whether an owned piece suits today's plans. A piece marked Rahat / Günlük / Şık by the
+// user is judged by that alone (leather sneakers marked Şık can go to an event);
+// otherwise by its kind and how dressy that kind usually is.
+function ownedFitsPlan(occ) {
+  const off = new Set(expandAvoid(occ.avoid));
+  const [min] = occ.formality || [1];
+  return item => {
+    const f = itemFormality(item);
+    if (item.category === 'yanina') return !off.has(itemLook(item).art);
+    if (occ.sport === 'only') return f < 3 && !off.has(itemLook(item).art);
+    if (isFormality(item.formality)) return f >= min;
+    return f >= min && !off.has(itemLook(item).art);
+  };
+}
 function expandAvoid(list) {
   const out = new Set(list || []);
   for (const a of list || []) for (const g of AVOID_GROUPS) if (g.includes(a)) g.forEach(x => out.add(x));
@@ -593,9 +607,9 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
     : allItems.filter(i => !i.gender || i.gender === 'unisex' || i.gender === genderKey);
   const onlyMine = wardrobeOnly && wardrobeItems.length > 0;
   // With suggestions to fall back on, an owned piece that doesn't fit today's plans stays in the wardrobe.
-  if (occ && !onlyMine) {
-    const off = new Set(expandAvoid(occ.avoid));
-    for (let i = wardrobeItems.length - 1; i >= 0; i--) if (off.has(itemLook(wardrobeItems[i]).art)) wardrobeItems.splice(i, 1);
+  const planFit = occ ? ownedFitsPlan(occ) : null;
+  if (planFit && !onlyMine) {
+    for (let i = wardrobeItems.length - 1; i >= 0; i--) if (!planFit(wardrobeItems[i])) wardrobeItems.splice(i, 1);
   }
 
   // Below -3° precipitation falls as snow: snow boots instead of an umbrella.
@@ -666,7 +680,7 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const ctx = { feelsLike, wind, rainMax };
   const needsRain = rainy || snowy;
   const needsWind = wind >= 20;
-  const pickOpts = { bandKey, needsRain, needsWind, allowArts: { yanina: accKinds || ['__none__'] }, relaxed: onlyMine, seed: String(seed || '') + (adj.reroll ? `#${adj.reroll}` : '') };
+  const pickOpts = { bandKey, needsRain, needsWind, allowArts: { yanina: accKinds || ['__none__'] }, relaxed: onlyMine, planFit: onlyMine ? planFit : null, seed: String(seed || '') + (adj.reroll ? `#${adj.reroll}` : '') };
   const optional = (OPTIONAL_SLOTS[bandKey] || []).filter(k => !rows[k]);
   const picks = pickWardrobeOutfit(wardrobeItems, SLOT_ORDER.filter(k => rows[k] || optional.includes(k)), pickOpts, locks);
   for (const k of optional) if (picks[k]) rows[k] = { item: picks[k].name, reason: '' };

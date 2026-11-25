@@ -261,6 +261,17 @@ function dayNudge(str) {
   return ((h >>> 0) % 1000) / 1000;
 }
 
+// How dressy a piece is: 1 relaxed, 2 everyday, 3 smart. The user's own choice wins;
+// otherwise it's read from the kind of piece.
+const RELAXED_ARTS = ['hoodie', 'sweatshirt', 'tank', 'fleece', 'leggings', 'shorts', 'minishorts', 'slide', 'cap', 'bucket'];
+const SMART_ARTS = ['shirt', 'blouse', 'blazer', 'blazerw', 'coat', 'wrapcoat', 'trench', 'trousers', 'dress', 'loafer', 'heel', 'chelsea', 'watch'];
+export function isFormality(f) { return f === 1 || f === 2 || f === 3; }
+export function itemFormality(item) {
+  if (isFormality(item.formality)) return item.formality;
+  const art = itemLook(item).art;
+  return RELAXED_ARTS.includes(art) ? 1 : SMART_ARTS.includes(art) ? 3 : 2;
+}
+
 const MAX_CANDIDATES_PER_SLOT = 5;
 // Clothes people change every day. Shoes, coats and accessories are fine to repeat.
 const REST_SLOTS = ['ust', 'ustune', 'alt'];
@@ -277,7 +288,8 @@ const COLOR_WEIGHT = 0.7;
 // the accessory slot on a rainy day, only a beanie or scarf when it's freezing).
 // `relaxed` (wardrobe-only mode): any thickness is allowed and rain/wind only
 // lower the score, so the user always gets an outfit from their own clothes.
-function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed, seed = '' }, limit = MAX_CANDIDATES_PER_SLOT) {
+// `planFit` (wardrobe-only mode): pieces that don't suit today's plans rank lower.
+function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed, planFit, seed = '' }, limit = MAX_CANDIDATES_PER_SLOT) {
   const desired = BAND_WARMTH[bandKey];
   const kinds = allowArts && allowArts[category];
   const isAcc = category === 'yanina';
@@ -299,6 +311,7 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
       if (needsRain && category !== 'yanina') score += i.rainOk ? 2 : -3;
       if (needsWind && category === 'dis') score += i.windproof ? 2 : -3;
       if (needsRain && i.rainOk) score += 0.5;
+      if (planFit && !planFit(i)) score -= 2.5;
       // A small nudge that changes every day, so similar pieces take turns
       // instead of the same T-shirt winning every day.
       if (seed) score += dayNudge(`${i.id}|${seed}`);
@@ -310,19 +323,19 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
 
 // Every wardrobe piece that suits this slot today, best weather fit first.
 // The swap button cycles through these.
-export function slotOptionIds(items, category, { bandKey, needsRain, needsWind, allowArts, relaxed }) {
-  return slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed }, Infinity).map(c => c.item.id);
+export function slotOptionIds(items, category, { bandKey, needsRain, needsWind, allowArts, relaxed, planFit }) {
+  return slotCandidates(items, { category, bandKey, needsRain, needsWind, allowArts, relaxed, planFit }, Infinity).map(c => c.item.id);
 }
 
 // Picks one wardrobe piece per slot (where a viable one exists) so that the
 // whole outfit fits the weather AND its colors/patterns work together.
 // `locks` pins a slot to a specific item id (from the swap button); the other
 // slots are then re-picked to go with it. Returns { [category]: item }.
-export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind, allowArts, relaxed, seed }, locks = {}) {
+export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, needsWind, allowArts, relaxed, planFit, seed }, locks = {}) {
   const day = dayNumber(seed);
   const slots = categories
     .map(category => {
-      const opts = { category, bandKey, needsRain, needsWind, allowArts, relaxed, seed };
+      const opts = { category, bandKey, needsRain, needsWind, allowArts, relaxed, planFit, seed };
       if (locks[category]) {
         const locked = slotCandidates(items, opts, Infinity).filter(c => c.item.id === locks[category]);
         if (locked.length) return { category, cands: locked };

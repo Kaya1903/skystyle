@@ -1690,3 +1690,4 @@ p { margin: 0; }
 .hours-select option { color: #1a2030; }
 .hours-dash { color: #fff; font-weight: 700; }
 .hours-temps { font-size: 12.5px; font-weight: 800; color: var(--ink); background: rgba(255, 255, 255, 0.9); padding: 6px 10px; border-radius: 999px; }
+.field-hint { margin-top: 8px; font-size: 12.5px; line-height: 1.45; color: var(--ink-soft); }

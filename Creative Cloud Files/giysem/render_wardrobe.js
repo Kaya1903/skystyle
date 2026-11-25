@@ -5,7 +5,7 @@ import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { analyzePhoto } from './ai.js';
 import { COLORS, COLOR_KEYS, colorName, isValidColor, nearestColorKey } from './colors.js';
 import { garmentArt, itemLook, STYLE_OPTIONS, PATTERN_TYPES, DETAIL_KEYS, styleLabel } from './visuals.js';
-import { photoColors, cropPrint, validPrintBox } from './wardrobe.js';
+import { photoColors, cropPrint, validPrintBox, itemFormality, isFormality } from './wardrobe.js';
 import {
   state, openEditor, closeEditor, saveWardrobeItem, deleteWardrobeItem,
   setWardrobeFilter, setWardrobeSearch, newItemId, resizePhoto, inLaundry, laundryUntilFrom,
@@ -208,6 +208,14 @@ export function renderEditorSheet(state) {
         </div>
 
         <div class="field-group">
+          <label class="field-label">${t(lang, 'field_formality')}</label>
+          <div class="chip-row pattern-row">
+            ${[1, 2, 3].map(f => `<button type="button" class="chip ${itemFormality(item) === f ? 'active' : ''}" data-formality="${f}" aria-pressed="${itemFormality(item) === f}">${t(lang, 'formality_' + f)}</button>`).join('')}
+          </div>
+          <div class="field-hint">${t(lang, 'formality_hint')}</div>
+        </div>
+
+        <div class="field-group">
           <label class="field-label">${t(lang, 'field_warmth')}</label>
           <div class="warmth-row">
             <span class="warmth-end">${t(lang, 'warmth_thin')}</span>
@@ -306,6 +314,13 @@ export function attachEditorHandlers(root) {
   root.querySelectorAll('[data-item-gender]').forEach(btn => {
     btn.addEventListener('click', () => {
       draftItem.gender = btn.dataset.itemGender;
+      rerenderEditor(root);
+    });
+  });
+
+  root.querySelectorAll('[data-formality]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      draftItem.formality = parseInt(btn.dataset.formality, 10);
       rerenderEditor(root);
     });
   });
@@ -483,6 +498,7 @@ function applySuggestion(item, sug, measured) {
   if (typeof sug.windproof === 'boolean') item.windproof = sug.windproof;
   if (sug.name && !item.name.trim()) item.name = sug.name;
   if (['unisex', 'kadin', 'erkek'].includes(sug.gender)) item.gender = sug.gender;
+  if (isFormality(Number(sug.formality))) item.formality = Number(sug.formality);
   if ((STYLE_OPTIONS[item.category] || []).includes(sug.style)) item.art = sug.style;
   else if (!(STYLE_OPTIONS[item.category] || []).includes(item.art)) item.art = null;
   if (PATTERN_TYPES.includes(sug.patternType)) item.patternType = sug.patternType;
