@@ -13,7 +13,7 @@ import { renderTodayScreen, attachTodayHandlers } from './render_today.js';
 import { renderWardrobeScreen, attachWardrobeHandlers, renderEditorSheet, attachEditorHandlers } from './render_wardrobe.js';
 import { renderWeekScreen, attachWeekHandlers, updateWeekTipRow } from './render_week.js';
 import { renderProfileScreen, attachProfileHandlers } from './render_profile.js';
-import { renderCitySheet, attachCitySheetHandlers } from './render_city.js';
+import { renderCitySheet, attachCitySheetHandlers, refreshCityBody } from './render_city.js';
 import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboarding.js';
 
 const CITY_KEY = 'giysem_city_v1';
@@ -164,14 +164,12 @@ function rememberCity(city) {
 export function removeRecentCity(lat, lon) {
   const next = loadRecentCities().filter(c => !sameCity(c, { lat, lon }));
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* ignore */ }
-  state.quietRender = true;
-  render();
+  refreshCity();
 }
 
 export function clearRecentCities() {
   try { localStorage.removeItem(RECENT_KEY); } catch { /* ignore */ }
-  state.quietRender = true;
-  render();
+  refreshCity();
 }
 
 export async function chooseCity(city, persist = true) {
@@ -420,21 +418,27 @@ export async function searchCity(query) {
   state.citySheetQuery = query;
   if (!query || query.trim().length < 2) {
     state.citySheetResults = [];
-    render();
+    state.citySheetMsg = '';
+    refreshCity();
     return;
   }
-  state.citySheetLoading = true;
-  render();
   try {
     const results = await geocodeCity(query.trim(), state.lang);
     if (state.citySheetQuery !== query) return; // a newer search already started
     state.citySheetResults = results;
     state.citySheetMsg = results.length ? '' : t(state.lang, 'city_not_found');
   } catch {
+    if (state.citySheetQuery !== query) return;
     state.citySheetMsg = t(state.lang, 'search_failed');
     state.citySheetResults = [];
   }
-  state.citySheetLoading = false;
+  refreshCity();
+}
+
+// Updates just the city sheet's list; falls back to a full render if it isn't open.
+function refreshCity() {
+  if (refreshCityBody(state)) return;
+  state.quietRender = true;
   render();
 }
 

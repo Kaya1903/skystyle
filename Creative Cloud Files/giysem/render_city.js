@@ -19,14 +19,30 @@ export function renderCitySheet(state) {
           ${icons.location}
           <span>${s.citySheetLoading ? t(s.lang, 'getting_location') : t(s.lang, 'use_location')}</span>
         </button>
-        ${s.citySheetMsg ? `<div class="sheet-msg">${s.citySheetMsg}</div>` : ''}
-        ${recentSection(s)}
-        <div class="city-results">
-          ${s.citySheetResults.map(r => cityButton(r)).join('')}
-        </div>
+        <div class="city-body" id="city-body">${cityBody(s)}</div>
       </div>
     </div>
   `;
+}
+
+// Everything under the search box: message, recent cities and results.
+function cityBody(s) {
+  return `
+    ${s.citySheetMsg ? `<div class="sheet-msg">${s.citySheetMsg}</div>` : ''}
+    ${recentSection(s)}
+    <div class="city-results">
+      ${s.citySheetResults.map(r => cityButton(r)).join('')}
+    </div>`;
+}
+
+// While typing, only the part under the search box changes. Redrawing the
+// whole page on every letter made it flash and shake like a reload.
+export function refreshCityBody(state) {
+  const body = document.getElementById('city-body');
+  if (!body) return false;
+  body.innerHTML = cityBody(state);
+  attachCityBodyHandlers(body);
+  return true;
 }
 
 function cityButton(r, extraClass = '', inner = '') {
@@ -83,7 +99,11 @@ export function attachCitySheetHandlers(root) {
   }
   const locBtn = root.querySelector('#use-location-btn');
   if (locBtn) locBtn.addEventListener('click', useGeolocation);
+  const body = root.querySelector('#city-body');
+  if (body) attachCityBodyHandlers(body);
+}
 
+function attachCityBodyHandlers(root) {
   root.querySelectorAll('.city-result').forEach(btn => {
     btn.addEventListener('click', () => {
       chooseCity({
