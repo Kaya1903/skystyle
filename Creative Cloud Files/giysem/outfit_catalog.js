@@ -4,7 +4,8 @@
 //
 // Entry: [slot, bands, styles, formality, sport, gender, Turkish, English, reason]
 //   slot       ust (top), ustune (warm layer), dis (outerwear), alt (bottom), ayak (shoes)
-//   bands      letters for the weather bands it suits: D freezing, S cold, N cool
+//   bands      letters for the weather bands it suits: D freezing, S cold, N cool,
+//              I mild, W warm, H hot
 //   styles     'casual|elegant|sporty|bold|minimal', one or more
 //   formality  1 relaxed, 2 everyday, 3 smart
 //   sport      1 for sportswear
@@ -14,7 +15,7 @@
 //
 // Names must contain a word the drawing picker knows (kazak, mont, bot, sneaker...).
 
-export const BAND_LETTERS = { D: 'dondurucu', S: 'soguk', N: 'serin' };
+export const BAND_LETTERS = { D: 'dondurucu', S: 'soguk', N: 'serin', I: 'ilik', W: 'sicak', H: 'cok_sicak' };
 
 export const REASONS = {
   knit_warm: ['Örgü doku sıcağı içeride tutar', 'A knit holds the warmth in'],
@@ -50,6 +51,23 @@ export const REASONS = {
   sneaker_easy: ['Rahat ve her kombine uyar', 'Comfortable and goes with any outfit'],
   sneaker_warm: ['İçi astarlı, soğukta da rahat', 'Lined, so it stays comfy in the cold'],
   snow_boot: ['Kar ve buzda güvenle yürütür', 'Keeps you steady on snow and ice'],
+  // Mild and warm days
+  linen_cool: ['Keten serin tutar, hava alır', 'Linen keeps you cool and lets air through'],
+  cotton_easy: ['Pamuk tene iyi gelir, rahat ettirir', 'Cotton feels good on the skin'],
+  tee_basic: ['Her şeyle giyilen temel bir parça', 'A basic that goes with everything'],
+  light_breathe: ['İnce kumaş bunaltmaz', 'Light fabric that won’t weigh you down'],
+  summer_smart: ['Yaz sıcağında bile derli toplu durur', 'Looks neat even in the summer heat'],
+  summer_bold: ['Yaz gününe neşe katar', 'Brings some fun to a summer day'],
+  light_color: ['Açık renk güneşte serin tutar', 'Light colors stay cooler in the sun'],
+  loose_air: ['Bol kesim hava alır', 'A loose fit lets air in'],
+  flowy: ['Uçuşan kumaş hareket ettikçe serinletir', 'The flowy fabric keeps you cool as you move'],
+  sandal_air: ['Ayakların nefes alır', 'Lets your feet breathe'],
+  sneaker_light: ['Hafif, gün boyu yormaz', 'Light, so it won’t tire you out all day'],
+  smart_shoe_summer: ['Yazın da şık, çorapsız giyilir', 'Smart in summer too, worn without socks'],
+  evening_layer: ['Akşam serinlerse üstüne alırsın', 'Put it on if the evening turns cool'],
+  dress_one: ['Tek parça, sıcakta en kolayı', 'One piece, the easiest in the heat'],
+  denim_summer: ['Kot her şeye uyar', 'Denim goes with everything'],
+  quick_dry: ['Teri dışarı atar, çabuk kurur', 'Wicks sweat and dries fast'],
 };
 
 export const CATALOG = [
@@ -202,4 +220,86 @@ export const CATALOG = [
   ['ayak', 'SD', 'casual', 2, 0, 'erkek', 'Çöl botu', 'Desert boots', 'boot_smart'],
   ['ayak', 'N', 'sporty', 1, 1, '', 'Arazi koşu ayakkabısı', 'Trail running shoes', 'sporty_move'],
   ['ayak', 'SN', 'casual|bold', 1, 0, '', 'Kanvas bilekli sneaker', 'Canvas high-top sneakers', 'sneaker_easy'],
+  // ---- Tops for mild, warm and hot days ----
+  ['ust', 'IWH', 'minimal|casual', 2, 0, '', 'Beyaz basic tişört', 'Plain white T-shirt', 'tee_basic'],
+  ['ust', 'IW', 'minimal|casual', 2, 0, '', 'Siyah basic tişört', 'Plain black T-shirt', 'tee_basic'],
+  ['ust', 'IW', 'casual|bold', 1, 0, '', 'Bol kesim grafik tişört', 'Loose graphic T-shirt', 'loose_air'],
+  ['ust', 'IW', 'casual|elegant', 2, 0, '', 'Cepli keten gömlek', 'Linen shirt with pockets', 'linen_cool'],
+  ['ust', 'IW', 'casual', 2, 0, '', 'Kısa kollu kot gömlek', 'Short-sleeve denim shirt', 'denim_summer'],
+  ['ust', 'W', 'casual|elegant', 2, 0, '', 'Lacivert çizgili kısa kollu gömlek', 'Navy striped short-sleeve shirt', 'summer_smart'],
+  ['ust', 'I', 'casual|minimal', 2, 0, '', 'Waffle dokulu tişört', 'Waffle T-shirt', 'cotton_easy'],
+  ['ust', 'IW', 'casual|minimal', 2, 0, '', 'V yaka tişört', 'V-neck T-shirt', 'cotton_easy'],
+  ['ust', 'IW', 'casual', 2, 0, '', 'Kısa kollu henley tişört', 'Short-sleeve henley T-shirt', 'cotton_easy'],
+  ['ust', 'IWH', 'elegant|minimal', 3, 0, '', 'Beyaz keten gömlek', 'White linen shirt', 'linen_cool'],
+  ['ust', 'IW', 'elegant|minimal', 3, 0, '', 'Lacivert polo tişört', 'Navy polo shirt', 'summer_smart'],
+  ['ust', 'W', 'elegant', 3, 0, '', 'Kısa kollu poplin gömlek', 'Short-sleeve poplin shirt', 'summer_smart'],
+  ['ust', 'WH', 'elegant|minimal', 3, 0, '', 'Hakim yaka keten gömlek', 'Band-collar linen shirt', 'linen_cool'],
+  ['ust', 'WH', 'elegant', 3, 0, 'kadin', 'Saten askılı bluz', 'Satin camisole', 'light_breathe'],
+  ['ust', 'IW', 'elegant', 3, 0, 'kadin', 'Fırfırlı keten bluz', 'Ruffled linen blouse', 'linen_cool'],
+  ['ust', 'WH', 'casual|bold', 2, 0, 'kadin', 'Önden bağlamalı gömlek', 'Tie-front shirt', 'summer_bold'],
+  ['ust', 'WH', 'bold|elegant', 3, 0, 'kadin', 'Omzu açık bluz', 'Off-the-shoulder blouse', 'summer_bold'],
+  ['ust', 'IW', 'elegant', 3, 0, 'kadin', 'Kare yaka bluz', 'Square-neck blouse', 'summer_smart'],
+  ['ust', 'IWH', 'sporty', 1, 1, '', 'Teknik koşu tişörtü', 'Technical running T-shirt', 'quick_dry'],
+  ['ust', 'WH', 'sporty', 1, 1, '', 'Fileli spor atlet', 'Mesh sports tank', 'quick_dry'],
+  ['ust', 'IW', 'sporty|casual', 1, 1, '', 'Spor polo tişört', 'Sports polo shirt', 'sporty_move'],
+  ['ust', 'IWH', 'sporty', 1, 1, '', 'Rahat antrenman tişörtü', 'Relaxed training T-shirt', 'sporty_move'],
+  ['ust', 'WH', 'bold', 2, 0, '', 'Tropikal desenli gömlek', 'Tropical print shirt', 'summer_bold'],
+  ['ust', 'WH', 'bold|elegant', 2, 0, '', 'Renkli keten gömlek', 'Colorful linen shirt', 'linen_cool'],
+  ['ust', 'W', 'bold', 2, 0, 'erkek', 'Çiçek desenli kısa kollu gömlek', 'Floral short-sleeve shirt', 'summer_bold'],
+  ['ust', 'IW', 'bold|casual', 1, 0, '', 'Batik desenli tişört', 'Tie-dye T-shirt', 'summer_bold'],
+  ['ust', 'H', 'bold|sporty', 1, 0, '', 'Neon renkli atlet', 'Neon tank top', 'summer_bold'],
+  ['ust', 'IW', 'bold|casual', 2, 0, '', 'Renkli çizgili tişört', 'Bold striped T-shirt', 'pattern_star'],
+  ['ust', 'IW', 'bold', 2, 0, 'kadin', 'Puantiyeli bluz', 'Polka-dot blouse', 'pattern_star'],
+  ['ust', 'WH', 'minimal', 2, 0, '', 'Krem rengi keten tişört', 'Cream linen T-shirt', 'light_color'],
+  ['ust', 'IW', 'minimal|casual', 2, 0, '', 'Gri melanj tişört', 'Heather grey T-shirt', 'tee_basic'],
+  ['ust', 'WH', 'minimal', 2, 0, 'kadin', 'Siyah fitilli atlet', 'Black ribbed tank top', 'minimal_clean'],
+  ['ust', 'IW', 'minimal|elegant', 3, 0, '', 'Beyaz poplin gömlek', 'White poplin shirt', 'minimal_clean'],
+  // ---- Light layers for mild days ----
+  ['ustune', 'I', 'casual', 2, 0, '', 'İnce keten gömlek (yanında bulunsun)', 'Light linen overshirt (bring it along)', 'evening_layer'],
+  ['ustune', 'I', 'elegant|minimal', 3, 0, '', 'İnce örgü hırka (yanında bulunsun)', 'Light knit cardigan (bring it along)', 'evening_layer'],
+  ['ustune', 'I', 'sporty', 1, 1, '', 'İnce fermuarlı sweatshirt (yanında bulunsun)', 'Light zip-up sweatshirt (bring it along)', 'evening_layer'],
+  ['ustune', 'I', 'elegant|bold', 3, 0, '', 'İnce örgü yelek', 'Fine knit vest', 'summer_smart'],
+  ['ustune', 'I', 'bold|casual', 2, 0, '', 'Çizgili ince hırka (yanında bulunsun)', 'Striped light cardigan (bring it along)', 'evening_layer'],
+  // ---- Bottoms ----
+  ['alt', 'WH', 'casual|elegant', 2, 0, '', 'Bej chino şort', 'Beige chino shorts', 'summer_smart'],
+  ['alt', 'IW', 'elegant|casual', 3, 0, '', 'Lacivert chino pantolon', 'Navy chinos', 'summer_smart'],
+  ['alt', 'WH', 'elegant|minimal', 3, 0, '', 'Beyaz keten pantolon', 'White linen trousers', 'linen_cool'],
+  ['alt', 'IW', 'casual', 2, 0, 'kadin', 'Boyfriend kot', 'Boyfriend jeans', 'denim_summer'],
+  ['alt', 'I', 'casual', 2, 0, '', 'Paçası kıvrık kot', 'Cuffed jeans', 'denim_summer'],
+  ['alt', 'I', 'minimal', 2, 0, '', 'Siyah dar kesim kot', 'Black slim jeans', 'minimal_clean'],
+  ['alt', 'WH', 'bold|casual', 1, 0, '', 'Yırtık kot şort', 'Distressed denim shorts', 'summer_bold'],
+  ['alt', 'IW', 'bold|sporty', 1, 0, '', 'Paraşüt pantolon', 'Parachute trousers', 'loose_air'],
+  ['alt', 'WH', 'casual|minimal', 2, 0, '', 'Bağcıklı keten pantolon', 'Drawstring linen trousers', 'linen_cool'],
+  ['alt', 'WH', 'sporty', 1, 1, '', 'Astarlı spor şort', 'Lined sports shorts', 'quick_dry'],
+  ['alt', 'I', 'sporty', 1, 1, '', 'Hafif eşofman altı', 'Lightweight track pants', 'sporty_move'],
+  ['alt', 'WH', 'sporty|bold', 1, 1, 'kadin', 'Pileli tenis eteği', 'Pleated tennis skirt', 'sporty_move'],
+  ['alt', 'IW', 'elegant', 3, 0, 'kadin', 'Saten midi etek', 'Satin midi skirt', 'flowy'],
+  ['alt', 'WH', 'elegant|minimal', 3, 0, 'kadin', 'Uzun keten etek', 'Long linen skirt', 'flowy'],
+  ['alt', 'WH', 'bold', 2, 0, 'kadin', 'Çiçek desenli mini elbise', 'Floral mini dress', 'summer_bold'],
+  ['alt', 'WH', 'casual', 2, 0, 'kadin', 'Askılı yazlık elbise', 'Strappy sundress', 'dress_one'],
+  ['alt', 'W', 'elegant', 3, 0, 'kadin', 'Saten askılı elbise', 'Satin slip dress', 'dress_one'],
+  ['alt', 'WH', 'casual|bold', 1, 0, 'kadin', 'Kısa tulum', 'Romper', 'dress_one'],
+  ['alt', 'WH', 'bold', 2, 0, '', 'Renkli kısa şort', 'Bright shorts', 'summer_bold'],
+  ['alt', 'W', 'bold', 2, 0, '', 'Desenli keten pantolon', 'Patterned linen trousers', 'pattern_star'],
+  ['alt', 'WH', 'elegant', 3, 0, 'erkek', 'Kumaş bermuda', 'Tailored Bermuda shorts', 'summer_smart'],
+  ['alt', 'IW', 'elegant', 3, 0, '', 'Hafif pileli pantolon', 'Light pleated trousers', 'classic_smart'],
+  ['alt', 'IW', 'casual|minimal', 2, 0, '', 'Krem rengi chino', 'Cream chinos', 'light_color'],
+  // ---- Shoes ----
+  ['ayak', 'IW', 'casual|minimal', 2, 0, '', 'Düşük bilekli deri sneaker', 'Low-top leather sneakers', 'sneaker_easy'],
+  ['ayak', 'IW', 'elegant', 3, 0, '', 'Süet makosen', 'Suede loafers', 'smart_shoe_summer'],
+  ['ayak', 'WH', 'casual|elegant', 2, 0, '', 'Kahverengi deri sandalet', 'Brown leather sandals', 'sandal_air'],
+  ['ayak', 'WH', 'casual', 1, 0, '', 'Mantar tabanlı sandalet', 'Cork-sole sandals', 'sandal_air'],
+  ['ayak', 'WH', 'elegant|bold', 2, 0, '', 'Hasır espadril', 'Straw espadrilles', 'smart_shoe_summer'],
+  ['ayak', 'IW', 'elegant|casual', 3, 0, '', 'Deri tekne ayakkabısı', 'Leather boat shoes', 'smart_shoe_summer'],
+  ['ayak', 'IWH', 'sporty', 1, 1, '', 'Hafif antrenman ayakkabısı', 'Light training shoes', 'sneaker_light'],
+  ['ayak', 'H', 'sporty', 1, 1, '', 'Spor terlik', 'Sport slides', 'sandal_air'],
+  ['ayak', 'IW', 'casual|bold', 1, 0, '', 'Retro tenis ayakkabısı', 'Retro tennis sneakers', 'sneaker_light'],
+  ['ayak', 'IW', 'bold|sporty', 1, 1, '', 'Neon koşu ayakkabısı', 'Neon running shoes', 'summer_bold'],
+  ['ayak', 'WH', 'elegant', 3, 0, 'kadin', 'Kalın topuklu sandalet', 'Block-heel sandals', 'summer_smart'],
+  ['ayak', 'IW', 'elegant', 3, 0, 'kadin', 'Bantlı babet', 'Strappy ballet flats', 'summer_smart'],
+  ['ayak', 'WH', 'bold|casual', 2, 0, 'kadin', 'Platform sandalet', 'Platform sandals', 'summer_bold'],
+  ['ayak', 'W', 'elegant', 3, 0, 'kadin', 'Burnu kapalı terlik', 'Mules', 'summer_smart'],
+  ['ayak', 'H', 'casual|minimal', 1, 0, '', 'Deri parmak arası terlik', 'Leather flip-flops', 'sandal_air'],
+  ['ayak', 'WH', 'minimal', 2, 0, '', 'Siyah deri sandalet', 'Black leather sandals', 'minimal_clean'],
+  ['ayak', 'IW', 'casual|minimal', 1, 0, '', 'Bağcıksız kanvas ayakkabı', 'Slip-on canvas shoes', 'sneaker_light'],
 ];
