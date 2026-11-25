@@ -4,7 +4,7 @@ import { unlockSound, setAmbient, playTap, playToggle, playDice, playChime, play
 import { skyKind } from './weather.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe, cropPrint } from './wardrobe.js';
-import { generateOutfit } from './outfit.js';
+import { generateOutfit, OCCASION_KEYS } from './outfit.js';
 import { t, LANGS, RTL_LANGS } from './i18n.js';
 import { loadProfile, saveProfile, clearProfile, comfortOffset } from './profile.js';
 import { getSmartTip, askOutfitChange, askStylist } from './ai.js';
@@ -75,6 +75,8 @@ export const state = {
   smartTip: null,
   // The AI stylist's pick for today: { key, status: 'loading' | 'done' | 'error', roll, colors, note }.
   stylist: null,
+  // What they're doing today ({ date, key }), chosen on Today; it resets the next day.
+  occasion: (() => { try { return JSON.parse(localStorage.getItem(OCCASION_KEY) || 'null'); } catch { return null; } })(),
   smartTipLoading: false,
   smartTipKey: null,
   avatarPickerOpen: false,
@@ -90,6 +92,7 @@ export const state = {
 let toastTimer = null;
 const SMART_TIP_CACHE_KEY = 'giysem_smart_tip_v1';
 const STYLIST_CACHE_KEY = 'giysem_stylist_v1';
+const OCCASION_KEY = 'giysem_occasion_v1';
 const WEEK_TIP_CACHE_KEY = 'giysem_week_tip_v1';
 
 const screenEl = document.getElementById('screen');
@@ -278,8 +281,23 @@ export function toggleModeMenu(open = !state.modeMenuOpen) {
 }
 
 // The wardrobe the outfit engine may use in the current mode.
-function outfitWardrobe() {
-  return state.wardrobeMode === 'ideas' ? [] : state.wardrobe;
+function outfitWardrobe(date = todayDate()) {
+  if (state.wardrobeMode === 'ideas') return [];
+  // Pieces in the wash sit out until they're back.
+  return date ? state.wardrobe.filter(i => !inLaundry(i, date)) : state.wardrobe;
+}
+
+// "In the wash" lasts three days (today and the next two), unless they take it back sooner.
+export function inLaundry(item, date = todayDate()) {
+  return !!(item && item.laundryUntil && date && item.laundryUntil >= date);
+}
+export function laundryUntilFrom(date = todayDate()) {
+  const d = new Date(`${date || new Date().toISOString().slice(0, 10)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 2);
+  return d.toISOString().slice(0, 10);
+}
+export function currentDate() {
+  return todayDate();
 }
 
 export function toggleSound() {
@@ -722,8 +740,28 @@ function outfitParams(dayView, dayOffset, adjust, lang = state.lang) {
     params: { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rainMax: dayView.maxRainToday, gender: state.gender, lang,
       comfort: comfortOffset(state.profile) + learned, shift: -3 * (adjust ? adjust.warmth : 0),
       vibe: (adjust && adjust.vibe) || (state.profile ? state.profile.styleVibe : 'casual'), seed: dayView.date, kind: dayView.hero.kind,
-      wardrobeOnly: state.wardrobeMode === 'mine', memory: memory ? memory.answer : null, adjust, late, uv: dayView.uvMax },
+      wardrobeOnly: state.wardrobeMode === 'mine', memory: memory ? memory.answer : null, adjust, late, uv: dayView.uvMax,
+      occasion: dayOffset === 0 ? todaysOccasion(dayView.date) : null },
   };
+}
+
+// Today's plans, if they picked any (yesterday's choice doesn't carry over).
+export function todaysOccasion(date) {
+  const o = state.occasion;
+  return o && o.date === date && OCCASION_KEYS.includes(o.key) ? o.key : null;
+}
+
+// Tapping the chosen plan again clears it.
+export function setOccasion(key) {
+  const date = todayDate();
+  if (!date) return;
+  const current = todaysOccasion(date);
+  state.occasion = key && key !== current && OCCASION_KEYS.includes(key) ? { date, key } : null;
+  try { localStorage.setItem(OCCASION_KEY, JSON.stringify(state.occasion)); } catch { /* private mode */ }
+  state.outfitLocks = {};
+  state.swappedSlot = 'all';
+  state.quietRender = true;
+  render();
 }
 
 function computeOutfitFor(dayOffset) {
@@ -828,6 +866,7 @@ function stylistFor(dayView) {
     weather: { feelsLike: dayView.hero.feelsLike, wind: dayView.hero.wind, rain: dayView.maxRainToday, uv: dayView.uvMax, sky: dayView.hero.kind,
       evening: eveningTip(dayView, 'en'), late: outfitParams(dayView, 0, null).params.late },
     person: { gender: state.gender || 'unisex', styleVibe: vibe, ...aiPersonal() },
+    occasion: todaysOccasion(dayView.date),
     recent,
     candidates: cands.map(c => ({ rows: c.rows })),
   }).then(res => {
@@ -952,7 +991,7 @@ function computeWeekOutfits() {
         comfort: comfortOffset(state.profile) + learnedOffset(state.feedback, day.feelsLike, day.wind, day.date),
         vibe: styleVibe, seed: day.date, kind: day.kind, wardrobeOnly: state.wardrobeMode === 'mine', uv: day.uvMax,
         memory: (findMemory(state.feedback, day.feelsLike, day.date) || {}).answer || null },
-      outfitWardrobe()
+      outfitWardrobe(day.date)
     );
     const tipKey = [day.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit)].join('|');
     return { day, outfit, tipKey, tip: state.weekTips[tipKey] || null, tipLoading: state.weekTipStatus[tipKey] === 'loading' };
@@ -1003,7 +1042,8 @@ function ensureSmartTip(dayView, outfit) {
   const cityName = state.city ? state.city.name : 'unknown';
   const styleVibe = state.profile ? (state.profile.styleVibe || 'casual') : 'casual';
   // The note talks about the outfit on screen, so a different outfit gets its own note.
-  const key = [dayView.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit)].join('|');
+  const occasion = todaysOccasion(dayView.date);
+  const key = [dayView.date, cityName, outfit.intensity || outfit.bandKey, state.gender, styleVibe, state.lang, outfitSig(outfit), occasion || ''].join('|');
   if (state.smartTipKey === key) return;
   state.smartTipKey = key;
 
@@ -1029,6 +1069,7 @@ function ensureSmartTip(dayView, outfit) {
     styleVibe,
     wardrobeSummary,
     outfit: aiOutfit(outfit),
+    occasion,
     ...aiPersonal(),
   }).then(tip => {
     if (state.smartTipKey !== key) return;

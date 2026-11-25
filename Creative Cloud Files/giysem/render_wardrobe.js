@@ -8,7 +8,7 @@ import { garmentArt, itemLook, STYLE_OPTIONS, PATTERN_TYPES, DETAIL_KEYS, styleL
 import { photoColors, cropPrint, validPrintBox } from './wardrobe.js';
 import {
   state, openEditor, closeEditor, saveWardrobeItem, deleteWardrobeItem,
-  setWardrobeFilter, setWardrobeSearch, newItemId, resizePhoto,
+  setWardrobeFilter, setWardrobeSearch, newItemId, resizePhoto, inLaundry, laundryUntilFrom,
 } from './app.js';
 
 // The item's drawing: built from its stored look (style, exact color, pattern, details).
@@ -72,7 +72,7 @@ export function renderWardrobeScreen(s) {
 
 function wardrobeCard(item, i, lang) {
   return `
-    <button class="glass wardrobe-card rise-in" style="animation-delay:${150 + i * 50}ms" data-item-id="${item.id}">
+    <button class="glass wardrobe-card rise-in ${inLaundry(item) ? 'in-laundry' : ''}" style="animation-delay:${150 + i * 50}ms" data-item-id="${item.id}">
       <div class="wardrobe-thumb is-art" style="--tint:${itemLook(item).color || '#b9c6dc'}">
         ${itemArt(item)}
         ${item.photo ? `<img class="photo-badge" src="${item.photo}" alt="${escapeAttr(item.name)}" />` : ''}
@@ -80,6 +80,7 @@ function wardrobeCard(item, i, lang) {
           ${item.rainOk ? `<span class="badge-dot badge-rain" title="${t(lang, 'toggle_rain')}">${icons.drop}</span>` : ''}
           ${item.windproof ? `<span class="badge-dot badge-wind" title="${t(lang, 'toggle_wind')}">${icons.wind}</span>` : ''}
         </div>
+        ${inLaundry(item) ? `<span class="laundry-badge">🧺 ${t(lang, 'laundry_label')}</span>` : ''}
       </div>
       <div class="wardrobe-info">
         <div class="wardrobe-name">${item.name}</div>
@@ -255,6 +256,11 @@ export function renderEditorSheet(state) {
             <span class="toggle-label">${t(lang, 'toggle_wind')}</span>
             <button type="button" class="switch switch-wind ${item.windproof ? 'on' : ''}" id="toggle-wind"></button>
           </div>
+          ${item.__new ? '' : `
+          <div class="toggle-row">
+            <span class="toggle-label">🧺 ${t(lang, 'laundry_label')}<span class="toggle-hint">${t(lang, 'laundry_hint')}</span></span>
+            <button type="button" class="switch switch-laundry ${inLaundry(item) ? 'on' : ''}" id="toggle-laundry" aria-pressed="${inLaundry(item)}"></button>
+          </div>`}
         </div>
 
         <div class="sheet-actions">
@@ -358,6 +364,11 @@ export function attachEditorHandlers(root) {
   const rainToggle = root.querySelector('#toggle-rain');
   if (rainToggle) rainToggle.addEventListener('click', () => {
     draftItem.rainOk = !draftItem.rainOk;
+    rerenderEditor(root);
+  });
+  const laundryToggle = root.querySelector('#toggle-laundry');
+  if (laundryToggle) laundryToggle.addEventListener('click', () => {
+    draftItem.laundryUntil = inLaundry(draftItem) ? null : laundryUntilFrom();
     rerenderEditor(root);
   });
   const windToggle = root.querySelector('#toggle-wind');

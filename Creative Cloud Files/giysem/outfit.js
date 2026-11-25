@@ -374,6 +374,16 @@ const GENDER_PALETTE = {
   },
 };
 const GLASSES = ['sunglasses', 'catglasses'];
+// Today's plans: the style they call for and the drawings that don't fit them.
+export const OCCASIONS = {
+  work: { vibe: 'elegant', avoid: ['hoodie', 'sweatshirt', 'tank', 'shorts', 'minishorts', 'slide', 'cap', 'bucket', 'leggings'] },
+  school: { vibe: 'casual', avoid: ['heel', 'blazerw', 'slide'] },
+  date: { vibe: 'elegant', avoid: ['hoodie', 'sweatshirt', 'fleece', 'slide', 'cap', 'leggings'] },
+  event: { vibe: 'elegant', avoid: ['hoodie', 'sweatshirt', 'fleece', 'tank', 'shorts', 'minishorts', 'slide', 'sneaker', 'cap', 'bucket', 'tote', 'leggings', 'windbreaker'] },
+  sport: { vibe: 'sporty', avoid: ['heel', 'flat', 'loafer', 'chelsea', 'espadrille', 'blazer', 'blazerw', 'shirt', 'blouse', 'dress', 'skirt', 'jumpsuit', 'coat', 'wrapcoat', 'trench'] },
+  walk: { vibe: null, avoid: ['heel', 'flat', 'loafer', 'slide'], want: ['sneaker'] },
+};
+export const OCCASION_KEYS = Object.keys(OCCASIONS);
 // Color words in Turkish and English item names (the stylist keeps these colors).
 const COLOR_WORD = /siyah|beyaz|gri\b|lacivert|\bbej\b|kahve|haki|yeşil|mavi|kırmızı|bordo|pembe|\bmor\b|sarı|turuncu|krem|pastel|açık renk|koyu renk|\bblack|\bwhite|\bgr[ae]y\b|\bnavy|\bbeige|\bbrown|khaki|\bgreen|\bblue|\bred\b|burgundy|\bpink|purple|yellow|orange|cream|light-colored|dark|denim|\bkot\b/i;
 const ACCENT_WORD = /renkli|canlı|colorful|bright/i;
@@ -503,8 +513,13 @@ function coldLevel(temp) {
   return 0;
 }
 
-export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false, memory = null, adjust = null, shift = 0, late = false, uv = null }, allItems = [], locks = {}) {
-  const adj = adjust || {};
+export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort = 0, vibe = 'casual', seed = '', kind = null, wardrobeOnly = false, memory = null, adjust = null, shift = 0, late = false, uv = null, occasion = null }, allItems = [], locks = {}) {
+  // What they're doing today sets the style (unless they picked one themselves)
+  // and rules out pieces that don't belong (no slides at work, no heels at the gym).
+  const occ = OCCASIONS[occasion] || null;
+  const adj0 = adjust || {};
+  const adj = occ ? { ...adj0, avoid: [...(adj0.avoid || []), ...occ.avoid], want: [...(adj0.want || []), ...(occ.want || [])] } : adj0;
+  if (occ && occ.vibe && !adj0.vibe) vibe = occ.vibe;
   // Turkish and English have their own wording; every other language runs on
   // the English rules and is translated on the way out (outfit_i18n.js).
   const outLang = lang || 'tr';
@@ -530,9 +545,14 @@ export function generateOutfit({ feelsLike, wind, rainMax, gender, lang, comfort
   const genderKey = ['unisex', 'kadin', 'erkek'].includes(gender) ? gender : 'unisex';
   const rows = clone(BASE[language][bandKey][genderKey]);
   // Only pieces meant for this gender (or for anyone) are used from the wardrobe.
-  const wardrobeItems = genderKey === 'unisex' ? allItems
+  const wardrobeItems = genderKey === 'unisex' ? allItems.slice()
     : allItems.filter(i => !i.gender || i.gender === 'unisex' || i.gender === genderKey);
   const onlyMine = wardrobeOnly && wardrobeItems.length > 0;
+  // With suggestions to fall back on, an owned piece that doesn't fit today's plans stays in the wardrobe.
+  if (occ && !onlyMine) {
+    const off = new Set(expandAvoid(occ.avoid));
+    for (let i = wardrobeItems.length - 1; i >= 0; i--) if (off.has(itemLook(wardrobeItems[i]).art)) wardrobeItems.splice(i, 1);
+  }
 
   // Below -3° precipitation falls as snow: snow boots instead of an umbrella.
   const snowFall = rainMax >= 50 && feelsLike <= -3;

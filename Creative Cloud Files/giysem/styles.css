@@ -1652,3 +1652,24 @@ p { margin: 0; }
   [dir="rtl"] .mode-menu-list { transform-origin: top right; }
   .mine-toggle { min-height: 36px; }
 }
+
+/* "What are you up to today?" */
+.occasion { margin: -4px 2px 14px; }
+.occasion-title { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); text-shadow: var(--sky-text-shadow); margin: 0 2px 8px; }
+.occasion-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 4px; }
+.occasion-row::-webkit-scrollbar { display: none; }
+.occasion-chip {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.16); color: #fff;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.25s var(--spring);
+}
+.occasion-chip.active { background: #fff; color: var(--ink); border-color: transparent; box-shadow: 0 8px 18px -8px rgba(10, 20, 50, 0.5); }
+.occasion-chip:active { transform: scale(0.94); }
+
+/* Pieces in the wash */
+.wardrobe-card.in-laundry .wardrobe-thumb > :not(.laundry-badge) { opacity: 0.45; filter: grayscale(0.4); }
+.wardrobe-card.in-laundry .wardrobe-info { opacity: 0.7; }
+.laundry-badge { position: absolute; left: 8px; bottom: 8px; background: rgba(255, 255, 255, 0.95); color: var(--ink); font-size: 11px; font-weight: 800; padding: 4px 9px; border-radius: 999px; box-shadow: 0 4px 10px -4px rgba(10, 20, 50, 0.4); }
+.toggle-hint { display: block; font-size: 12px; font-weight: 500; color: var(--ink-faint); margin-top: 2px; }

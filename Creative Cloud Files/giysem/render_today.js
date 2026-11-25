@@ -1,8 +1,9 @@
 import { icons } from './icons.js';
 import { installCard, attachInstallHandlers } from './install.js';
 import { t } from './i18n.js';
+import { OCCASION_KEYS } from './outfit.js';
 import { brandHeader, attachHeaderHandlers } from './render_header.js';
-import { state, switchTab, setGender, setWardrobeMode, toggleModeMenu, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
+import { state, switchTab, setGender, setWardrobeMode, toggleModeMenu, setOccasion, todaysOccasion, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
   toggleAdjustPanel, rerollOutfit, swapSuggestedPiece, quickAdjust, askAdjust } from './app.js';
 import { dayLabel, sameOutfit } from './feedback.js';
 import { renderLandmark } from './landmarks.js';
@@ -121,6 +122,19 @@ function boardCard(outfit, s) {
     </article>`;
 }
 
+// "What are you up to today?": work, school, date, event, sport, out and about.
+const OCCASION_EMOJI = { work: '💼', school: '🎒', date: '🍷', event: '🎉', sport: '🏃', walk: '🚶' };
+function occasionRow(s, date) {
+  const current = todaysOccasion(date);
+  return `
+    <div class="occasion fade-slide" style="animation-delay:300ms">
+      <div class="occasion-title">${t(s.lang, 'occ_title')}</div>
+      <div class="occasion-row chip-row" role="group" aria-label="${t(s.lang, 'occ_title')}">
+        ${OCCASION_KEYS.map(k => `<button type="button" class="occasion-chip ${k === current ? 'active' : ''}" data-occasion="${k}" aria-pressed="${k === current}"><span aria-hidden="true">${OCCASION_EMOJI[k]}</span>${t(s.lang, 'occ_' + k)}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
 // Where outfits come from: own clothes + ideas, only own clothes, or only ideas.
 const MODE_LABEL = { mix: 'mode_mix', mine: 'only_mine', ideas: 'mode_ideas' };
 function modeMenu(s) {
@@ -149,6 +163,7 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
         <span class="band-chip">${outfit.bandLabel}</span>
       </div>
     </div>
+    ${fb.isToday ? occasionRow(s, fb.date) : ''}
     <div class="outfit-layout">
       <div class="board-col">${boardCard(outfit, s)}</div>
       <div class="glass pieces-card rise-in" style="animation-delay:340ms">
@@ -408,6 +423,7 @@ export function attachTodayHandlers(root) {
   root.querySelectorAll('[data-fb]').forEach(btn => {
     btn.addEventListener('click', () => answerFeedback(btn.dataset.fbDate, btn.dataset.fb));
   });
+  root.querySelectorAll('[data-occasion]').forEach(btn => btn.addEventListener('click', () => setOccasion(btn.dataset.occasion)));
   const modeBtn = root.querySelector('[data-action="toggle-mode"]');
   if (modeBtn) modeBtn.addEventListener('click', () => toggleModeMenu());
   root.querySelectorAll('[data-mode]').forEach(btn => {
