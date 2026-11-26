@@ -7,6 +7,8 @@ cd "$(dirname "$0")/.."
 rm -rf dist
 mkdir dist
 cp index.html dist/
+# The private stats page (it shows nothing without the STATS_KEY secret).
+cp stats.html dist/
 for f in *.css *.js; do
   case "$f" in
     *[!A-Za-z0-9_.-]*) continue ;;  # same naming rule as server.py's allowlist
