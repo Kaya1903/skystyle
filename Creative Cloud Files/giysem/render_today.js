@@ -6,6 +6,8 @@ import { brandHeader, attachHeaderHandlers } from './render_header.js';
 import { state, switchTab, setGender, setWardrobeMode, toggleModeMenu, setOccasion, todaysOccasion, setOutHours, openCitySheet, refetchForecast, swapOutfitPiece, resetOutfit, wearToday, unwearToday, answerFeedback,
   toggleAdjustPanel, rerollOutfit, swapSuggestedPiece, quickAdjust, askAdjust } from './app.js';
 import { dayLabel, sameOutfit } from './feedback.js';
+import { stylistRating, RATE_REASONS_DOWN, RATE_REASONS_UP } from './taste.js';
+import { rateTodayStylist, toggleStylistReason } from './app.js';
 import { renderLandmark } from './landmarks.js';
 import { cityLabel } from './weather.js';
 import { garmentArt, weatherGlyph, tempColor, outfitFigure, figurePartsFromRows, wornPieces } from './visuals.js';
@@ -227,7 +229,20 @@ function stylistNote(outfit, fb, s) {
   if (fb.stylistPending) return `<div class="stylist-note is-loading"><span class="stylist-dot"></span><span>${t(s.lang, 'stylist_loading')}</span></div>`;
   if (!outfit.stylistNote) return '';
   const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  return `<div class="stylist-note">${SPARKLE}<div><div class="stylist-title">${t(s.lang, 'stylist_title')}</div><div>${esc(outfit.stylistNote)}</div></div></div>`;
+  return `<div class="stylist-note">${SPARKLE}<div class="stylist-body"><div class="stylist-title">${t(s.lang, 'stylist_title')}</div><div>${esc(outfit.stylistNote)}</div>${fb.isToday ? stylistRate(fb.date, s) : ''}</div></div>`;
+}
+
+// 👍 / 👎 under the stylist's note, then optional reasons. Teaches the stylist their taste.
+function stylistRate(date, s) {
+  const r = stylistRating(date);
+  const thumb = (val, glyph) => `<button type="button" class="rate-btn ${r && r.rating === val ? 'active' : ''}" data-rate="${val}" aria-pressed="${!!(r && r.rating === val)}" aria-label="${t(s.lang, 'rate_' + val)}">${glyph}</button>`;
+  const reasons = r ? (r.rating === 'down' ? RATE_REASONS_DOWN : RATE_REASONS_UP) : [];
+  return `
+    <div class="stylist-rate">
+      <span class="rate-q">${r ? t(s.lang, 'rate_thanks_' + r.rating) : t(s.lang, 'rate_q')}</span>
+      <span class="rate-thumbs">${thumb('up', '👍')}${thumb('down', '👎')}</span>
+    </div>
+    ${r ? `<div class="rate-reasons"><span class="rate-why">${t(s.lang, 'rate_why')}</span>${reasons.map(k => `<button type="button" class="chip rate-reason ${r.reasons.includes(k) ? 'active' : ''}" data-rate-reason="${k}">${t(s.lang, 'rr_' + k)}</button>`).join('')}</div>` : ''}`;
 }
 
 // "Last Tuesday felt like today and you were cold": why today's outfit is warmer/lighter.
@@ -413,6 +428,8 @@ function animateCounts(root) {
 
 export function attachTodayHandlers(root) {
   attachInstallHandlers(root);
+  root.querySelectorAll('[data-rate]').forEach(b => b.addEventListener('click', () => rateTodayStylist(b.dataset.rate)));
+  root.querySelectorAll('[data-rate-reason]').forEach(b => b.addEventListener('click', () => toggleStylistReason(b.dataset.rateReason)));
   root.querySelectorAll('.piece-row[data-row]').forEach(row => row.addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
     const key = row.dataset.row;

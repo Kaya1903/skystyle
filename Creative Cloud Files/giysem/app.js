@@ -17,6 +17,8 @@ import { renderProfileScreen, attachProfileHandlers } from './render_profile.js'
 import { renderCitySheet, attachCitySheetHandlers, refreshCityBody } from './render_city.js';
 import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboarding.js';
 import { initInstall } from './install.js';
+import { recordTaste, forgetTaste, rateStylist, stylistRating, tasteSummary, clearTaste } from './taste.js';
+import { sendSignal } from './signals.js';
 import { initSheetSwipe } from './sheet_swipe.js';
 
 const CITY_KEY = 'giysem_city_v1';
@@ -347,12 +349,69 @@ export function setGender(g) {
   render();
 }
 
+// ---------------- Learning the person's taste ----------------
+
+// Today's outfit as the taste profile keeps it: each piece's kind and palette color.
+function tastePieces(outfit) {
+  return outfit.rows.map(r => {
+    const hex = r.color || (r.look && r.look.color);
+    return { slot: r.slotKey, art: r.art || null, color: ownColorKey(r) || (hex ? nearestColorKey(hex) : null) };
+  });
+}
+// Whether today's outfit is still the stylist's own pick (nothing changed by hand).
+function showingStylistPick(data) {
+  return !!(data && state.stylist && state.stylist.status === 'done' && !data.adjust && !Object.keys(state.outfitLocks || {}).length);
+}
+// Notes what they did with today's outfit, here and (anonymously) for us.
+function learn(type, extra = {}) {
+  const data = computeOutfitFor(0);
+  if (!data) return;
+  const pieces = tastePieces(data.outfit);
+  const stylist = showingStylistPick(data);
+  const local = { ...extra };
+  if (type === 'wear' || type === 'reroll') local.pieces = pieces;
+  if (type === 'wear') local.stylist = stylist;
+  if (type === 'swap') local.from = pieces.find(p => p.slot === extra.slot) || null;
+  recordTaste(type, data.dayView.date, local);
+  sendSignal({
+    type, stylist, occasion: todaysOccasion(data.dayView.date) || '', band: data.outfit.bandKey, gender: state.gender || 'unisex',
+    vibe: state.profile ? state.profile.styleVibe || 'casual' : 'casual', lang: state.lang,
+    kinds: pieces.map(p => `${p.slot}:${p.art || ''}:${p.color || ''}`), slot: extra.slot || '', kind: extra.kind || '',
+  });
+}
+
+// 👍 / 👎 on today's stylist pick; reasons can be added after.
+export function rateTodayStylist(rating) {
+  const data = computeOutfitFor(0);
+  if (!data) return;
+  const date = data.dayView.date;
+  const cur = stylistRating(date);
+  const next = cur && cur.rating === rating ? null : rating; // tapping the same thumb again takes it back
+  rateStylist(date, next, []);
+  if (next) sendSignal({ type: 'rate', rating: next, occasion: todaysOccasion(date) || '', band: data.outfit.bandKey, gender: state.gender || 'unisex', lang: state.lang, kinds: tastePieces(data.outfit).map(p => `${p.slot}:${p.art || ''}:${p.color || ''}`) });
+  state.quietRender = true;
+  render();
+}
+export function toggleStylistReason(reason) {
+  const data = computeOutfitFor(0);
+  if (!data) return;
+  const date = data.dayView.date;
+  const cur = stylistRating(date);
+  if (!cur) return;
+  const reasons = cur.reasons.includes(reason) ? cur.reasons.filter(r => r !== reason) : [...cur.reasons, reason].slice(-3);
+  rateStylist(date, cur.rating, reasons);
+  if (!cur.reasons.includes(reason)) sendSignal({ type: 'reason', rating: cur.rating, reason, occasion: todaysOccasion(date) || '', lang: state.lang });
+  state.quietRender = true;
+  render();
+}
+
 // Cycles one slot of today's outfit to the next suitable wardrobe piece.
 // The other slots are re-picked around it so colors still work together.
 export function swapOutfitPiece(slotKey) {
   const data = computeOutfitFor(0);
   const row = data && data.outfit.rows.find(r => r.slotKey === slotKey);
   if (!row || row.options.length < 2) return;
+  learn('swap', { slot: slotKey });
   const idx = row.options.indexOf(row.itemId);
   state.outfitLocks = { ...state.outfitLocks, [slotKey]: row.options[(idx + 1) % row.options.length] };
   state.swappedSlot = slotKey;
@@ -392,6 +451,7 @@ export function toggleAdjustPanel() {
 
 // 🎲 A whole new outfit for the same weather.
 export function rerollOutfit() {
+  learn('reroll');
   state.swappedSlot = 'all';
   state.diceSpin = true;
   changeAdjust(a => ({ ...a, reroll: a.reroll + 1, reply: null }));
@@ -399,12 +459,16 @@ export function rerollOutfit() {
 
 // Swap just one suggested piece.
 export function swapSuggestedPiece(slot) {
+  learn('swap', { slot });
   state.swappedSlot = slot;
   changeAdjust(a => ({ ...a, slotRolls: { ...a.slotRolls, [slot]: (a.slotRolls[slot] || 0) + 1 }, reply: null }));
 }
 
 // Quick options: warmer, lighter, dark, bright, elegant, casual, sporty, shoes.
 export function quickAdjust(kind) {
+  // Turning a style or color option on says something about their taste (turning it off doesn't).
+  const cur = todaysAdjust();
+  if ((ADJUST_STYLES.includes(kind) && !(cur && cur.vibe === kind)) || (ADJUST_TONES.includes(kind) && !(cur && cur.tone === kind))) learn('adjust', { kind });
   state.swappedSlot = kind === 'shoes' ? 'ayak' : 'all';
   changeAdjust(a => {
     const next = { ...a, reply: null };
@@ -445,6 +509,7 @@ export async function askAdjust(text) {
       if (w === 1 || w === -1) next.warmth = Math.max(-2, Math.min(2, a.warmth + w));
       if (ADJUST_TONES.includes(res.tone)) next.tone = res.tone;
       if (ADJUST_STYLES.includes(res.vibe)) next.vibe = res.vibe;
+      for (const k of [res.tone, res.vibe]) if (ADJUST_TONES.includes(k) || ADJUST_STYLES.includes(k)) recordTaste('adjust', a.date, { kind: k });
       const kinds = v => (Array.isArray(v) ? v : []).filter(x => typeof x === 'string' && /^[a-z]{2,12}$/.test(x));
       const want = kinds(res.want).slice(0, 3);
       // Asking for a piece cancels an earlier "not that one".
@@ -928,7 +993,7 @@ function stylistFor(dayView) {
     lang: state.lang,
     weather: { feelsLike: wp.feelsLike, wind: wp.wind, rain: wp.rainMax, uv: dayView.uvMax, sky: dayView.hero.kind,
       evening: eveningTip(dayView, 'en'), late: wp.late, hours: hoursText() },
-    person: { gender: state.gender || 'unisex', styleVibe: vibe, ...aiPersonal() },
+    person: { gender: state.gender || 'unisex', styleVibe: vibe, ...aiPersonal(), taste: tasteSummary(dayView.date) },
     occasion: todaysOccasion(dayView.date),
     recent,
     candidates: cands.map(c => ({ rows: c.rows })),
@@ -999,6 +1064,8 @@ export function wearToday() {
     })),
   });
   saveFeedback(state.feedback);
+  forgetTaste('wear', dayView.date); // wearing a different outfit later the same day replaces it
+  learn('wear');
   state.celebrate = true;
   state.quietRender = true;
   render();
@@ -1009,6 +1076,7 @@ export function unwearToday() {
   if (!data) return;
   state.feedback = unmarkWorn(state.feedback, data.dayView.date);
   saveFeedback(state.feedback);
+  forgetTaste('wear', data.dayView.date);
   state.quietRender = true;
   render();
 }
@@ -1023,6 +1091,7 @@ export function answerFeedback(date, answer) {
 }
 
 export function resetLearning() {
+  clearTaste();
   state.feedback = clearLearning();
   saveFeedback(state.feedback);
   state.quietRender = true;
