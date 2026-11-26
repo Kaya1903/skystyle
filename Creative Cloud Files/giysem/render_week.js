@@ -27,7 +27,7 @@ function weekDayRow({ day, outfit, tip, tipLoading, tipKey }, index, s, range) {
       <div class="week-row-body">
         <div class="week-row-condition">
           ${day.condition}
-          ${tip && !tipLoading ? `<span class="smart-tip-badge">${t(s.lang, 'smart_tip_badge')}</span>` : ''}
+          ${tip || tipLoading ? `<span class="smart-tip-badge ${tipLoading ? 'is-waiting' : ''}">${t(s.lang, 'smart_tip_badge')}</span>` : ''}
         </div>
         <div class="week-range">
           <span class="week-temp-min">${day.feelsMin}°</span>
@@ -56,13 +56,18 @@ export function updateWeekTipRow(root, tipKey, tip, lang) {
   const row = [...root.querySelectorAll('[data-tip-key]')].find(el => el.dataset.tipKey === tipKey);
   if (!row) return false;
   const tipEl = row.querySelector('.week-row-tip');
-  if (tipEl) tipEl.textContent = tip || tipEl.dataset.fallback || '';
-  const cond = row.querySelector('.week-row-condition');
-  if (tip && cond && !cond.querySelector('.smart-tip-badge')) {
-    const badge = document.createElement('span');
-    badge.className = 'smart-tip-badge';
-    badge.textContent = t(lang, 'smart_tip_badge');
-    cond.appendChild(badge);
+  if (tipEl) { tipEl.textContent = tip || tipEl.dataset.fallback || ''; tipEl.classList.add('tip-in'); }
+  // The badge's place was kept while loading, so showing it (or dropping it) doesn't move anything.
+  const badge = row.querySelector('.smart-tip-badge');
+  if (badge) {
+    if (tip) badge.classList.remove('is-waiting');
+    else badge.style.visibility = 'hidden';
+  } else if (tip) {
+    const cond = row.querySelector('.week-row-condition');
+    const b = document.createElement('span');
+    b.className = 'smart-tip-badge';
+    b.textContent = t(lang, 'smart_tip_badge');
+    if (cond) cond.appendChild(b);
   }
   return true;
 }

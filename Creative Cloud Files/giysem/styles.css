@@ -1754,3 +1754,14 @@ input, textarea, [contenteditable] { -webkit-user-select: text; user-select: tex
   .piece-row:active .piece-art { transform: scale(0.96); }
 }
 @keyframes rowOpen { from { opacity: 0; transform: translateY(-4px); } }
+
+/* Week: each day's tip keeps a two-line space while it loads, so rows don't jump as tips arrive. */
+.week-row-tip { min-height: calc(2 * 1.35em); }
+.week-row-tip.tip-in { animation: tipIn 0.35s ease both; }
+@keyframes tipIn { from { opacity: 0; } }
+.smart-tip-badge.is-waiting { visibility: hidden; }
+
+/* City search: the sheet keeps one height while results change under the search box. */
+#city-backdrop .sheet { height: min(86vh, 680px); height: min(86dvh, 680px); display: flex; flex-direction: column; }
+#city-backdrop .city-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#city-backdrop .city-results { max-height: none; overflow: visible; }
