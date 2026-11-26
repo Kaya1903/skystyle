@@ -172,6 +172,10 @@ function modeMenu(s) {
     </div>`;
 }
 
+// Phones show each piece as one line; a tap opens why it was picked. Remembered
+// across re-renders so a swap or the weather refresh doesn't fold it back up.
+const openRows = new Set();
+
 function outfitSection(outfit, kombinLabel, s, fb = {}) {
   return `
     <div class="section-head fade-slide" style="animation-delay:280ms">
@@ -189,7 +193,7 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
         ${stylistNote(outfit, fb, s)}
         ${memoryNote(fb, s)}
         ${outfit.rows.map((row, i) => `
-          <article class="piece-row ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey || s.swappedSlot === 'all' ? 'swapped' : ''}" style="--stag:${s.swappedSlot === 'all' ? i : 0}">
+          <article data-row="${row.slotKey}" aria-expanded="${openRows.has(row.slotKey)}" class="piece-row ${openRows.has(row.slotKey) ? 'open' : ''} ${row.fromWardrobe ? 'is-mine' : ''} ${s.swappedSlot === row.slotKey || s.swappedSlot === 'all' ? 'swapped' : ''}" style="--stag:${s.swappedSlot === 'all' ? i : 0}">
             <div class="piece-art" style="--float-delay:${i * -0.8}s">
               ${garmentArt(row.art, row.color || (row.look && row.look.color), row.look, 'flat')}
             </div>
@@ -198,7 +202,7 @@ function outfitSection(outfit, kombinLabel, s, fb = {}) {
                 <span>${row.label}</span>
                 ${row.fromWardrobe ? `<span class="wardrobe-tag">${icons.hanger}${t(s.lang, 'gardirobundan')}</span>` : ''}
               </div>
-              <div class="look-item">${row.color ? `<span class="color-dot ${row.patterned ? 'patterned' : ''}" style="background:${row.color}"></span>` : ''}${row.item}</div>
+              <div class="look-item">${row.color ? `<span class="color-dot ${row.patterned ? 'patterned' : ''}" style="background:${row.color}"></span>` : ''}${row.item}${row.reason ? `<span class="row-more">${icons.chevron}</span>` : ''}</div>
               <div class="look-reason">${row.reason}</div>
             </div>
             ${row.options && row.options.length > 1 ? `
@@ -409,6 +413,14 @@ function animateCounts(root) {
 
 export function attachTodayHandlers(root) {
   attachInstallHandlers(root);
+  root.querySelectorAll('.piece-row[data-row]').forEach(row => row.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    const key = row.dataset.row;
+    const open = !openRows.has(key);
+    if (open) openRows.add(key); else openRows.delete(key);
+    row.classList.toggle('open', open);
+    row.setAttribute('aria-expanded', String(open));
+  }));
   attachHeaderHandlers(root);
   root.querySelectorAll('[data-gender]').forEach(btn => {
     btn.addEventListener('click', () => setGender(btn.dataset.gender));

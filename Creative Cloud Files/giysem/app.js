@@ -16,6 +16,7 @@ import { renderProfileScreen, attachProfileHandlers } from './render_profile.js'
 import { renderCitySheet, attachCitySheetHandlers, refreshCityBody } from './render_city.js';
 import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboarding.js';
 import { initInstall } from './install.js';
+import { initSheetSwipe } from './sheet_swipe.js';
 
 const CITY_KEY = 'giysem_city_v1';
 const LANG_KEY = 'giysem_lang_v1';
@@ -1346,6 +1347,8 @@ document.addEventListener('click', (e) => {
   else if (el.classList.contains('nav-btn')) playWhoosh();
   else playTap();
 }, { capture: true });
+
+initSheetSwipe();
 
 navEl.addEventListener('click', (e) => {
   const btn = e.target.closest('.nav-btn');
