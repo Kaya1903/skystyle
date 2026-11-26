@@ -11,6 +11,8 @@
 //                               (an error from someone's phone)
 //   POST /api/signal          { type, anon, stylist, rating, reason, occasion, band, kinds, ... } -> 204
 //                               (anonymous: was the stylist's pick worn, re-rolled, changed, rated)
+//   POST /api/stats           { key } -> { signals, errors, examples } for the private /stats page
+//                               (the key is the STATS_KEY secret set in Cloudflare)
 // Errors and signals are kept for 90 days in the KV namespace bound as DATA
 // (or ERRORS, its earlier name); without one they only show in the live log.
 //
@@ -327,11 +329,13 @@ const HOUR = 3600 * 1000;
 const SIGNAL_HOURLY_LIMIT = 200;
 const hits = { ai: new Map(), error: new Map(), signal: new Map() };
 const KEEP_SECONDS = 90 * 24 * 3600;
-async function keep(env, prefix, entry) {
+async function keep(env, prefix, entry, metadata) {
   const kv = env.DATA || env.ERRORS;
   if (!kv) return;
   const key = `${prefix}/${entry.at.slice(0, 10)}/${entry.at}-${Math.random().toString(36).slice(2, 8)}`;
-  try { await kv.put(key, JSON.stringify(entry), { expirationTtl: KEEP_SECONDS }); } catch { /* logging must never fail the app */ }
+  // `metadata` is a small summary that comes back with a key listing, so the stats
+  // page can count thousands of signals without opening each one.
+  try { await kv.put(key, JSON.stringify(entry), { expirationTtl: KEEP_SECONDS, metadata }); } catch { /* logging must never fail the app */ }
 }
 function overLimit(kind, ip, limit) {
   const map = hits[kind];
@@ -359,24 +363,28 @@ async function clientError(request, env, ip) {
     version: clip(body.version, 20),
   };
   console.log('[client-error]', JSON.stringify(entry));
-  if (entry.message) await keep(env, 'errors', entry);
+  if (entry.message) await keep(env, 'errors', entry, { m: entry.message.slice(0, 160), w: entry.where.slice(0, 80), sc: entry.screen, dv: entry.device });
   return new Response(null, { status: 204 });
 }
 
 const SIGNAL_TYPES = ['wear', 'swap', 'reroll', 'adjust', 'rate', 'reason'];
-// An anonymous signal about the stylist's picks. Only fixed, non-personal fields are kept.
+const bounded = (v, lo, hi) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : null; };
+const word = (v, n) => clip(v, n).replace(/[^a-z_:0-9-]/gi, '');
+// An anonymous signal about the stylist's picks. Only these fields are kept; the
+// stylist's own note is the one piece of free text (written by the AI).
 async function signal(request, env, ip) {
   if (overLimit('signal', ip, SIGNAL_HOURLY_LIMIT)) return new Response(null, { status: 204 });
   const b = await request.json().catch(() => ({}));
   if (!SIGNAL_TYPES.includes(b.type)) return new Response(null, { status: 204 });
-  const word = (v, n) => clip(v, n).replace(/[^a-z_:0-9-]/gi, '');
+  const c = b.context && typeof b.context === 'object' ? b.context : null;
   const entry = {
     at: new Date().toISOString(),
     type: b.type,
     anon: word(b.anon, 20),
+    date: /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : '',
     stylist: b.stylist === true,
-    rating: ['up', 'down'].includes(b.rating) ? b.rating : '',
-    reason: word(b.reason, 16),
+    rating: ['up', 'down', 'none'].includes(b.rating) ? b.rating : '',
+    reasons: (Array.isArray(b.reasons) ? b.reasons : []).slice(0, 5).map(r => word(r, 16)),
     occasion: word(b.occasion, 10),
     band: word(b.band, 12),
     gender: word(b.gender, 8),
@@ -385,10 +393,55 @@ async function signal(request, env, ip) {
     slot: word(b.slot, 8),
     kind: word(b.kind, 10),
     kinds: (Array.isArray(b.kinds) ? b.kinds : []).slice(0, 8).map(k => word(k, 40)),
+    context: c ? {
+      feels: bounded(c.feels, -60, 60), rain: bounded(c.rain, 0, 100), wind: bounded(c.wind, 0, 200), sky: word(c.sky, 10), hours: clip(c.hours, 20),
+      note: clip(c.note, 300), pick: bounded(c.pick, -1, 9),
+      colors: Object.fromEntries(Object.entries(c.colors && typeof c.colors === 'object' ? c.colors : {}).slice(0, 7).map(([k, v]) => [word(k, 8), word(v, 12)])),
+      options: (Array.isArray(c.options) ? c.options : []).slice(0, 6).map(o => clip(o, 200).replace(/[^a-z_:0-9 -]/gi, '')),
+    } : null,
   };
   console.log('[signal]', JSON.stringify(entry));
-  await keep(env, 'signals', entry);
+  await keep(env, 'signals', entry, {
+    t: entry.type, a: entry.anon, d: entry.date || entry.at.slice(0, 10), s: entry.stylist ? 1 : 0, r: entry.rating,
+    rs: entry.reasons, o: entry.occasion, b: entry.band, g: entry.gender, k: entry.kind,
+  });
   return new Response(null, { status: 204 });
+}
+
+function sameSecret(a, b) {
+  const x = new TextEncoder().encode(String(a || ''));
+  const y = new TextEncoder().encode(String(b || ''));
+  let diff = x.length ^ y.length;
+  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] || 0) ^ (y[i] || 0);
+  return diff === 0;
+}
+
+// Every key (with its summary) under a prefix, oldest first.
+async function listAll(kv, prefix, max = 20000) {
+  const out = [];
+  let cursor;
+  do {
+    const page = await kv.list({ prefix, cursor, limit: 1000 });
+    for (const k of page.keys) out.push({ key: k.name, ...(k.metadata || {}) });
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor && out.length < max);
+  return out;
+}
+
+// The private stats page's data: every signal's summary, recent errors, and the
+// full story of the latest thumbs-down ratings. Needs the STATS_KEY secret.
+async function stats(request, env, ip) {
+  if (overLimit('error', ip, ERROR_HOURLY_LIMIT)) return json(429, { error: 'too many tries' });
+  if (!env.STATS_KEY) return json(503, { error: 'STATS_KEY is not set in Cloudflare' });
+  const b = await request.json().catch(() => ({}));
+  if (!sameSecret(b.key, env.STATS_KEY)) return json(401, { error: 'wrong key' });
+  const kv = env.DATA || env.ERRORS;
+  if (!kv) return json(503, { error: 'no DATA KV namespace is bound' });
+  const signals = await listAll(kv, 'signals/');
+  const errors = (await listAll(kv, 'errors/')).slice(-200);
+  const downs = signals.filter(x => x.t === 'rate' && x.r === 'down').slice(-25);
+  const examples = (await Promise.all(downs.map(x => kv.get(x.key, 'json').catch(() => null)))).filter(Boolean);
+  return json(200, { signals, errors, examples });
 }
 
 export async function onRequestPost({ request, env, params }) {
@@ -396,6 +449,7 @@ export async function onRequestPost({ request, env, params }) {
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   if (route === 'client-error') return clientError(request, env, ip);
   if (route === 'signal') return signal(request, env, ip);
+  if (route === 'stats') return stats(request, env, ip);
   if (!['analyze-photo', 'style-tip', 'adjust-outfit', 'stylist'].includes(route)) return json(404, { error: 'not found' });
   if (overLimit('ai', ip, AI_HOURLY_LIMIT)) return json(429, { error: 'too many requests, try again in a while' });
   const keyError = checkApiKey(env);

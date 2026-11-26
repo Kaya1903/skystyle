@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>SkyStyle Pano</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <style>
+    :root {
+      --bg: #f4f5f9; --card: #ffffff; --ink: #141a2e; --ink-soft: #4b536e; --ink-faint: #8a91a8; --line: #e4e7ef;
+      --brand: #7a5a9e; --brand-soft: #efe9f6; --good: #2f8f5b; --bad: #c0453b;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+    main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 60px; }
+    h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+    h2 { font-size: 15px; margin: 0 0 12px; }
+    .sub { color: var(--ink-soft); margin: 0 0 20px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .grid { display: grid; gap: 12px; }
+    .tiles { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 12px; }
+    .two { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 12px; }
+    .tile .label { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+    .tile .value { font-size: 28px; font-weight: 750; letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .tile .hint { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+    input, button, select { font: inherit; }
+    input[type=password] { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; min-width: 240px; }
+    button { padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 600; }
+    button.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+    button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .msg { color: var(--bad); margin-top: 10px; }
+    .muted { color: var(--ink-faint); }
+    /* Bars */
+    .bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding-top: 8px; border-bottom: 1px solid var(--line); }
+    .bar { flex: 1; min-width: 6px; background: var(--brand); border-radius: 4px 4px 0 0; position: relative; }
+    .bar:hover { opacity: 0.8; }
+    .bar-x { display: flex; gap: 4px; font-size: 10.5px; color: var(--ink-faint); margin-top: 4px; }
+    .bar-x span { flex: 1; min-width: 0; text-align: left; overflow: visible; white-space: nowrap; }
+    .hbar { display: grid; grid-template-columns: 130px 1fr 42px; gap: 8px; align-items: center; margin: 6px 0; font-size: 13px; }
+    .hbar .track { height: 10px; background: var(--brand-soft); border-radius: 999px; overflow: hidden; }
+    .hbar .fill { height: 100%; background: var(--brand); border-radius: 999px; }
+    .hbar .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+    th { color: var(--ink-soft); font-weight: 650; font-size: 12px; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .ex { border-top: 1px solid var(--line); padding: 12px 0; }
+    .ex:first-of-type { border-top: 0; padding-top: 0; }
+    .ex .meta { font-size: 12px; color: var(--ink-soft); }
+    .ex .note { margin: 6px 0; padding: 8px 10px; background: var(--brand-soft); border-radius: 10px; font-weight: 600; }
+    .tag { display: inline-block; font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: #f1f2f6; margin: 2px 4px 2px 0; }
+    .tag.bad { background: #fbe9e7; color: var(--bad); }
+    .opt { font-size: 12px; color: var(--ink-soft); margin: 2px 0; }
+    .opt.picked { color: var(--ink); font-weight: 650; }
+    .hidden { display: none; }
+    @media (max-width: 600px) { .hbar { grid-template-columns: 100px 1fr 34px; } input[type=password] { min-width: 0; width: 100%; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>SkyStyle Pano</h1>
+  <p class="sub">Stilist sinyalleri ve uygulama hataları. Veriler isimsizdir; her kişi rastgele bir kimlikle görünür.</p>
+
+  <form id="login" class="card row">
+    <input id="key" type="password" placeholder="Pano şifresi (STATS_KEY)" autocomplete="current-password" />
+    <button class="primary" type="submit">Aç</button>
+    <div id="login-msg" class="msg"></div>
+  </form>
+
+  <div id="dash" class="hidden">
+    <div class="row" style="margin-bottom:14px">
+      <span class="muted">Dönem:</span>
+      <button data-days="7">7 gün</button>
+      <button data-days="30">30 gün</button>
+      <button data-days="90">90 gün</button>
+      <span style="flex:1"></span>
+      <button id="refresh">Yenile</button>
+      <button id="logout">Çıkış</button>
+    </div>
+
+    <div class="grid tiles" id="tiles"></div>
+
+    <div class="grid two">
+      <div class="card"><h2>Günlük aktif kişi</h2><div id="daily"></div></div>
+      <div class="card"><h2>👎 sebepleri</h2><div id="reasons-down"></div><h2 style="margin-top:18px">👍 sebepleri</h2><div id="reasons-up"></div></div>
+    </div>
+
+    <div class="grid two">
+      <div class="card"><h2>Plana göre</h2><div id="by-occasion"></div></div>
+      <div class="card"><h2>Havaya göre</h2><div id="by-band"></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px"><h2>Son 👎 alan öneriler</h2><div id="examples"></div></div>
+    <div class="card"><h2>Uygulama hataları</h2><div id="errors"></div></div>
+  </div>
+</main>
+
+<script type="module">
+const KEY_STORE = 'skystyle_stats_key';
+const $ = id => document.getElementById(id);
+let data = null;
+let days = 30;
+
+const OCC = { work: 'İş', school: 'Okul', date: 'Randevu', event: 'Davet', sport: 'Spor', walk: 'Gezme', '': 'Plan seçilmedi' };
+const BAND = { dondurucu: 'Dondurucu', soguk: 'Soğuk', serin: 'Serin', ilik: 'Ilık', sicak: 'Sıcak', cok_sicak: 'Çok sıcak' };
+const REASON = {
+  colors: 'Renkler olmamış', plain: 'Çok sıradan', bold: 'Fazla iddialı', not_me: 'Bana göre değil', weather: 'Havaya uymuyor',
+  colors_good: 'Renkler güzel', me: 'Tam bana göre', idea: 'Not işime yaradı',
+};
+const SLOT = { ust: 'İç giyim', ustune: 'Üstüne', dis: 'Dış giyim', alt: 'Alt', ayak: 'Ayakkabı', yanina: 'Yanına' };
+const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '-');
+
+function sessionKey() { try { return sessionStorage.getItem(KEY_STORE) || ''; } catch { return ''; } }
+function setSessionKey(k) { try { k ? sessionStorage.setItem(KEY_STORE, k) : sessionStorage.removeItem(KEY_STORE); } catch { /* fine */ } }
+
+async function load(key) {
+  const res = await fetch('/api/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || ('HTTP ' + res.status));
+  return body;
+}
+
+async function open(key) {
+  $('login-msg').textContent = '';
+  try {
+    data = await load(key);
+    setSessionKey(key);
+    $('login').classList.add('hidden');
+    $('dash').classList.remove('hidden');
+    draw();
+  } catch (e) {
+    setSessionKey('');
+    $('login-msg').textContent = e.message === 'wrong key' ? 'Şifre yanlış.' : 'Açılamadı: ' + e.message;
+  }
+}
+
+function since(n) {
+  const d = new Date(); d.setDate(d.getDate() - (n - 1));
+  return d.toISOString().slice(0, 10);
+}
+
+// The latest value per person and day (ratings and reasons can change during a day).
+function latestByPersonDay(list) {
+  const m = new Map();
+  for (const x of list) m.set(x.a + '|' + x.d, x);
+  return [...m.values()];
+}
+
+function compute() {
+  const from = since(days);
+  const s = data.signals.filter(x => (x.d || '') >= from);
+  const people = new Map();
+  for (const x of s) { if (!people.has(x.a)) people.set(x.a, new Set()); people.get(x.a).add(x.d); }
+  const personDays = [...people.values()].reduce((n, set) => n + set.size, 0);
+  const returning = [...people.values()].filter(set => set.size >= 2).length;
+  const wears = s.filter(x => x.t === 'wear');
+  const stylistWears = wears.filter(x => x.s === 1);
+  const rerolls = s.filter(x => x.t === 'reroll');
+  const swaps = s.filter(x => x.t === 'swap');
+  const ratings = latestByPersonDay(s.filter(x => x.t === 'rate')).filter(x => x.r === 'up' || x.r === 'down');
+  const up = ratings.filter(x => x.r === 'up').length;
+  const down = ratings.filter(x => x.r === 'down').length;
+  const reasonEvents = latestByPersonDay(s.filter(x => x.t === 'reason'));
+  const reasons = { up: {}, down: {} };
+  for (const x of reasonEvents) for (const r of x.rs || []) { const side = x.r === 'up' ? 'up' : 'down'; reasons[side][r] = (reasons[side][r] || 0) + 1; }
+  // Per day: active people.
+  const daily = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    daily.push({ date: key, n: new Set(s.filter(x => x.d === key).map(x => x.a)).size });
+  }
+  const group = field => {
+    const g = {};
+    const add = (k, f) => { g[k] = g[k] || { up: 0, down: 0, wears: 0, stylistWears: 0, rerolls: 0 }; g[k][f]++; };
+    for (const x of ratings) add(x[field] || '', x.r);
+    for (const x of wears) { add(x[field] || '', 'wears'); if (x.s === 1) g[x[field] || ''].stylistWears++; }
+    for (const x of rerolls) add(x[field] || '', 'rerolls');
+    return g;
+  };
+  return { people: people.size, personDays, returning, wears: wears.length, stylistWears: stylistWears.length, rerolls: rerolls.length, swaps: swaps.length,
+    up, down, reasons, daily, byOccasion: group('o'), byBand: group('b'), signals: s.length,
+    today: new Set(s.filter(x => x.d === new Date().toISOString().slice(0, 10)).map(x => x.a)).size };
+}
+
+function tile(label, value, hint) {
+  return `<div class="card tile"><div class="label">${label}</div><div class="value">${value}</div>${hint ? `<div class="hint">${hint}</div>` : ''}</div>`;
+}
+function hbars(counts, labels) {
+  const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!rows.length) return '<div class="muted">Henüz veri yok.</div>';
+  const max = rows[0][1];
+  return rows.map(([k, n]) => `<div class="hbar" title="${esc(labels[k] || k)}: ${n}"><span>${esc(labels[k] || k)}</span><span class="track"><span class="fill" style="display:block;width:${(n / max) * 100}%"></span></span><span class="n">${n}</span></div>`).join('');
+}
+function groupTable(g, labels) {
+  const rows = Object.entries(g).sort((a, b) => (b[1].up + b[1].down + b[1].wears) - (a[1].up + a[1].down + a[1].wears));
+  if (!rows.length) return '<div class="muted">Henüz veri yok.</div>';
+  return `<table><thead><tr><th></th><th class="num">👍</th><th class="num">👎</th><th class="num">Beğeni</th><th class="num">Olduğu gibi giyildi</th><th class="num">Yeni kombin istendi</th></tr></thead><tbody>${
+    rows.map(([k, v]) => `<tr><td>${esc(labels[k] || k)}</td><td class="num">${v.up}</td><td class="num">${v.down}</td><td class="num">${pct(v.up, v.up + v.down)}</td><td class="num">${pct(v.stylistWears, v.wears)} <span class="muted">(${v.stylistWears}/${v.wears})</span></td><td class="num">${v.rerolls}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+function piece(k) {
+  const [slot, kind, color] = String(k).split(':');
+  return `${SLOT[slot] || slot}: ${kind}${color ? ` (${color})` : ''}`;
+}
+function examples() {
+  const from = since(days);
+  const reasonsFor = new Map();
+  for (const x of data.signals) if (x.t === 'reason') reasonsFor.set(x.a + '|' + x.d, x.rs || []);
+  const list = data.examples.filter(e => (e.date || e.at.slice(0, 10)) >= from).reverse();
+  if (!list.length) return '<div class="muted">Bu dönemde 👎 yok.</div>';
+  return list.map(e => {
+    const c = e.context || {};
+    const rs = reasonsFor.get(e.anon + '|' + (e.date || e.at.slice(0, 10))) || [];
+    const weather = [c.feels != null ? `hissedilen ${c.feels}°` : '', c.rain != null ? `yağmur %${c.rain}` : '', c.wind != null ? `rüzgâr ${c.wind} km/sa` : '', c.hours ? `saat ${esc(c.hours)}` : ''].filter(Boolean).join(', ');
+    return `<div class="ex">
+      <div class="meta">${[e.date || e.at.slice(0, 10), OCC[e.occasion] || 'Plan seçilmedi', BAND[e.band] || e.band, e.gender, e.vibe, e.lang].filter(Boolean).map(esc).join(' · ')}${weather ? ' · ' + weather : ''}${e.stylist ? '' : ' · <b>kombin elle değiştirilmişti</b>'}</div>
+      ${rs.length ? `<div>${rs.map(r => `<span class="tag bad">${esc(REASON[r] || r)}</span>`).join('')}</div>` : ''}
+      ${c.note ? `<div class="note">${esc(c.note)}</div>` : ''}
+      <div>${(e.kinds || []).map(k => `<span class="tag">${esc(piece(k))}</span>`).join('')}</div>
+      ${(c.options || []).length ? `<details style="margin-top:6px"><summary class="muted">Stilistin elindeki ${c.options.length} seçenek</summary>${c.options.map((o, i) => `<div class="opt ${i === c.pick ? 'picked' : ''}">${i === c.pick ? '✓ ' : ''}${i + 1}. ${esc(o)}</div>`).join('')}</details>` : ''}
+    </div>`;
+  }).join('');
+}
+function errors() {
+  const g = {};
+  for (const x of data.errors) { const k = x.m + ' @ ' + x.w; g[k] = g[k] || { n: 0, sc: new Set(), dv: new Set() }; g[k].n++; g[k].sc.add(x.sc); g[k].dv.add(x.dv); }
+  const rows = Object.entries(g).sort((a, b) => b[1].n - a[1].n).slice(0, 30);
+  if (!rows.length) return '<div class="muted">Hata yok. 🎉</div>';
+  return `<table><thead><tr><th>Hata</th><th>Ekran</th><th>Cihaz</th><th class="num">Sayı</th></tr></thead><tbody>${
+    rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc([...v.sc].join(', '))}</td><td>${esc([...v.dv].join(', '))}</td><td class="num">${v.n}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+function draw() {
+  document.querySelectorAll('[data-days]').forEach(b => b.classList.toggle('on', Number(b.dataset.days) === days));
+  const m = compute();
+  $('tiles').innerHTML = [
+    tile('Aktif kişi', m.people, `bugün ${m.today}`),
+    tile('Geri dönen', pct(m.returning, m.people), `${m.returning} kişi en az 2 farklı gün açtı`),
+    tile('Stilist beğenisi', pct(m.up, m.up + m.down), `${m.up} 👍 · ${m.down} 👎`),
+    tile('Olduğu gibi giyildi', pct(m.stylistWears, m.wears), `${m.stylistWears} / ${m.wears} giyilen kombin stilistin seçimiydi`),
+    tile('Yeni kombin isteme', m.personDays ? (m.rerolls / m.personDays).toFixed(1) : '-', `kişi-gün başına zar (${m.rerolls} kez)`),
+    tile('Parça değiştirme', m.swaps, `${m.signals} sinyal toplam`),
+  ].join('');
+  const max = Math.max(1, ...m.daily.map(d => d.n));
+  const step = Math.ceil(m.daily.length / 10);
+  $('daily').innerHTML = `<div class="bars">${m.daily.map(d => `<div class="bar" style="height:${Math.max(2, (d.n / max) * 100)}%" title="${d.date}: ${d.n} kişi"></div>`).join('')}</div>
+    <div class="bar-x">${m.daily.map((d, i) => `<span>${i % step === 0 ? Number(d.date.slice(8)) + '.' + Number(d.date.slice(5, 7)) : ''}</span>`).join('')}</div>
+    <div class="muted" style="margin-top:6px">En yüksek: ${max} kişi</div>`;
+  $('reasons-down').innerHTML = hbars(m.reasons.down, REASON);
+  $('reasons-up').innerHTML = hbars(m.reasons.up, REASON);
+  $('by-occasion').innerHTML = groupTable(m.byOccasion, OCC);
+  $('by-band').innerHTML = groupTable(m.byBand, BAND);
+  $('examples').innerHTML = examples();
+  $('errors').innerHTML = errors();
+}
+
+$('login').addEventListener('submit', e => { e.preventDefault(); open($('key').value.trim()); });
+document.querySelectorAll('[data-days]').forEach(b => b.addEventListener('click', () => { days = Number(b.dataset.days); draw(); }));
+$('refresh').addEventListener('click', () => open(sessionKey()));
+$('logout').addEventListener('click', () => { setSessionKey(''); location.reload(); });
+if (sessionKey()) open(sessionKey());
+</script>
+</body>
+</html>

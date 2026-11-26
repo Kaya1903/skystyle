@@ -373,11 +373,33 @@ function learn(type, extra = {}) {
   if (type === 'wear') local.stylist = stylist;
   if (type === 'swap') local.from = pieces.find(p => p.slot === extra.slot) || null;
   recordTaste(type, data.dayView.date, local);
-  sendSignal({
-    type, stylist, occasion: todaysOccasion(data.dayView.date) || '', band: data.outfit.bandKey, gender: state.gender || 'unisex',
-    vibe: state.profile ? state.profile.styleVibe || 'casual' : 'casual', lang: state.lang,
-    kinds: pieces.map(p => `${p.slot}:${p.art || ''}:${p.color || ''}`), slot: extra.slot || '', kind: extra.kind || '',
-  });
+  sendSignal({ ...signalBase(data), type, stylist, slot: extra.slot || '', kind: extra.kind || '',
+    ...(['wear', 'reroll'].includes(type) ? { context: stylistContext(data) } : {}) });
+}
+
+// What every signal says about the day: plan, weather band, who, and the outfit on screen.
+function signalBase(data) {
+  return {
+    date: data.dayView.date, occasion: todaysOccasion(data.dayView.date) || '', band: data.outfit.bandKey,
+    gender: state.gender || 'unisex', vibe: state.profile ? state.profile.styleVibe || 'casual' : 'casual', lang: state.lang,
+    kinds: tastePieces(data.outfit).map(p => `${p.slot}:${p.art || ''}:${p.color || ''}`),
+  };
+}
+
+// The whole scene behind a rating: the weather they dressed for, what the stylist
+// picked and wrote, and the other options it had. Lets us see why a pick missed.
+function stylistContext(data) {
+  const { params } = outfitParams(data.dayView, 0, null);
+  const ctx = { feels: params.feelsLike, rain: params.rainMax, wind: params.wind, sky: data.dayView.hero.kind, hours: hoursText() || '' };
+  const st = state.stylist && state.stylist.status === 'done' ? state.stylist : null;
+  if (st) {
+    const cands = stylistCandidates(data.dayView);
+    ctx.note = st.note || '';
+    ctx.pick = cands.findIndex(c => c.roll === st.roll);
+    ctx.colors = st.colors || {};
+    ctx.options = cands.map(c => c.rows.map(r => `${r.slot}:${r.kind}${r.color ? ':' + r.color : ''}`).join(' '));
+  }
+  return ctx;
 }
 
 // 👍 / 👎 on today's stylist pick; reasons can be added after.
@@ -388,7 +410,7 @@ export function rateTodayStylist(rating) {
   const cur = stylistRating(date);
   const next = cur && cur.rating === rating ? null : rating; // tapping the same thumb again takes it back
   rateStylist(date, next, []);
-  if (next) sendSignal({ type: 'rate', rating: next, occasion: todaysOccasion(date) || '', band: data.outfit.bandKey, gender: state.gender || 'unisex', lang: state.lang, kinds: tastePieces(data.outfit).map(p => `${p.slot}:${p.art || ''}:${p.color || ''}`) });
+  sendSignal({ ...signalBase(data), type: 'rate', rating: next || 'none', stylist: showingStylistPick(data), context: stylistContext(data) });
   state.quietRender = true;
   render();
 }
@@ -400,7 +422,8 @@ export function toggleStylistReason(reason) {
   if (!cur) return;
   const reasons = cur.reasons.includes(reason) ? cur.reasons.filter(r => r !== reason) : [...cur.reasons, reason].slice(-3);
   rateStylist(date, cur.rating, reasons);
-  if (!cur.reasons.includes(reason)) sendSignal({ type: 'reason', rating: cur.rating, reason, occasion: todaysOccasion(date) || '', lang: state.lang });
+  // The full list each time, so the latest signal of the day has every reason.
+  sendSignal({ type: 'reason', date, rating: cur.rating, reasons, occasion: todaysOccasion(date) || '', lang: state.lang });
   state.quietRender = true;
   render();
 }

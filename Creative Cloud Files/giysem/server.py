@@ -26,6 +26,11 @@ import urllib.request
 
 PORT = int(os.environ.get('PORT', 8420))
 
+# Signals and errors from this run, for the local /stats page (Cloudflare keeps them in KV).
+_signals = []
+_errors = []
+STATS_KEY = os.environ.get('STATS_KEY') or 'local'
+
 # AI requests per IP in the last hour (same limit as the Cloudflare functions).
 AI_HOURLY_LIMIT = 120
 _ai_hits = {}
@@ -310,6 +315,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path == '/api/signal':
             self._handle_signal()
             return
+        if self.path == '/api/stats':
+            self._handle_stats()
+            return
         if self.path in ('/api/analyze-photo', '/api/style-tip', '/api/adjust-outfit', '/api/stylist') \
                 and over_limit(self.client_address[0]):
             self._send_json(429, {'error': 'too many requests, try again in a while'})
@@ -336,26 +344,56 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         entry = {k: clip(body.get(k), n) for k, n in
                  (('message', 300), ('where', 200), ('screen', 20), ('lang', 5), ('device', 40), ('version', 20))}
         print('[client-error]', json.dumps(entry, ensure_ascii=False), flush=True)
+        if entry['message']:
+            _errors.append({'key': f"errors/{len(_errors)}", 'meta': {'m': entry['message'][:160], 'w': entry['where'][:80], 'sc': entry['screen'], 'dv': entry['device']}})
         self.send_response(204)
         self.end_headers()
 
-    def _handle_signal(self):
-        """An anonymous stylist signal (worn, re-rolled, changed, rated): printed to the server log."""
+    def _read_json(self, limit=8000):
         try:
-            length = min(int(self.headers.get('Content-Length') or 0), 4000)
-            body = json.loads(self.rfile.read(length) or b'{}')
+            length = min(int(self.headers.get('Content-Length') or 0), limit)
+            return json.loads(self.rfile.read(length) or b'{}')
         except Exception:
-            body = {}
+            return {}
+
+    def _handle_signal(self):
+        """An anonymous stylist signal: kept in memory for the local /stats page (same fields as Cloudflare)."""
+        body = self._read_json()
         if body.get('type') in ('wear', 'swap', 'reroll', 'adjust', 'rate', 'reason'):
             word = lambda v, n: re.sub(r'[^a-zA-Z_:0-9-]', '', str(v if v is not None else '')[:n])
             entry = {k: word(body.get(k), n) for k, n in
-                     (('type', 8), ('anon', 20), ('rating', 4), ('reason', 16), ('occasion', 10), ('band', 12),
+                     (('type', 8), ('anon', 20), ('date', 10), ('rating', 4), ('occasion', 10), ('band', 12),
                       ('gender', 8), ('vibe', 10), ('lang', 5), ('slot', 8), ('kind', 10))}
+            entry['date'] = str(body.get('date') or '')[:10]
+            entry['at'] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
             entry['stylist'] = body.get('stylist') is True
+            entry['reasons'] = [word(r, 16) for r in (body.get('reasons') or [])[:5]]
             entry['kinds'] = [word(k, 40) for k in (body.get('kinds') or [])[:8]]
-            print('[signal]', json.dumps(entry), flush=True)
+            c = body.get('context') if isinstance(body.get('context'), dict) else None
+            entry['context'] = {
+                'feels': c.get('feels'), 'rain': c.get('rain'), 'wind': c.get('wind'), 'sky': word(c.get('sky'), 10),
+                'hours': str(c.get('hours') or '')[:20], 'note': str(c.get('note') or '')[:300], 'pick': c.get('pick'),
+                'colors': c.get('colors') if isinstance(c.get('colors'), dict) else {},
+                'options': [str(o)[:200] for o in (c.get('options') or [])[:6]],
+            } if c else None
+            print('[signal]', json.dumps(entry, ensure_ascii=False), flush=True)
+            _signals.append({'key': f"signals/{entry['at']}-{len(_signals)}", 'entry': entry,
+                             'meta': {'t': entry['type'], 'a': entry['anon'], 'd': entry['date'] or entry['at'][:10],
+                                      's': 1 if entry['stylist'] else 0, 'r': entry['rating'], 'rs': entry['reasons'],
+                                      'o': entry['occasion'], 'b': entry['band'], 'g': entry['gender'], 'k': entry['kind']}})
         self.send_response(204)
         self.end_headers()
+
+    def _handle_stats(self):
+        """Data for the private /stats page. Key: STATS_KEY, or 'local' when it isn't set."""
+        body = self._read_json()
+        if not hmac.compare_digest(str(body.get('key') or ''), STATS_KEY):
+            self._send_json(401, {'error': 'wrong key'})
+            return
+        signals = [{'key': x['key'], **x['meta']} for x in _signals]
+        errors = [{'key': x['key'], **x['meta']} for x in _errors][-200:]
+        downs = [x['entry'] for x in _signals if x['meta']['t'] == 'rate' and x['meta']['r'] == 'down'][-25:]
+        self._send_json(200, {'signals': signals, 'errors': errors, 'examples': downs})
 
     def _check_api_key(self):
         """Returns True if the key is usable. Otherwise writes the error response and returns False."""
