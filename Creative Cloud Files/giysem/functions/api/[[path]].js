@@ -7,6 +7,12 @@
 //                               -> { warmth, tone, vibe, change, avoid, want, reply }
 //   POST /api/stylist         { lang, weather, person, recent, candidates: [{ rows }] }
 //                               -> { pick, colors, note }
+//   POST /api/client-error    { message, where, screen, lang, device } -> 204
+//                               (an error from someone's phone; kept for 30 days if the
+//                               ERRORS KV namespace is bound, otherwise only in the live log)
+//
+// Each person (by IP) gets AI_HOURLY_LIMIT AI requests an hour; past that the
+// app gets a 429 and falls back to its built-in suggestions.
 //
 // Same behaviour as server.py (which is kept for running the app locally):
 // the Anthropic API key stays on the server and never reaches the browser.
@@ -307,9 +313,52 @@ async function stylistPick(body, env) {
   return json(200, extractJsonObject(await callClaude(env, payload, 45000)));
 }
 
+// Requests per IP in the last hour, kept in this Cloudflare instance's memory (no
+// storage to set up). Instances are per region and restart now and then, so this
+// is a guard against a runaway loop or a script hammering the API, not an exact count.
+const AI_HOURLY_LIMIT = 120;
+const ERROR_HOURLY_LIMIT = 20;
+const HOUR = 3600 * 1000;
+const hits = { ai: new Map(), error: new Map() };
+function overLimit(kind, ip, limit) {
+  const map = hits[kind];
+  const now = Date.now();
+  const recent = (map.get(ip) || []).filter(t => now - t < HOUR);
+  if (recent.length >= limit) { map.set(ip, recent); return true; }
+  recent.push(now);
+  map.set(ip, recent);
+  if (map.size > 5000) map.clear(); // never let the table grow without bound
+  return false;
+}
+
+// An error from someone's phone. Only the message, where it happened, the screen and
+// the device type are kept: no IP, no wardrobe, no location.
+async function clientError(request, env, ip) {
+  if (overLimit('error', ip, ERROR_HOURLY_LIMIT)) return new Response(null, { status: 204 });
+  const body = await request.json().catch(() => ({}));
+  const entry = {
+    at: new Date().toISOString(),
+    message: clip(body.message, 300),
+    where: clip(body.where, 200),
+    screen: clip(body.screen, 20),
+    lang: clip(body.lang, 5),
+    device: clip(body.device, 40),
+    version: clip(body.version, 20),
+  };
+  console.log('[client-error]', JSON.stringify(entry));
+  if (env.ERRORS && entry.message) {
+    const key = `${entry.at.slice(0, 10)}/${entry.at}-${Math.random().toString(36).slice(2, 8)}`;
+    try { await env.ERRORS.put(key, JSON.stringify(entry), { expirationTtl: 30 * 24 * 3600 }); } catch { /* logging must never fail the app */ }
+  }
+  return new Response(null, { status: 204 });
+}
+
 export async function onRequestPost({ request, env, params }) {
   const route = (params.path || []).join('/');
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (route === 'client-error') return clientError(request, env, ip);
   if (!['analyze-photo', 'style-tip', 'adjust-outfit', 'stylist'].includes(route)) return json(404, { error: 'not found' });
+  if (overLimit('ai', ip, AI_HOURLY_LIMIT)) return json(429, { error: 'too many requests, try again in a while' });
   const keyError = checkApiKey(env);
   if (keyError) return keyError;
   try {

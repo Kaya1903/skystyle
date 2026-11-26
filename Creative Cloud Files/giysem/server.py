@@ -20,10 +20,27 @@ import json
 import os
 import re
 import socketserver
+import time
 import urllib.error
 import urllib.request
 
 PORT = int(os.environ.get('PORT', 8420))
+
+# AI requests per IP in the last hour (same limit as the Cloudflare functions).
+AI_HOURLY_LIMIT = 120
+_ai_hits = {}
+
+
+def over_limit(ip):
+    now = time.time()
+    recent = [t for t in _ai_hits.get(ip, []) if now - t < 3600]
+    if len(recent) >= AI_HOURLY_LIMIT:
+        _ai_hits[ip] = recent
+        return True
+    recent.append(now)
+    _ai_hits[ip] = recent
+    return False
+
 API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-haiku-5-5')
 # Reading a clothing photo needs a better eye, so it runs on Sonnet (same as Cloudflare).
@@ -284,6 +301,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not self._site_authorized():
             self._send_auth_challenge()
             return
+        if self.path == '/api/client-error':
+            self._handle_client_error()
+            return
+        if self.path in ('/api/analyze-photo', '/api/style-tip', '/api/adjust-outfit', '/api/stylist') \
+                and over_limit(self.client_address[0]):
+            self._send_json(429, {'error': 'too many requests, try again in a while'})
+            return
         if self.path == '/api/analyze-photo':
             self._handle_analyze()
         elif self.path == '/api/style-tip':
@@ -294,6 +318,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._handle_stylist()
         else:
             self.send_error(404)
+
+    def _handle_client_error(self):
+        """An error from the app in someone's browser: printed to the server log (same fields as Cloudflare)."""
+        try:
+            length = min(int(self.headers.get('Content-Length') or 0), 4000)
+            body = json.loads(self.rfile.read(length) or b'{}')
+        except Exception:
+            body = {}
+        clip = lambda v, n: str(v if v is not None else '')[:n]
+        entry = {k: clip(body.get(k), n) for k, n in
+                 (('message', 300), ('where', 200), ('screen', 20), ('lang', 5), ('device', 40), ('version', 20))}
+        print('[client-error]', json.dumps(entry, ensure_ascii=False), flush=True)
+        self.send_response(204)
+        self.end_headers()
 
     def _check_api_key(self):
         """Returns True if the key is usable. Otherwise writes the error response and returns False."""

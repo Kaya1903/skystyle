@@ -1,3 +1,4 @@
+import { setErrorContext } from './errors.js';
 import { colorName, isValidColor, nearestColorKey, COLORS } from './colors.js';
 import { setSky } from './sky.js';
 import { unlockSound, makeAudible, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
@@ -1349,6 +1350,7 @@ document.addEventListener('click', (e) => {
 }, { capture: true });
 
 initSheetSwipe();
+setErrorContext(() => ({ screen: state.screen === 'app' ? state.activeTab : state.screen, lang: state.lang }));
 
 navEl.addEventListener('click', (e) => {
   const btn = e.target.closest('.nav-btn');
