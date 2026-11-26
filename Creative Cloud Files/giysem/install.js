@@ -49,11 +49,24 @@ function installMode() {
   return null;
 }
 
+// Safari 26 moved Share into the menu behind the three-line button, and
+// "Add to Home Screen" is often under "View More" in the share sheet.
+function safariMajor() {
+  const m = /Version\/(\d+)/.exec(navigator.userAgent || '');
+  return m ? +m[1] : 0;
+}
+
+// Whether the closable install card is on Today right now (other hints stay out of its way).
+export function installBannerShowing() {
+  return !!installMode() && platform() !== 'other' && !dismissed();
+}
+
 function dismissed() {
   try { return localStorage.getItem(DISMISS_KEY) === '1'; } catch { return false; }
 }
 
 const SHARE_ICON = '<svg class="install-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+const MENU_ICON = '<svg class="install-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>';
 const PLUS_ICON = '<svg class="install-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 
 // The card: `banner` on Today (phones only, can be closed), otherwise the Profile version.
@@ -64,7 +77,10 @@ export function installCard(s, { banner = false } = {}) {
   const body = mode === 'prompt'
     ? `<button type="button" class="btn-primary install-btn" data-install="prompt">${t(s.lang, 'install_btn')}</button>`
     : mode === 'ios'
-      ? `<ol class="install-steps"><li>${SHARE_ICON}<span>${t(s.lang, 'install_ios_1')}</span></li><li>${PLUS_ICON}<span>${t(s.lang, 'install_ios_2')}</span></li></ol>`
+      ? `<ol class="install-steps">${(safariMajor() >= 26
+        ? [[MENU_ICON, 'install_ios26_1'], [PLUS_ICON, 'install_ios26_2']]
+        : [[SHARE_ICON, 'install_ios_1'], [PLUS_ICON, 'install_ios_2']])
+        .map(([icon, key], i) => `<li><span class="install-num">${i + 1}</span>${icon}<span>${t(s.lang, key)}</span></li>`).join('')}</ol>`
       : `<p class="install-why">${t(s.lang, 'install_menu')}</p>`;
   return `
     <section class="glass install-card ${banner ? 'is-banner' : ''}">

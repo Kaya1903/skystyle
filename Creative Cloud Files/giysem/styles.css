@@ -1724,3 +1724,4 @@ p { margin: 0; }
 @keyframes hintPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 @media (prefers-reduced-motion: reduce) { .sound-hint { animation: none; } }
 .sound-hint.settled { opacity: 1; transform: none; animation: hintPulse 2.4s ease-in-out infinite; }
+.install-num { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; font-weight: 800; background: var(--ink); color: #fff; }
