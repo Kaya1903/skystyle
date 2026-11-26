@@ -45,6 +45,11 @@ export function shade(hex, amt) {
   return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 }
 
+function luma(hex) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return (((n >> 16) & 255) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000;
+}
+
 function isLight(hex) {
   const n = parseInt(hex.replace('#', ''), 16);
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
@@ -105,9 +110,12 @@ const GARMENTS = {
     body: SHORT_JACKET,
     detail: '<path d="M42 15 L50 42 L60 25 Z M78 15 L70 42 L60 25 Z" fill="{D}" opacity=".55"/><path d="M60 25 V103" stroke="{D}" stroke-width="2.5"/><path d="M41 78 H52 M68 78 H79" stroke="{D}" stroke-width="3" stroke-linecap="round"/><path d="M33 56 H87" stroke="{D}" stroke-width="2" opacity=".25"/>',
   },
+  // Short puffer: wide and bulky, a tall collar, sides that bulge between the quilted
+  // bands, and the quilting running across the sleeves too.
   puffer: {
-    body: LONG_COAT,
-    detail: '<path d="M42 18 C40 2 80 2 78 18 C72 24 48 24 42 18 Z" fill="{D}" opacity=".5"/><path d="M60 25 V115" stroke="{D}" stroke-width="2.5"/><path d="M33 44 Q60 50 87 44 M33 62 Q60 68 87 62 M33 80 Q60 86 87 80 M33 98 Q60 104 87 98" fill="none" stroke="{D}" stroke-width="2.4" opacity=".55"/><path d="M24 44 L36 46 M22 62 L34 64 M19 80 L31 82 M96 46 L84 44 M98 64 L86 62 M101 82 L89 80" stroke="{D}" stroke-width="2.2" opacity=".5"/>',
+    back: 'M43 5 H77 V22 H43 Z',
+    body: 'M42 14 L20 25 Q12 30 12 40 L9 94 Q9 99 14 99 H27 Q31 99 31 95 L32 58 Q27 62 31 67 Q27 72 31 77 Q27 82 31 87 Q27 93 32 98 Q32 104 38 104 H82 Q88 104 88 98 Q93 93 89 87 Q93 82 89 77 Q93 72 89 67 Q93 62 88 58 L89 95 Q89 99 93 99 H106 Q111 99 111 94 L108 40 Q108 30 100 25 L78 14 C74 21 67 24 60 24 C53 24 46 21 42 14 Z',
+    detail: '<path d="M43 5 H77 V22 Q60 28 43 22 Z" fill="{D}" opacity=".35"/><path d="M60 22 V104" stroke="{D}" stroke-width="2.5"/><path d="M31 47 Q60 53 89 47 M31 67 Q60 73 89 67 M31 87 Q60 93 89 87" fill="none" stroke="{D}" stroke-width="2.4" opacity=".6"/><path d="M12 47 L31 50 M11 67 L31 69 M10 87 L31 88 M108 47 L89 50 M109 67 L89 69 M110 87 L89 88" stroke="{D}" stroke-width="2.2" opacity=".55"/>',
   },
   coat: {
     body: LONG_COAT,
@@ -474,7 +482,7 @@ const ZONES = {
   bomber: { neck: 29, shoulder: 15, bottom: 94, chest: [72, 48], pocket: 'patch' },
   blazer: { neck: 70, shoulder: 15, bottom: 110, chest: [74, 50], pocket: 'patch', open: true },
   windbreaker: { neck: 25, shoulder: 15, bottom: 102, chest: [72, 70], pocket: 'patch', hasHood: true },
-  puffer: { neck: 25, shoulder: 15, bottom: 114, chest: [72, 54], pocket: 'patch', hasHood: true },
+  puffer: { neck: 25, shoulder: 15, bottom: 104, chest: [72, 54], pocket: 'patch', hasHood: true },
   coat: { neck: 40, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch' },
   trench: { neck: 38, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch' },
   parka: { neck: 25, shoulder: 15, bottom: 114, chest: [74, 50], pocket: 'patch', hasHood: true },
@@ -673,14 +681,18 @@ export function garmentArt(kind, color, opts = {}, extraClass = '') {
   const c2 = opts.color2 || null;
   const dark = shade(fill, isLight(fill) ? -0.32 : -0.38);
   const light = shade(fill, 0.55);
+  // On very dark pieces (black, navy) lines drawn darker than the fabric vanish, so
+  // a puffer's quilting, a coat's lapels or a jacket's zip would all disappear and
+  // every black outerwear piece would look the same. Draw those details lighter instead.
+  const lineD = luma(fill) < 70 ? shade(fill, 0.42) : dark;
   const id = `gp${++uid}`;
   const type = opts.patternType || 'solid';
   const lensDef = glasses
     ? `<linearGradient id="${id}l" x1="0" y1="0" x2="0" y2="1">${(lightLens ? ['#9a5b2e', '#e9b778'] : ['#1c1f26', '#5a6474']).map((c, i) => `<stop offset="${i}" stop-color="${c}"/>`).join('')}</linearGradient>`
     : '';
   const defs = patternDefs(id, type, fill, c2) + lensDef;
-  const detail = g.detail.replaceAll('{D}', dark).replaceAll('{L}', light).replaceAll('{LENS}', `url(#${id}l)`);
-  const over = detailOverlays(name, opts.details || {}, fill, c2, dark, light);
+  const detail = g.detail.replaceAll('{D}', lineD).replaceAll('{L}', light).replaceAll('{LENS}', `url(#${id}l)`);
+  const over = detailOverlays(name, opts.details || {}, fill, c2, lineD, light);
   const zone = ZONES[name];
   const print = type === 'print' && zone ? printArt(id, g.body, zone, opts.printImg, fill, c2, dark, light) : '';
   return `
