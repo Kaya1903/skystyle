@@ -998,7 +998,7 @@ export function resetLearning() {
   showToast(t(state.lang, 'fb_reset_done'));
 }
 
-function computeWeekView() {
+export function computeWeekView() {
   if (!state.forecastRaw) return [];
   return buildWeekView(state.forecastRaw, state.lang);
 }

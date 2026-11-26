@@ -9,7 +9,10 @@ import { photoColors, cropPrint, validPrintBox, itemFormality, isFormality } fro
 import {
   state, openEditor, closeEditor, saveWardrobeItem, deleteWardrobeItem,
   setWardrobeFilter, setWardrobeSearch, newItemId, resizePhoto, inLaundry, laundryUntilFrom,
+  computeWeekView, todaysOccasion, render,
 } from './app.js';
+import { wardrobeGaps } from './wardrobe_gaps.js';
+import { garmentDefaultColor } from './visuals.js';
 
 // The item's drawing: built from its stored look (style, exact color, pattern, details).
 function itemArt(item, extraClass = '') {
@@ -60,6 +63,7 @@ export function renderWardrobeScreen(s) {
         <button class="chip ${s.wardrobeFilter === key ? 'active' : ''}" data-filter="${key}">${label}</button>
       `).join('')}
     </div>
+    ${s.wardrobeFilter === 'all' && !s.wardrobeSearch ? gapsCard(s) : ''}
     <div class="wardrobe-grid">
       <button class="add-card rise-in" style="animation-delay:130ms" data-action="add-item">
         ${icons.plus}
@@ -90,6 +94,76 @@ function wardrobeCard(item, i, lang) {
   `;
 }
 
+// ---------------- What the wardrobe is missing ----------------
+
+const GAPS_HIDDEN_KEY = 'skystyle_gaps_hidden';
+const GAPS_SHOWN = 3;
+function hiddenGaps() {
+  try { return JSON.parse(localStorage.getItem(GAPS_HIDDEN_KEY)) || {}; } catch { return {}; }
+}
+// A hidden tip stays away for two weeks, then comes back if it still applies.
+function hideGap(key, today) {
+  const until = new Date(`${today}T12:00:00`);
+  until.setDate(until.getDate() + 14);
+  const all = hiddenGaps();
+  all[key] = until.toISOString().slice(0, 10);
+  try { localStorage.setItem(GAPS_HIDDEN_KEY, JSON.stringify(all)); } catch { /* fine: it just shows again */ }
+}
+let shownGaps = [];
+
+function gapsCard(s) {
+  const week = computeWeekView();
+  if (!week.length) return '';
+  const today = week[0].date;
+  const hidden = hiddenGaps();
+  const all = wardrobeGaps(s.wardrobe, week, { gender: s.gender, occasion: todaysOccasion(today) });
+  shownGaps = all.filter(g => !(hidden[g.key] && hidden[g.key] >= today)).slice(0, GAPS_SHOWN);
+  const lang = s.lang;
+  if (!shownGaps.length) {
+    return all.length ? '' : `<div class="gaps-card gaps-ready glass fade-slide" style="animation-delay:120ms">${icons.check || ''}<span>${t(lang, 'gaps_ready')}</span></div>`;
+  }
+  return `
+    <section class="gaps-card glass fade-slide" style="animation-delay:120ms">
+      <div class="gaps-head">
+        <div class="gaps-title">${t(lang, 'gaps_title')}</div>
+        <div class="gaps-sub">${t(lang, 'gaps_sub')}</div>
+      </div>
+      ${shownGaps.map((g, i) => `
+        <div class="gap-row">
+          <div class="gap-art">${garmentArt(g.piece.art, garmentDefaultColor(g.piece.art), {}, 'flat')}</div>
+          <div class="gap-text">
+            <div class="gap-name">${t(lang, `gap_${g.key}_t`)}</div>
+            <div class="gap-reason">${t(lang, `gap_${g.key}_r`, g.n)}</div>
+            <div class="gap-actions">
+              <button type="button" class="gap-add" data-gap-add="${i}">${icons.plus}<span>${t(lang, 'gaps_add')}</span></button>
+              <button type="button" class="gap-hide" data-gap-hide="${i}">${t(lang, 'gaps_hide')}</button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </section>`;
+}
+
+function attachGapHandlers(root) {
+  root.querySelectorAll('[data-gap-add]').forEach(btn => btn.addEventListener('click', () => {
+    const g = shownGaps[+btn.dataset.gapAdd];
+    if (!g) return;
+    // The editor opens with the piece's kind, warmth and weather traits filled in; they add the name.
+    openEditor({
+      id: newItemId(), name: '', color: null, pattern: 'duz', patternType: 'solid', details: {}, photo: null,
+      gender: ['kadin', 'erkek'].includes(state.gender) ? state.gender : 'unisex',
+      ...g.piece, __new: true,
+    });
+  }));
+  root.querySelectorAll('[data-gap-hide]').forEach(btn => btn.addEventListener('click', () => {
+    const g = shownGaps[+btn.dataset.gapHide];
+    const week = computeWeekView();
+    if (!g || !week.length) return;
+    hideGap(g.key, week[0].date);
+    state.quietRender = true;
+    render();
+  }));
+}
+
 function escapeAttr(str) {
   return String(str || '').replace(/"/g, '&quot;');
 }
@@ -98,6 +172,7 @@ let searchDebounce = null;
 
 export function attachWardrobeHandlers(root) {
   attachHeaderHandlers(root);
+  attachGapHandlers(root);
   root.querySelectorAll('[data-action="add-item"]').forEach(btn => {
     btn.addEventListener('click', () => openEditor(null));
   });
