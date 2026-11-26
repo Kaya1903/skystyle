@@ -267,6 +267,8 @@ const CITIES = [
     const pin = (px, base, h, w = 12) => SPIRE(X(px), Y(base), +(w * k).toFixed(2), +(h * k).toFixed(2));
     const arch = (x1, x2, y1, y2) => ARCH(X(x1), Y(y2), +((x2 - x1) * k).toFixed(2), +((y2 - y1) * k).toFixed(2));
     return [
+      // Warm light behind the palace: invisible by day, at night it shines through every window and the clock.
+      { d: box(492, 745, 873, 1640) + box(340, 1245, 1022, 1640) + box(510, 1450, 845, 1910) + box(-255, 1665, 465, 1910) + box(900, 1665, 1621, 1910) + box(608, 530, 758, 688) + box(635, 405, 732, 520), cls: 'wars-glow' },
       // wings (extend past the photo's crop so the base reads as wide and low)
       { d: box(-260, 1660, 465, 1910) + box(900, 1660, 1626, 1910) + box(-270, 1640, 470, 1662) + box(895, 1640, 1636, 1662) +
           grid(-200, 400, 110, 1700, 1800, 80, 34, 46) + grid(960, 1560, 110, 1700, 1800, 80, 34, 46), o: 0.9, eo: true },
@@ -300,6 +302,10 @@ const CITIES = [
       box(555, 1648, 800, 1706),
       [570, 633, 697, 760].map(px => box(px, 1706, px + 25, 1900)).join(''),
       'M' + X(640) + ' ' + Y(1445) + 'Q' + X(678) + ' ' + Y(1400) + ' ' + X(716) + ' ' + Y(1445) + 'Z',
+      // The crown (clock stage, lantern, spire) again on top: lit in slowly changing colors at night, like the real one.
+      { d: box(630, 400, 737, 522) + C(X(683), Y(497), +(26 * k).toFixed(2)) + box(624, 392, 743, 404) +
+          'M' + X(660) + ' ' + Y(392) + 'C' + X(656) + ' ' + Y(360) + ' ' + X(668) + ' ' + Y(330) + ' ' + X(683) + ' ' + Y(318) + 'C' + X(698) + ' ' + Y(330) + ' ' + X(710) + ' ' + Y(360) + ' ' + X(706) + ' ' + Y(392) + 'Z' +
+          P(`${X(673)} ${Y(320)}, ${X(683)} ${Y(50)}, ${X(693)} ${Y(320)}`), cls: 'wars-crown', eo: true },
     ];
   }],
   ['prague', 50.0755, 14.4378, () => [
@@ -1316,18 +1322,88 @@ function istanbulLayers() {
   return { defs, back, front };
 }
 
+// ---------- Warsaw: the Old Town, Syrenka, a tram and the Vistula ----------
+// In the hero's 320x160 box, in front of the Palace of Culture: the colorful Old Town
+// houses of the Market Square on the left, the Mermaid of Warsaw on the riverbank,
+// a red and yellow tram crossing, the Vistula, and birds by day. At night the house
+// windows glow and the palace's lights reflect in the river.
+const WARS_HOUSES = [
+  // [x, width, height, gable: 't' triangle | 'r' rounded | 's' stepped, color]
+  [-4, 15, 27, 't', '#e7b450'], [11, 13, 33, 'r', '#cf6a52'], [24, 14, 25, 's', '#82b08f'], [38, 13, 31, 't', '#efd389'],
+  [51, 15, 24, 'r', '#b97393'], [66, 13, 29, 's', '#e39a5c'], [79, 14, 22, 't', '#7ea6d3'], [93, 12, 26, 'r', '#e8c26a'],
+];
+function warsawLayers() {
+  const base = 146;
+  let houses = '', shades = '', wins = '';
+  for (const [x, w, h, g, color] of WARS_HOUSES) {
+    const top = base - h, gh = 7;
+    const gable = g === 't' ? P(`${x} ${top}, ${x + w / 2} ${top - gh}, ${x + w} ${top}`)
+      : g === 'r' ? `M${x} ${top}Q${x + w / 2} ${top - gh * 1.6} ${x + w} ${top}Z`
+      : `M${x} ${top}h${w * 0.2}v${-gh * 0.45}h${w * 0.2}v${-gh * 0.5}h${w * 0.2}v${gh * 0.5}h${w * 0.2}v${gh * 0.45}h${w * 0.2}Z`;
+    const body = R(x, top, w, h) + gable;
+    houses += `<path class="wars-house" style="fill:${color}" d="${body}"/>`;
+    shades += body;
+    for (let wy = top + 4; wy < base - 5; wy += 6) for (const wx of [x + w * 0.22, x + w * 0.6]) wins += R(+wx.toFixed(1), wy, 2.4, 3);
+  }
+  // The Mermaid of Warsaw (Syrenka), as on the city's arms: sword raised over her head,
+  // round shield in front, a thick fish tail curling down and up into a fin, on a pedestal.
+  // Drawn in its own 40x64 box, then placed on the riverbank.
+  const syrenka = `
+    <g class="wars-syrenka" transform="translate(102 101) scale(0.7)">
+      <path d="${R(6, 54, 26, 10)}${R(4, 50.6, 30, 3.6)}"/>
+      <path d="M14 30C9.6 38 10 46.8 18 50.6C24.6 53.6 31.4 50.6 33.6 44.2L35.6 38.2L30.8 39.6C29 43.2 25.2 44.6 21.6 42.8C18.4 41 18.4 35.4 22.2 30Z"/>
+      <path d="M32.2 41.4L37.4 29.6L36.8 37L41.8 33.6L35.8 43.8Z"/>
+      <path d="M15 30.4L14.4 20.4Q15 16 18.6 15.4Q22.2 16 22.8 20.4L22.2 30.4Z"/>
+      <path d="${C(18.6, 11.4, 3.3)}${C(15.4, 12.8, 1.7)}"/>
+      <path fill-rule="evenodd" d="${C(14.6, 25.4, 6.2)}${C(14.6, 25.4, 4.4)}${C(14.6, 25.4, 1.9)}"/>
+      <path class="wars-stroke" d="M21.6 17.6L23.8 10L20.8 5.4" stroke-width="2.4"/>
+      <path class="wars-stroke" d="M18.4 7.2L22.8 3.8" stroke-width="1.5"/>
+      <path class="wars-stroke" d="M21 5.2L38.6 -1.4" stroke-width="2.4"/>
+    </g>`;
+  const tram = `
+    <g class="wars-tram-move"><g class="wars-tram">
+      <path class="wars-tram-red" d="${R(-17, 136.5, 34, 8)}"/>
+      <path class="wars-tram-yellow" d="${R(-17, 136.5, 34, 3.4)}"/>
+      <path class="wars-tram-win" d="${range(-15, 12, 5.2).map(x => R(x, 137.2, 3.8, 2.4)).join('')}"/>
+      <path class="wars-tram-roof" d="${R(-15, 135.3, 30, 1.3)}"/>
+      <path class="wars-stroke wars-panto" d="M-2 135.3L1 131L-2 128.5" stroke-width="0.7"/>
+    </g></g>`;
+  const bird = (y, dur, delay, s) => `
+    <g class="ist-gull-path" style="animation-duration:${dur}s;animation-delay:${delay}s"><g transform="translate(0 ${y}) scale(${s})">
+      <path class="ist-gull" d="M-5 0Q-2.6 -2.8 0 0.3Q2.6 -2.8 5 0" style="animation-delay:${(delay % 1).toFixed(2)}s;animation-duration:0.8s"/>
+    </g></g>`;
+  const shimmer = [[20, 151, 18], [90, 155, 26], [170, 150, 20], [232, 156, 24], [286, 152, 18]].map(([x, y, w]) => `M${x} ${y}h${w}`).join('');
+  // Night reflections: the palace's light (center ~206), its colored crown, and the house windows.
+  const reflect = R(194, 148, 3, 11) + R(201, 147, 2, 13) + R(206, 148, 3, 12) + R(213, 147, 2, 11) + R(218, 148, 3, 10);
+  const houseReflect = WARS_HOUSES.map(([x, w]) => R(x + w * 0.3, 149, 1.4, 6)).join('');
+  const defs = `<defs><linearGradient id="warsWater" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" class="wars-water-top"/><stop offset="1" class="wars-water-bottom"/></linearGradient></defs>`;
+  const front = `
+    <g class="wars-houses">${houses}<path class="wars-house-shade" d="${shades}"/><path class="wars-win" d="${wins}"/></g>
+    ${syrenka}
+    <path class="wars-rail" d="M-10 145.2H330"/>
+    ${tram}
+    <path class="wars-water" d="M-10 146Q40 144.5 80 146T160 146T240 146T330 146V172H-10Z"/>
+    <path class="ist-shimmer" d="${shimmer}"/>
+    <path class="wars-reflect" d="${reflect}"/>
+    <path class="wars-reflect-warm" d="${houseReflect}"/>
+    <g class="ist-gulls">${bird(26, 24, -6, 0.9)}${bird(40, 30, -15, 0.7)}${bird(18, 36, -27, 0.55)}</g>`;
+  return { defs, back: '', front };
+}
+
 export function renderLandmark(city) {
   const { key, elements } = sceneFor(city);
   const seed = city ? `${city.name || ''}${city.lat}` : 'city';
-  // Istanbul gets its own full-width Bosphorus around the mosque (most of our users are there).
-  const ist = key === 'istanbul' ? istanbulLayers() : null;
+  // Istanbul and Warsaw get their own full-width scenes around the landmark (most of our users are there).
+  const ist = key === 'istanbul' ? istanbulLayers() : key === 'warsaw' ? warsawLayers() : null;
+  const lift = key === 'istanbul' ? -10 : key === 'warsaw' ? -9 : 0;
   return `
     <div class="hero-landmark" data-scene="${key}" aria-hidden="true">
       <svg viewBox="0 0 320 160" preserveAspectRatio="xMidYMax meet">
         ${ist ? ist.defs : ''}
         <g class="lm-back-wrap">${backSkyline(seed)}</g>
-        ${ist ? `<g class="lm-back-wrap">${ist.back}</g>` : ''}
-        <svg class="lm-front" x="100" y="${ist ? -10 : 0}" width="213" height="160" viewBox="0 0 200 150">${elements.map(elementSvg).join('')}</svg>
+        ${ist && ist.back ? `<g class="lm-back-wrap">${ist.back}</g>` : ''}
+        <svg class="lm-front" x="100" y="${lift}" width="213" height="160" viewBox="0 0 200 150">${elements.map(elementSvg).join('')}</svg>
         ${ist ? `<g class="ist-front">${ist.front}</g>` : ''}
       </svg>
     </div>`;

@@ -218,7 +218,9 @@ export function playSuccess() {
 
 // A light buzz on Android for the moments that matter (iPhone browsers don't allow it).
 export function haptic(pattern = 8) {
-  try { if (navigator.vibrate && matchMedia('(pointer: coarse)').matches) navigator.vibrate(pattern); } catch { /* not supported */ }
+  // Chrome only allows it after a real tap; skip it otherwise instead of logging an error.
+  const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+  try { if (tapped && navigator.vibrate && matchMedia('(pointer: coarse)').matches) navigator.vibrate(pattern); } catch { /* not supported */ }
 }
 
 // ---------- weather ambience ----------

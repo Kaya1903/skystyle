@@ -1892,3 +1892,69 @@ input, textarea, [contenteditable] { -webkit-user-select: text; user-select: tex
   .ist-ferry-move { transform: translateX(210px); }
   .ist-gull-path { transform: translateX(120px); }
 }
+
+/* =========================================================
+   Warsaw: Old Town, Syrenka, tram, the Vistula, palace lights
+   ========================================================= */
+.hero-landmark[data-scene="warsaw"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, #000 88%, rgba(0, 0, 0, 0.8));
+          mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, #000 88%, rgba(0, 0, 0, 0.8));
+}
+/* Palace: warm light behind the windows and a colored crown, both only at night. */
+.lm-front path.wars-glow { fill: #ffc768; fill-opacity: 0; transition: fill-opacity 1.5s ease; }
+:root[data-daytime="night"] .lm-front path.wars-glow { fill-opacity: 1; }
+.lm-front path.wars-crown { fill-opacity: 0; transition: fill-opacity 1.5s ease; }
+:root[data-daytime="night"] .lm-front path.wars-crown { fill-opacity: 1; animation: warsCrown 16s ease-in-out infinite; }
+@keyframes warsCrown {
+  0%, 100% { fill: #c9a8ff; }
+  25% { fill: #ff8fa3; }
+  50% { fill: #8fd8ff; }
+  75% { fill: #ffd98a; }
+}
+:root[data-daytime="night"] .hero-landmark[data-scene="warsaw"] .lm-front { filter: drop-shadow(0 0 12px rgba(255, 200, 130, 0.28)); }
+/* At night the palace is a dark silhouette, so its lit windows stand out. */
+:root[data-daytime="night"] .hero-landmark[data-scene="warsaw"] .lm-front path:not(.wars-glow):not(.wars-crown) { fill: rgba(58, 66, 112, 0.96); }
+
+/* Old Town houses in their Market Square colors; darker with lit windows at night. */
+.wars-house { fill-opacity: 0.95; }
+.wars-house-shade { fill: #0b1238; fill-opacity: 0; transition: fill-opacity 1.5s ease; }
+:root[data-daytime="night"] .wars-house-shade { fill-opacity: 0.55; }
+.wars-win { fill: rgba(40, 50, 90, 0.35); transition: fill 1.5s ease; }
+:root[data-daytime="night"] .wars-win { fill: #ffd76b; }
+
+/* Syrenka: white like the other landmarks. */
+.wars-syrenka path { fill: rgba(255, 255, 255, 0.95); }
+.wars-stroke { fill: none !important; stroke: rgba(255, 255, 255, 0.95); stroke-linecap: round; stroke-linejoin: round; }
+:root[data-daytime="night"] .wars-syrenka path { fill: rgba(225, 232, 255, 0.85); }
+:root[data-daytime="night"] .wars-stroke { stroke: rgba(225, 232, 255, 0.85); }
+
+/* The tram crosses every half minute or so, red and yellow like Warsaw's. */
+.wars-rail { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 0.8; }
+.wars-tram-move { animation: warsTram 32s linear infinite; animation-delay: -9s; }
+@keyframes warsTram { 0% { transform: translateX(-40px); } 55% { transform: translateX(360px); } 100% { transform: translateX(360px); } }
+.wars-tram-red { fill: #c8333a; }
+.wars-tram-yellow { fill: #f2c230; }
+.wars-tram-roof { fill: #d9dde6; }
+.wars-tram-win { fill: #dbe8f7; }
+.wars-panto { stroke: rgba(40, 45, 60, 0.7); }
+:root[data-daytime="night"] .wars-tram-win { fill: #ffe39a; }
+:root[data-daytime="night"] .wars-tram-red { fill: #8f2a33; }
+:root[data-daytime="night"] .wars-tram-yellow { fill: #b8962f; }
+
+/* The Vistula: grey-blue by day, deep blue at night with the city's lights on it. */
+.wars-water { fill: url(#warsWater); }
+.wars-water-top { stop-color: #5f97c4; stop-opacity: 1; }
+.wars-water-bottom { stop-color: #36678f; stop-opacity: 1; }
+:root[data-daytime="night"] .wars-water-top { stop-color: #24508f; }
+:root[data-daytime="night"] .wars-water-bottom { stop-color: #0a1a40; }
+.wars-reflect, .wars-reflect-warm { opacity: 0; transition: opacity 1.5s ease; }
+.wars-reflect { fill: #ffd98a; }
+.wars-reflect-warm { fill: #ffd76b; }
+:root[data-daytime="night"] .wars-reflect { opacity: 0.5; animation: istFlicker 2.8s ease-in-out infinite; }
+:root[data-daytime="night"] .wars-reflect-warm { opacity: 0.4; animation: istFlicker 3.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wars-tram-move, :root[data-daytime="night"] .lm-front path.wars-crown, :root[data-daytime="night"] .wars-reflect,
+  :root[data-daytime="night"] .wars-reflect-warm { animation: none; }
+  .wars-tram-move { transform: translateX(150px); }
+}
