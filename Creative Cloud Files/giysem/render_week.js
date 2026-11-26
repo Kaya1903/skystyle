@@ -9,6 +9,9 @@ function headlinePiece(outfit) {
   return outfit.rows.find(r => r.slotKey === 'dis') || outfit.rows[0];
 }
 
+// A day's tip shows two lines; a tap on the day shows all of it (and another tap folds it).
+const openDays = new Set();
+
 function weekDayRow({ day, outfit, tip, tipLoading, tipKey }, index, s, range) {
   const d = new Date(day.date + 'T00:00:00');
   const weekdayName = index === 0 ? t(s.lang, 'week_today') : t(s.lang, 'weekdays')[d.getDay()];
@@ -18,7 +21,7 @@ function weekDayRow({ day, outfit, tip, tipLoading, tipKey }, index, s, range) {
   const left = ((day.feelsMin - range.min) / span) * 100;
   const width = Math.max(6, ((day.feelsMax - day.feelsMin) / span) * 100);
   return `
-    <article class="glass week-row rise-in" style="animation-delay:${80 + index * 70}ms" data-tip-key="${escapeAttr(tipKey)}">
+    <article class="glass week-row rise-in ${openDays.has(day.date) ? 'open' : ''}" style="animation-delay:${80 + index * 70}ms" data-tip-key="${escapeAttr(tipKey)}" data-day="${day.date}" aria-expanded="${openDays.has(day.date)}">
       <div class="week-row-day">
         <span class="week-day-name">${weekdayName}</span>
         <span class="week-day-num">${d.getDate()}</span>
@@ -56,7 +59,7 @@ export function updateWeekTipRow(root, tipKey, tip, lang) {
   const row = [...root.querySelectorAll('[data-tip-key]')].find(el => el.dataset.tipKey === tipKey);
   if (!row) return false;
   const tipEl = row.querySelector('.week-row-tip');
-  if (tipEl) { tipEl.textContent = tip || tipEl.dataset.fallback || ''; tipEl.classList.add('tip-in'); }
+  if (tipEl) { tipEl.textContent = tip || tipEl.dataset.fallback || ''; tipEl.classList.add('tip-in'); markClipped(row); }
   // The badge's place was kept while loading, so showing it (or dropping it) doesn't move anything.
   const badge = row.querySelector('.smart-tip-badge');
   if (badge) {
@@ -108,8 +111,23 @@ export function renderWeekScreen(s) {
   `;
 }
 
+// Marks the days whose tip is cut off, so they show a small "more" arrow.
+function markClipped(row) {
+  const tip = row.querySelector('.week-row-tip');
+  row.classList.toggle('clipped', !!tip && tip.scrollHeight > tip.clientHeight + 1);
+}
+
 export function attachWeekHandlers(root) {
   attachHeaderHandlers(root);
+  requestAnimationFrame(() => root.querySelectorAll('.week-row[data-day]').forEach(markClipped));
+  root.querySelectorAll('.week-row[data-day]').forEach(row => row.addEventListener('click', () => {
+    // Nothing to open when the whole tip already fits.
+    if (!row.classList.contains('open') && !row.classList.contains('clipped')) return;
+    const open = !openDays.has(row.dataset.day);
+    if (open) openDays.add(row.dataset.day); else openDays.delete(row.dataset.day);
+    row.classList.toggle('open', open);
+    row.setAttribute('aria-expanded', String(open));
+  }));
   const retryBtn = root.querySelector('[data-action="retry"]');
   if (retryBtn) retryBtn.addEventListener('click', refetchForecast);
 }

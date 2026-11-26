@@ -185,6 +185,42 @@ export function playWhoosh() {
   f.frequency.exponentialRampToValueAtTime(2200, ctx.currentTime + 0.28);
 }
 
+// A crisp, light tick for choosing an option (chips, colors, styles).
+export function playSelect() {
+  if (!effectsOn()) return;
+  tone(uiBus, { freq: 1180, to: 990, gain: 0.07, release: 0.045 });
+  noise(uiBus, { freq: 5200, q: 3, gain: 0.03, release: 0.02 });
+}
+
+// A sheet sliding up: a short airy rise with a soft note on top.
+export function playOpen() {
+  if (!effectsOn()) return;
+  const f = noise(uiBus, { type: 'bandpass', freq: 700, q: 1.2, gain: 0.07, attack: 0.05, release: 0.16 });
+  f.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.2);
+  tone(uiBus, { freq: 520, to: 780, gain: 0.06, attack: 0.02, release: 0.14, at: 0.03 });
+}
+
+// A sheet going away: the same, falling.
+export function playClose() {
+  if (!effectsOn()) return;
+  const f = noise(uiBus, { type: 'bandpass', freq: 1600, q: 1.2, gain: 0.06, attack: 0.02, release: 0.16 });
+  f.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.18);
+  tone(uiBus, { freq: 700, to: 470, gain: 0.05, release: 0.12 });
+}
+
+// Saved: two warm notes and a tiny sparkle.
+export function playSuccess() {
+  if (!effectsOn()) return;
+  tone(uiBus, { freq: 659.3, gain: 0.1, release: 0.25 });
+  tone(uiBus, { freq: 987.8, gain: 0.1, release: 0.45, at: 0.08 });
+  tone(uiBus, { freq: 1975.5, gain: 0.025, release: 0.3, at: 0.12 });
+}
+
+// A light buzz on Android for the moments that matter (iPhone browsers don't allow it).
+export function haptic(pattern = 8) {
+  try { if (navigator.vibrate && matchMedia('(pointer: coarse)').matches) navigator.vibrate(pattern); } catch { /* not supported */ }
+}
+
 // ---------- weather ambience ----------
 
 function ambientKey({ kind, isDay, wind }) {

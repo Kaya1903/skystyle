@@ -1,7 +1,7 @@
 import { setErrorContext } from './errors.js';
 import { colorName, isValidColor, nearestColorKey, COLORS } from './colors.js';
 import { setSky } from './sky.js';
-import { unlockSound, makeAudible, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
+import { unlockSound, makeAudible, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, playSelect, playOpen, playClose, playSuccess, haptic, isSoundOn, setSoundOn } from './sound.js';
 import { skyKind } from './weather.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip, windowWeather } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe, cropPrint } from './wardrobe.js';
@@ -548,6 +548,9 @@ export async function useGeolocation() {
 export function saveWardrobeItem(item) {
   const { items, ok } = addOrUpdateItem(state.wardrobe, item);
   state.wardrobe = items;
+  // The saved piece's card gives a little pop when the wardrobe shows again.
+  state.justSavedId = item.id;
+  setTimeout(() => { if (state.justSavedId === item.id) state.justSavedId = null; }, 1500);
   render();
   if (!ok) showToast(t(state.lang, 'storage_full'));
 }
@@ -1337,15 +1340,27 @@ function renderOverlays() {
 // Phones only allow audio from the moment the finger lifts (touchend/click), not
 // when it lands, so all of them are listened to; unlocking twice is harmless.
 for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, unlockSound, { capture: true });
+// Picking one of several options (chips, colors, drawings, warmth dots).
+const SELECT_SEL = '.chip, .occasion-chip, .seg-btn, .cat-btn, .swatch, .style-opt, .warmth-dot, [data-gender], [data-formality], [data-pattern-type], [data-item-gender], [data-detail], [data-filter]';
+// Things that slide a sheet up.
+const OPEN_SEL = '[data-action="open-city"], [data-action="add-item"], [data-item-id], [data-action="history-open"], [data-gap-add]';
 document.addEventListener('click', (e) => {
+  // Tapping the dimmed area around a sheet closes it.
+  if (e.target.classList && e.target.classList.contains('sheet-backdrop') && e.target.classList.contains('open')) { playClose(); return; }
+  if (e.target.closest('.piece-row[data-row]') && !e.target.closest('button')) { playSelect(); return; }
+  if (e.target.closest('.week-row.clipped, .week-row.open')) { playSelect(); return; }
   const el = e.target.closest('button, [role="button"], a');
   if (!el || el.disabled) return;
   const action = el.dataset.action;
   if (action === 'toggle-sound' || action === 'toggle-sound-panel' || action === 'sound-hint') return;
-  if (action === 'reroll' || el.dataset.swapSuggest || el.dataset.swap) playDice();
-  else if (action === 'wear' || el.dataset.fb) playChime();
+  if (action === 'reroll' || el.dataset.swapSuggest || el.dataset.swap) { playDice(); haptic([6, 30, 6]); }
+  else if (action === 'wear' || el.dataset.fb) { playChime(); haptic([10, 40, 14]); }
+  else if (el.id === 'editor-save') { playSuccess(); haptic(12); }
+  else if (el.id === 'editor-cancel' || el.id === 'editor-delete' || action === 'history-close' || el.dataset.install === 'close' || el.dataset.gapHide) playClose();
+  else if (el.matches(OPEN_SEL)) playOpen();
   else if (el.dataset.adjust) playToggle(!el.classList.contains('active'));
-  else if (el.classList.contains('nav-btn')) playWhoosh();
+  else if (el.classList.contains('nav-btn')) { playWhoosh(); haptic(6); }
+  else if (el.matches(SELECT_SEL)) playSelect();
   else playTap();
 }, { capture: true });
 

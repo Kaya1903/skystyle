@@ -76,7 +76,7 @@ export function renderWardrobeScreen(s) {
 
 function wardrobeCard(item, i, lang) {
   return `
-    <button class="glass wardrobe-card rise-in ${inLaundry(item) ? 'in-laundry' : ''}" style="animation-delay:${150 + i * 50}ms" data-item-id="${item.id}">
+    <button class="glass wardrobe-card rise-in ${inLaundry(item) ? 'in-laundry' : ''} ${state.justSavedId === item.id ? 'just-saved' : ''}" style="animation-delay:${150 + i * 50}ms" data-item-id="${item.id}">
       <div class="wardrobe-thumb is-art" style="--tint:${itemLook(item).color || '#b9c6dc'}">
         ${itemArt(item)}
         ${item.photo ? `<img class="photo-badge" src="${item.photo}" alt="${escapeAttr(item.name)}" />` : ''}

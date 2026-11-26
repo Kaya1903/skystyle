@@ -37,7 +37,7 @@ function soundMenu(state) {
       <button type="button" class="sound-btn ${on ? 'on' : ''}" data-action="toggle-sound-panel" aria-expanded="${open}" aria-label="${t(state.lang, 'sound_title')}" title="${t(state.lang, 'sound_title')}">
         ${on ? SOUND_ON : SOUND_OFF}
       </button>
-      ${!open && !soundHintDone() && !(state.activeTab === 'today' && installBannerShowing()) ? `<button type="button" class="sound-hint ${hintIntroDone ? 'settled' : ''}" data-action="sound-hint">${SOUND_ON}<span>${t(state.lang, 'sound_unmute')}</span></button>` : ''}
+      ${!open && !soundHintDone() && state.screen === 'app' && state.activeTab === 'today' && !installBannerShowing() ? `<button type="button" class="sound-hint ${hintIntroDone ? 'settled' : ''}" data-action="sound-hint">${SOUND_ON}<span>${t(state.lang, 'sound_unmute')}</span></button>` : ''}
       ${open ? `
       <div class="sound-panel ${on ? '' : 'muted'}" role="dialog" aria-label="${t(state.lang, 'sound_title')}">
         <div class="sound-panel-title">${t(state.lang, 'sound_title')}</div>

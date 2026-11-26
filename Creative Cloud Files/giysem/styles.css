@@ -1765,3 +1765,40 @@ input, textarea, [contenteditable] { -webkit-user-select: text; user-select: tex
 #city-backdrop .sheet { height: min(86vh, 680px); height: min(86dvh, 680px); display: flex; flex-direction: column; }
 #city-backdrop .city-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 #city-backdrop .city-results { max-height: none; overflow: visible; }
+
+/* =========================================================
+   Polish: touch feedback, saved pieces, tab icons
+   ========================================================= */
+/* Every tappable thing sinks a little under the finger, like a real button.
+   `scale` (not `transform`) so it never fights the entrance animations. */
+@media (pointer: coarse) {
+  :is(.chip, .occasion-chip, .seg-btn, .btn-primary, .btn-save, .btn-ghost, .wear-btn, .gap-add, .gap-hide,
+      .dice-btn, .fb-opt, .locate-btn, .cat-btn, .style-opt, .reset-chip, .link-btn, .city-chip, .sound-hint, .mode-opt):active { scale: 0.95; }
+  :is(.add-card, .wardrobe-card, .week-row, .city-result):active { scale: 0.975; }
+  .swap-btn:active { scale: 0.9; }
+  .swap-btn:active svg { transform: rotate(180deg); }
+  .nav-btn:active { scale: 0.92; }
+}
+
+/* A piece that was just saved pops and glows once when the wardrobe shows again. */
+.wardrobe-card.just-saved { position: relative; animation: savedPop 0.7s var(--spring) both; }
+.wardrobe-card.just-saved::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 3px rgba(255, 159, 90, 0.9); animation: savedGlow 1.4s ease-out both; }
+@keyframes savedPop { 0% { scale: 0.85; opacity: 0; transform: none; } 60% { scale: 1.04; opacity: 1; transform: none; } 100% { scale: 1; opacity: 1; transform: none; } }
+@keyframes savedGlow { from { opacity: 1; } to { opacity: 0; } }
+
+/* The icon of the tab you just opened gives a small bounce. */
+.nav-btn.active svg { animation: navPop 0.45s var(--spring); }
+@keyframes navPop { 0% { scale: 0.7; } 60% { scale: 1.15; } 100% { scale: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wardrobe-card.just-saved, .wardrobe-card.just-saved::after, .nav-btn.active svg { animation: none; }
+}
+
+/* Week: a cut-off tip opens in full with a tap on its day. */
+.week-row[data-day] { cursor: pointer; }
+.week-row.open .week-row-tip { -webkit-line-clamp: unset; display: block; overflow: visible; animation: rowOpen 0.3s var(--ease-out) both; }
+.week-row-body { position: relative; }
+.week-row.clipped:not(.open) .week-row-body::after { content: ''; position: absolute; right: 0; bottom: 3px; width: 7px; height: 7px;
+  border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint); transform: rotate(45deg); }
+.week-row.clipped:not(.open) .week-row-tip { padding-right: 14px; }
