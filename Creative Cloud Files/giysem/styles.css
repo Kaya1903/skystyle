@@ -1818,3 +1818,77 @@ input, textarea, [contenteditable] { -webkit-user-select: text; user-select: tex
 .chip.rate-reason.active { background: #7a5a9e; color: #fff; border-color: #7a5a9e; }
 @media (hover: hover) { .rate-btn:hover { background: #fff; } }
 @media (prefers-reduced-motion: reduce) { .rate-btn.active, .rate-reasons { animation: none; } }
+
+/* =========================================================
+   Istanbul: Bosphorus, bridge lights, ferry and seagulls
+   ========================================================= */
+/* Let the water at the bottom stay visible instead of fading out with the rest. */
+.hero-landmark[data-scene="istanbul"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent), linear-gradient(to bottom, #000 88%, rgba(0, 0, 0, 0.8));
+          mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent), linear-gradient(to bottom, #000 88%, rgba(0, 0, 0, 0.8));
+}
+.ist-bridge path { fill: rgba(255, 255, 255, 0.6); }
+.ist-bridge .ist-cable { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 1.7; stroke-linecap: round; }
+.ist-bridge .ist-hanger { fill: none; stroke: rgba(255, 255, 255, 0.42); stroke-width: 0.5; }
+:root[data-daytime="night"] .ist-bridge path { fill: rgba(200, 212, 255, 0.4); }
+:root[data-daytime="night"] .ist-bridge .ist-cable { fill: none; stroke: rgba(200, 212, 255, 0.5); }
+:root[data-daytime="night"] .ist-bridge .ist-hanger { fill: none; stroke: rgba(200, 212, 255, 0.3); }
+
+/* The water: Istanbul blue by day, deep navy at night. */
+.ist-water { fill: url(#istWater); }
+.ist-water-top { stop-color: #2f93e6; stop-opacity: 1; }
+.ist-water-bottom { stop-color: #135aa6; stop-opacity: 1; }
+:root[data-daytime="night"] .ist-water-top { stop-color: #1d4384; }
+:root[data-daytime="night"] .ist-water-bottom { stop-color: #0b1d45; }
+.ist-shimmer { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 0.8; stroke-linecap: round; animation: istShimmer 6s ease-in-out infinite; }
+@keyframes istShimmer { 0%, 100% { transform: translateX(0); opacity: 0.35; } 50% { transform: translateX(7px); opacity: 0.8; } }
+
+/* Night: the bridge lights up and slowly changes color, like the real one. */
+.ist-lights path, .ist-reflect { opacity: 0; transition: opacity 1.5s ease; }
+/* Lamps fade with fill-opacity: the scene's rise-in animation already drives their opacity. */
+.lm-front path.ist-lamp { fill-opacity: 0; transition: fill-opacity 1.5s ease; }
+.ist-lights path { fill: #8fd8ff; stroke: #8fd8ff; stroke-width: 2.6; stroke-opacity: 0.35; }
+.ist-lights path.ist-deck-lights { fill: #ffe6a6; stroke: #ffe6a6; stroke-width: 1.2; stroke-opacity: 0.25; }
+:root[data-daytime="night"] .ist-lights path { opacity: 1; }
+:root[data-daytime="night"] .ist-lights path:not(.ist-deck-lights) { animation: istBridgeColor 14s ease-in-out infinite; }
+@keyframes istBridgeColor {
+  0%, 100% { fill: #8fd8ff; stroke: #8fd8ff; }
+  25% { fill: #b79bff; stroke: #b79bff; }
+  50% { fill: #ff8fcf; stroke: #ff8fcf; }
+  75% { fill: #7fe7c4; stroke: #7fe7c4; }
+}
+.ist-reflect { fill: #8fd8ff; }
+:root[data-daytime="night"] .ist-reflect { opacity: 0.45; animation: istBridgeColor 14s ease-in-out infinite, istFlicker 2.6s ease-in-out infinite; }
+@keyframes istFlicker { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.2; } }
+/* Minaret lamps glow warm at night. */
+.lm-front path.ist-lamp { fill: #ffd76b; }
+:root[data-daytime="night"] .lm-front path.ist-lamp { fill-opacity: 1; stroke: #ffd76b; stroke-width: 1.4; stroke-opacity: 0.35; }
+/* At night the mosque is floodlit in warm gold, like Istanbul's mosques. */
+:root[data-daytime="night"] .hero-landmark[data-scene="istanbul"] .lm-front path:not(.ist-lamp) { fill: rgba(255, 228, 184, 0.86); }
+:root[data-daytime="night"] .hero-landmark[data-scene="istanbul"] .lm-front { filter: drop-shadow(0 0 10px rgba(255, 200, 120, 0.35)); }
+
+/* The ferry crosses slowly and rocks a little on the water. */
+.ist-ferry-move { animation: istFerry 70s linear infinite; animation-delay: -22s; }
+@keyframes istFerry { from { transform: translateX(-30px); } to { transform: translateX(350px); } }
+.ist-ferry { animation: istRock 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+@keyframes istRock { 0%, 100% { transform: rotate(-1.2deg) translateY(0); } 50% { transform: rotate(1.2deg) translateY(0.6px); } }
+.ist-ferry-hull { fill: rgba(255, 255, 255, 0.95); }
+.ist-ferry-win { fill: #2a5fa8; fill-opacity: 0.55; }
+:root[data-daytime="night"] .ist-ferry-hull { fill: rgba(205, 216, 255, 0.8); }
+:root[data-daytime="night"] .ist-ferry-win { fill: #ffd76b; fill-opacity: 1; }
+
+/* Seagulls glide across by day, flapping now and then. */
+.ist-gull-path { animation-name: istGullFly; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes istGullFly { from { transform: translate(-20px, 4px); } 50% { transform: translate(160px, -6px); } to { transform: translate(345px, 2px); } }
+.ist-gull { fill: none; stroke: rgba(255, 255, 255, 0.95); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round;
+  transform-box: fill-box; transform-origin: center; animation: istFlap 1.1s ease-in-out infinite; }
+@keyframes istFlap { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-0.45); } }
+.ist-gulls { transition: opacity 1.5s ease; }
+:root[data-daytime="night"] .ist-gulls { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ist-shimmer, .ist-ferry-move, .ist-ferry, .ist-gull-path, .ist-gull, :root[data-daytime="night"] .ist-reflect,
+  :root[data-daytime="night"] .ist-lights path:not(.ist-deck-lights) { animation: none; }
+  .ist-ferry-move { transform: translateX(210px); }
+  .ist-gull-path { transform: translateX(120px); }
+}

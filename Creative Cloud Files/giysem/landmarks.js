@@ -406,29 +406,17 @@ const CITIES = [
     R(92, 92, 20, 58), P('92 92, 102 76, 112 92'),
     ...tree(150, 10), ...tree(176, 12),
   ]],
-  // Istanbul: the Blue Mosque (central dome, cascading semi-domes, four
-  // minarets) in front of the Bosphorus Bridge: two portal towers, the main
-  // cable sagging to the deck mid-span, side cables to the shores, hangers,
-  // and the water below.
-  ['istanbul', 41.0082, 28.9784, () => {
-    const towers = [10, 190];
-    const top = 46, deck = 116;
-    const cable = t => [(1 - t) ** 2 * towers[0] + 2 * t * (1 - t) * 100 + t * t * towers[1], (1 - t) ** 2 * top + 2 * t * (1 - t) * 186 + t * t * top];
-    const hangers = range(0.05, 0.96, 0.05).map(t => { const [x, y] = cable(t); return y < deck ? `M${x.toFixed(1)} ${y.toFixed(1)}V${deck}` : ''; }).join('');
-    const tower = x => R(x - 4, top, 2.6, 150 - top) + R(x + 1.4, top, 2.6, 150 - top) + R(x - 4, top, 8, 3) + R(x - 4, 78, 8, 2.4) + R(x - 4, 104, 8, 2.4);
-    return [
-      // bridge, faint, behind everything
-      { d: towers.map(tower).join('') + R(0, deck, 200, 3.2), o: 0.55 },
-      { s: `M${towers[0] + 1} ${top}Q100 186 ${towers[1] + 1} ${top}M${towers[0] + 1} ${top}L-6 ${deck}M${towers[1] + 1} ${top}L206 ${deck}`, w: 1.6, o: 0.55 },
-      { s: hangers, w: 0.5, o: 0.45 },
-      // mosque
-      { d: R(36, 112, 128, 38) + range(42, 156, 10).map(x => ARCH(x, 132, 5, 12)).join(''), eo: true },
-      R(68, 98, 64, 14) + DOME(100, 98, 30, 26) + DOME(70, 104, 15, 10) + DOME(130, 104, 15, 10) + DOME(52, 112, 13, 8) + DOME(148, 112, 13, 8),
-      R(99.4, 60, 1.2, 12), C(100, 58.5, 1.9),
-      ...minaret(30, 36), ...minaret(50, 50), ...minaret(150, 50), ...minaret(170, 36),
-      { s: 'M0 147Q12 144 24 147T48 147T72 147T96 147T120 147T144 147T168 147T192 147T216 147', w: 1.2, o: 0.7 },
-    ];
-  }],
+  // Istanbul: the Blue Mosque (central dome, cascading semi-domes, four minarets).
+  // The Bosphorus Bridge, the water, a ferry and the seagulls are drawn across the
+  // whole hero width by istanbulLayers() (see renderLandmark).
+  ['istanbul', 41.0082, 28.9784, () => [
+    { d: R(36, 112, 128, 38) + range(42, 156, 10).map(x => ARCH(x, 132, 5, 12)).join(''), eo: true },
+    R(68, 98, 64, 14) + DOME(100, 98, 30, 26) + DOME(70, 104, 15, 10) + DOME(130, 104, 15, 10) + DOME(52, 112, 13, 8) + DOME(148, 112, 13, 8),
+    R(99.4, 60, 1.2, 12), C(100, 58.5, 1.9),
+    ...minaret(30, 36), ...minaret(50, 50), ...minaret(150, 50), ...minaret(170, 36),
+    // Minaret balcony lamps (kandil): only lit at night.
+    { d: [[30, 36], [50, 50], [150, 50], [170, 36]].map(([x, t]) => C(x - 3, t + 19, 1.3) + C(x + 3, t + 19, 1.3) + C(x - 3, t + 41, 1.3) + C(x + 3, t + 41, 1.3)).join(''), cls: 'ist-lamp' },
+  ]],
   ['ankara', 39.9334, 32.8597, () => [
     { d: R(8, 136, 184, 14) + R(8, 140, 184, 1.2) + R(8, 145, 184, 1.2), eo: true },
     { d: R(34, 74, 132, 62) + range(40, 160, 8).map(x => R(x, 82, 4, 50)).join(''), eo: true },
@@ -1280,17 +1268,67 @@ function elementSvg(el) {
   if (typeof el === 'string') return `<path d="${el}"/>`;
   if (el.text) return `<text x="${el.x}" y="${el.y}" font-size="${el.size}" transform="rotate(${el.rot || 0} ${el.x} ${el.y})" class="lm-text">${el.text}</text>`;
   if (el.s) return `<path class="lm-stroke" d="${el.s}" stroke-width="${el.w || 2}"${el.o ? ` stroke-opacity="${el.o}"` : ''}/>`;
-  return `<path d="${el.d}"${el.eo ? ' fill-rule="evenodd"' : ''}${el.o ? ` fill-opacity="${el.o}"` : ''}/>`;
+  return `<path${el.cls ? ` class="${el.cls}"` : ''} d="${el.d}"${el.eo ? ' fill-rule="evenodd"' : ''}${el.o ? ` fill-opacity="${el.o}"` : ''}/>`;
+}
+
+// ---------- Istanbul: the Bosphorus across the whole hero ----------
+// In the hero's own 320x160 box. Behind the mosque: the bridge (lights up and slowly
+// changes color at night). In front: the blue water with a shimmer, the bridge
+// lights' reflections at night, a ferry crossing, and seagulls gliding by day.
+function istanbulLayers() {
+  const towers = [36, 284], top = 40, deck = 112, mid = 210;
+  const cableAt = t => [(1 - t) ** 2 * towers[0] + 2 * t * (1 - t) * 160 + t * t * towers[1], (1 - t) ** 2 * top + 2 * t * (1 - t) * mid + t * t * top];
+  const tower = x => R(x - 4.5, top, 3, 160 - top) + R(x + 1.5, top, 3, 160 - top) + R(x - 4.5, top, 9, 3) + R(x - 4.5, 72, 9, 2.4) + R(x - 4.5, 98, 9, 2.4);
+  const hangers = range(0.04, 0.97, 0.03).map(t => { const [x, y] = cableAt(t); return y < deck - 1 ? `M${x.toFixed(1)} ${y.toFixed(1)}V${deck}` : ''; }).join('');
+  const cables = `M${towers[0]} ${top}Q160 ${mid} ${towers[1]} ${top}M${towers[0]} ${top}L-10 ${deck + 6}M${towers[1]} ${top}L330 ${deck + 6}`;
+  // Night lights: dots along the main cable, the side cables and the deck.
+  const cableLights = range(0.02, 0.99, 0.035).map(t => { const [x, y] = cableAt(t); return y <= deck ? C(+x.toFixed(1), +y.toFixed(1), 1.25) : ''; }).join('');
+  const sideLights = range(0.1, 0.95, 0.15).map(t => C(towers[0] - (towers[0] + 10) * t, top + (deck + 6 - top) * t, 1.25) + C(towers[1] + (330 - towers[1]) * t, top + (deck + 6 - top) * t, 1.25)).join('');
+  const deckLights = range(-6, 326, 7).map(x => C(x, deck + 1.4, 0.75)).join('');
+  const back = `
+    <g class="ist-bridge">
+      <path d="${towers.map(tower).join('')}${R(-10, deck, 340, 3.2)}"/>
+      <path class="ist-cable" d="${cables}"/>
+      <path class="ist-hanger" d="${hangers}"/>
+    </g>
+    <g class="ist-lights"><path d="${cableLights}${sideLights}"/><path class="ist-deck-lights" d="${deckLights}"/></g>`;
+  // Water: a band across the bottom, with a soft shimmer and, at night, light reflections.
+  const shimmer = [[24, 149, 22], [96, 154, 30], [176, 147, 18], [236, 155, 26], [292, 150, 20], [140, 158, 16]]
+    .map(([x, y, w]) => `M${x} ${y}h${w}`).join('');
+  const reflections = range(0.1, 0.92, 0.1).map(t => { const [x] = cableAt(t); return R(+x.toFixed(1) - 0.8, 144, 1.6, 14); }).join('') + R(towers[0] - 1, 144, 2, 15) + R(towers[1] - 1, 144, 2, 15);
+  const ferry = `
+    <g class="ist-ferry-move"><g class="ist-ferry">
+      <path class="ist-ferry-hull" d="M-17 146L17 146L14 150L-14 150Z M-12 146V141H11V146Z M-8 141V137.5H7V141Z M-1.2 137.5V133H1.6V137.5Z"/>
+      <path class="ist-ferry-win" d="${range(-10, 8, 3.6).map(x => R(x, 142.5, 2, 2)).join('')}${R(-6, 138.5, 1.8, 1.6)}${R(-2.5, 138.5, 1.8, 1.6)}${R(1, 138.5, 1.8, 1.6)}${R(4.5, 138.5, 1.8, 1.6)}"/>
+    </g></g>`;
+  const gull = (y, dur, delay, s) => `
+    <g class="ist-gull-path" style="animation-duration:${dur}s;animation-delay:${delay}s"><g transform="translate(0 ${y}) scale(${s})">
+      <path class="ist-gull" d="M-6 0Q-3.2 -3.4 0 0.4Q3.2 -3.4 6 0" style="animation-delay:${(delay % 1).toFixed(2)}s"/>
+    </g></g>`;
+  const front = `
+    <path class="ist-water" d="M-10 142Q40 140 80 142T160 142T240 142T330 142V170H-10Z"/>
+    <path class="ist-shimmer" d="${shimmer}"/>
+    <path class="ist-reflect" d="${reflections}"/>
+    ${ferry}
+    <g class="ist-gulls">${gull(30, 26, -4, 1)}${gull(52, 34, -19, 0.75)}${gull(22, 40, -31, 0.6)}${gull(64, 30, -12, 0.85)}</g>`;
+  const defs = `<defs><linearGradient id="istWater" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" class="ist-water-top"/><stop offset="1" class="ist-water-bottom"/></linearGradient></defs>`;
+  return { defs, back, front };
 }
 
 export function renderLandmark(city) {
   const { key, elements } = sceneFor(city);
   const seed = city ? `${city.name || ''}${city.lat}` : 'city';
+  // Istanbul gets its own full-width Bosphorus around the mosque (most of our users are there).
+  const ist = key === 'istanbul' ? istanbulLayers() : null;
   return `
     <div class="hero-landmark" data-scene="${key}" aria-hidden="true">
       <svg viewBox="0 0 320 160" preserveAspectRatio="xMidYMax meet">
+        ${ist ? ist.defs : ''}
         <g class="lm-back-wrap">${backSkyline(seed)}</g>
-        <svg class="lm-front" x="100" y="0" width="213" height="160" viewBox="0 0 200 150">${elements.map(elementSvg).join('')}</svg>
+        ${ist ? `<g class="lm-back-wrap">${ist.back}</g>` : ''}
+        <svg class="lm-front" x="100" y="${ist ? -10 : 0}" width="213" height="160" viewBox="0 0 200 150">${elements.map(elementSvg).join('')}</svg>
+        ${ist ? `<g class="ist-front">${ist.front}</g>` : ''}
       </svg>
     </div>`;
 }
