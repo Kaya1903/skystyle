@@ -92,6 +92,14 @@ const REASON_EN = {
   weather: 'it didn\'t suit the weather', colors_good: 'they liked the colors', me: 'it felt like them', idea: 'the styling idea helped',
 };
 
+// What the stylist should do differently after each kind of thumbs down.
+const REASON_FIX = {
+  plain: 'Give the outfit one clear accent color instead of an all-neutral look.',
+  bold: 'Keep the colors calmer, with at most one accent.',
+  colors: 'Choose colors that sit closer together.',
+  not_me: 'Stay closer to the colors and kinds of pieces they usually wear.',
+  weather: 'Lean more on the weather when you choose.',
+};
 const top = (scores, n, min) => Object.entries(scores).filter(([, v]) => v >= min).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k);
 const list = arr => arr.length <= 1 ? arr.join('') : `${arr.slice(0, -1).join(', ')} and ${arr[arr.length - 1]}`;
 
@@ -155,7 +163,12 @@ export function tasteSummary(today) {
   if (rated >= 1) {
     const downReasons = top(s.down.reasons, 2, 0.8).map(k => REASON_EN[k]);
     const upReasons = top(s.up.reasons, 2, 0.8).map(k => REASON_EN[k]);
-    if (s.down.n > s.up.n && downReasons.length) lines.push(`When they disliked your picks, it was because ${list(downReasons)}.`);
+    if (s.down.n > s.up.n && downReasons.length) {
+      lines.push(`When they disliked your picks, it was because ${list(downReasons)}.`);
+      // Say what to do about it, not only what went wrong.
+      const fixes = top(s.down.reasons, 2, 0.8).map(k => REASON_FIX[k]).filter(Boolean);
+      if (fixes.length) lines.push(fixes.join(' '));
+    }
     if (upReasons.length) lines.push(`When they liked your picks, ${list(upReasons)}.`);
   }
   return lines.join(' ').slice(0, 600);

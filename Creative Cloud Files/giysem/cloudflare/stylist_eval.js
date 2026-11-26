@@ -10,10 +10,13 @@
 // from the palette, a bright color where one is asked for, at most two accent
 // colors unless the style is bold, the note in the right language with no
 // numbers or dashes, their own pieces used when they fit, no repeat of what
-// they wore yesterday). Change SCENARIOS to add cases.
+// they wore yesterday). Since the second round (48 scenarios) it also checks
+// today's plans (no pieces the occasion rules out), the learned taste profile
+// (no colors or kinds the person keeps swapping away from), the hours they are
+// out, extreme weather and more languages. Change SCENARIOS to add cases.
 
 (async () => {
-  const { generateOutfit } = await import('/outfit.js');
+  const { generateOutfit, OCCASIONS } = await import('/outfit.js');
   const { COLORS, colorName, nearestColorKey, isValidColor } = await import('/colors.js');
 
   const W = (id, name, category, art, color, warmth, extra = {}) => ({
@@ -66,11 +69,40 @@
     ['Cold, Russian, men, elegant', 3, 1, 10, 12, 'erkek', 'elegant', 'cloudy', { lang: 'ru' }],
     ['Mild, Arabic, women, casual', 22, 6, 0, 8, 'kadin', 'casual', 'clear', { lang: 'ar' }],
     ['Hot, Hindi, men, bold', 31, 9, 0, 6, 'erkek', 'bold', 'clear', { lang: 'hi' }],
+    // Round two: today's plans, hours outside, learned taste, extreme weather, more languages.
+    ['Work, cool, men', 13, 3, 0, 10, 'erkek', 'casual', 'partly', { occasion: 'work' }],
+    ['Work, hot, women', 29, 8, 0, 6, 'kadin', 'casual', 'clear', { occasion: 'work' }],
+    ['Work, rain, unisex', 11, 1, 85, 16, 'unisex', 'minimal', 'rain', { occasion: 'work' }],
+    ['Date, mild evening, women', 19, 3, 0, 7, 'kadin', 'casual', 'clear', { occasion: 'date', late: true }],
+    ['Date, cold, men', 4, 1, 10, 12, 'erkek', 'casual', 'cloudy', { occasion: 'date' }],
+    ['Event, mild, women, elegant', 20, 4, 0, 8, 'kadin', 'elegant', 'partly', { occasion: 'event' }],
+    ['Event, cold, men', 2, 1, 0, 10, 'erkek', 'minimal', 'clear', { occasion: 'event' }],
+    ['Sport, hot, unisex', 30, 9, 0, 8, 'unisex', 'sporty', 'clear', { occasion: 'sport' }],
+    ['Sport, cold rain, women', 7, 1, 80, 18, 'kadin', 'casual', 'rain', { occasion: 'sport' }],
+    ['School, cool, unisex', 12, 2, 10, 10, 'unisex', 'casual', 'cloudy', { occasion: 'school' }],
+    ['Out and about, hot, women', 31, 10, 0, 7, 'kadin', 'casual', 'clear', { occasion: 'walk' }],
+    ['Out only in the cold morning hours, men', 1, 1, 0, 12, 'erkek', 'casual', 'clear', { hours: '07:00-10:00' }],
+    ['Taste: swaps away from yellow and hoodies', 12, 2, 0, 9, 'unisex', 'casual', 'partly',
+      { taste: 'Often wears navy, beige and grey. Usually swaps away from yellow and hoodies: use them only when nothing else works.', avoidColor: 'sari', avoidKind: 'hoodie' }],
+    ['Taste: loves navy and beige, asks for casual', 20, 4, 0, 8, 'kadin', 'elegant', 'partly',
+      { taste: 'Often wears navy, beige and denim blue. Likes jeans and sneakers. Often asks for more casual outfits.' }],
+    ['Taste: found picks too plain', 6, 1, 10, 12, 'erkek', 'minimal', 'cloudy',
+      { taste: 'When they disliked your picks, it was because it was too plain. Give the outfit one clear accent color instead of an all-neutral look.', wantAccent: true }],
+    ['Extreme cold, snow, unisex', -20, 1, 60, 18, 'unisex', 'casual', 'snow'],
+    ['Extreme heat, strong sun, men', 38, 11, 0, 5, 'erkek', 'casual', 'clear'],
+    ['Storm, heavy rain and wind, women', 10, 1, 95, 48, 'kadin', 'casual', 'storm'],
+    ['Fog, cool, men, elegant', 9, 1, 20, 6, 'erkek', 'elegant', 'fog'],
+    ['Mild, German, women, bold', 18, 4, 0, 9, 'kadin', 'bold', 'partly', { lang: 'de' }],
+    ['Cold, Polish, men, casual', 0, 1, 20, 14, 'erkek', 'casual', 'cloudy', { lang: 'pl' }],
+    ['Hot, French, women, elegant', 28, 8, 0, 7, 'kadin', 'elegant', 'clear', { lang: 'fr' }],
+    ['Cool, Korean, unisex, minimal', 13, 3, 0, 8, 'unisex', 'minimal', 'partly', { lang: 'ko' }],
+    ['Mild, Chinese, men, elegant', 21, 5, 0, 7, 'erkek', 'elegant', 'clear', { lang: 'zh' }],
   ];
 
   const ALIASES = { camel: 'bej', cream: 'beyaz', ivory: 'beyaz', tan: 'bej', sand: 'bej', charcoal: 'gri', gray: 'gri', olive: 'haki', maroon: 'bordo', wine: 'bordo', rust: 'turuncu', mustard: 'sari', lilac: 'mor', 'light blue': 'mavi', 'sky blue': 'mavi' };
   const EN_TO_KEY = { ...Object.fromEntries(Object.keys(COLORS).map(k => [colorName(k, 'en').toLowerCase(), k])), ...ALIASES };
-  const SCRIPT = { tr: /[a-zçğıöşü]/i, en: /[a-z]/i, ja: /[぀-ヿ]/, ru: /[Ѐ-ӿ]/, ar: /[؀-ۿ]/, hi: /[ऀ-ॿ]/ };
+  const SCRIPT = { tr: /[a-zçğıöşü]/i, en: /[a-z]/i, ja: /[぀-ヿ]/, ru: /[Ѐ-ӿ]/, ar: /[؀-ۿ]/, hi: /[ऀ-ॿ]/,
+    de: /[a-zäöüß]/i, pl: /[a-ząćęłńóśźż]/i, fr: /[a-zàâçéèêëîïôûùüÿœ]/i, ko: /[가-힣]/, zh: /[一-鿿]/ };
   const TR_LOANWORDS = /\b(outfit|look|oversize|layering|sneaker|joggers?|crop|tuck|style|color)\b/i;
 
   const run = async ([name, feelsLike, uv, rain, wind, gender, vibe, sky, x = {}]) => {
@@ -79,7 +111,7 @@
     const seen = new Set();
     const cands = [];
     for (let roll = 0; roll < 10 && cands.length < 6; roll++) {
-      const o = generateOutfit({ feelsLike, wind, rainMax: rain, gender, lang: 'en', vibe, seed: '2026-07-02', kind: sky, uv, late: !!x.late, adjust: roll ? { reroll: roll } : null }, items);
+      const o = generateOutfit({ feelsLike, wind, rainMax: rain, gender, lang: 'en', vibe, seed: '2026-07-02', kind: sky, uv, late: !!x.late, adjust: roll ? { reroll: roll } : null, occasion: x.occasion || null }, items);
       const sig = o.rows.map(r => `${r.slotKey}:${r.item}`).join('|');
       if (seen.has(sig)) continue;
       seen.add(sig);
@@ -91,8 +123,9 @@
       }));
     }
     const body = {
-      lang, weather: { feelsLike, wind, rain, uv, sky, late: !!x.late },
-      person: { gender, styleVibe: vibe, comfort: 'normal', learned: '' }, recent: x.recent || [],
+      lang, weather: { feelsLike, wind, rain, uv, sky, late: !!x.late, hours: x.hours || '' },
+      person: { gender, styleVibe: vibe, comfort: 'normal', learned: '', taste: x.taste || '' }, recent: x.recent || [],
+      occasion: x.occasion || null,
       candidates: cands.map(rows => ({ rows: rows.map(r => ({ ...r, color: r.key ? colorName(r.key, 'en').toLowerCase() : null, key: undefined })) })),
     };
     const t0 = Date.now();
@@ -131,6 +164,17 @@
       if (/\b(outfit|option)\s*\d|seçenek\s*\d/i.test(note)) fails.push('note mentions an option number');
       if (items.length && cands.some(c => c.some(r => r.owned)) && !chosen.some(r => r.owned)) fails.push('ignored their own pieces');
       if (x.avoid && chosen.some(r => r.item === x.avoid) && cands.some(c => !c.some(r => r.item === x.avoid))) fails.push(`repeated yesterday's "${x.avoid}"`);
+      // Today's plans: nothing the occasion rules out, when another option avoided it.
+      const occ = x.occasion && OCCASIONS[x.occasion];
+      if (occ) {
+        const banned = r => occ.avoid.includes(r.kind);
+        const bad = chosen.filter(banned);
+        if (bad.length && cands.some(c => !c.some(banned))) fails.push(`wrong for ${x.occasion}: ${bad.map(r => r.item).join(', ')}`);
+      }
+      // Learned taste: no color or kind they keep swapping away from, when there was a choice.
+      if (x.avoidColor && Object.values(colors).includes(x.avoidColor)) fails.push(`used ${x.avoidColor} although they avoid it`);
+      if (x.wantAccent && !accents.size) fails.push('all neutral although they found the picks too plain');
+      if (x.avoidKind && chosen.some(r => r.kind === x.avoidKind) && cands.some(c => !c.some(r => r.kind === x.avoidKind))) fails.push(`picked a ${x.avoidKind} although they avoid it`);
       if (secs > 15) fails.push(`slow: ${secs.toFixed(1)}s`);
     }
     return {
