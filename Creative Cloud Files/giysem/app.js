@@ -18,7 +18,7 @@ import { renderCitySheet, attachCitySheetHandlers, refreshCityBody } from './ren
 import { renderOnboardingScreen, attachOnboardingHandlers } from './render_onboarding.js';
 import { initInstall } from './install.js';
 import { recordTaste, forgetTaste, rateStylist, stylistRating, tasteSummary, clearTaste } from './taste.js';
-import { sendSignal } from './signals.js';
+import { sendSignal, applyTestParam, toggleTestDevice } from './signals.js';
 import { initSheetSwipe } from './sheet_swipe.js';
 
 const CITY_KEY = 'giysem_city_v1';
@@ -1457,6 +1457,22 @@ document.addEventListener('click', (e) => {
 }, { capture: true });
 
 initSheetSwipe();
+// Owner's devices: ?test=1 stops this device from sending stylist signals.
+{
+  const changed = applyTestParam();
+  if (changed !== null) setTimeout(() => showToast(t(state.lang, changed ? 'test_device_on' : 'test_device_off')), 600);
+}
+// Seven quick taps on the "SkyStyle" name do the same from inside the installed app.
+{
+  let taps = 0, last = 0;
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.brand-name')) return;
+    const now = Date.now();
+    taps = now - last < 600 ? taps + 1 : 1;
+    last = now;
+    if (taps >= 7) { taps = 0; showToast(t(state.lang, toggleTestDevice() ? 'test_device_on' : 'test_device_off')); }
+  });
+}
 setErrorContext(() => ({ screen: state.screen === 'app' ? state.activeTab : state.screen, lang: state.lang }));
 
 navEl.addEventListener('click', (e) => {

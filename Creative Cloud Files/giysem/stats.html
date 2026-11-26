@@ -150,9 +150,13 @@ function latestByPersonDay(list) {
   return [...m.values()];
 }
 
+// Devices marked with ?test=1 (the owner's own): everything they ever sent is left out.
+function testers() { return new Set(data.signals.filter(x => x.t === 'test').map(x => x.a)); }
+
 function compute() {
   const from = since(days);
-  const s = data.signals.filter(x => (x.d || '') >= from);
+  const hidden = testers();
+  const s = data.signals.filter(x => (x.d || '') >= from && x.t !== 'test' && !hidden.has(x.a));
   const people = new Map();
   for (const x of s) { if (!people.has(x.a)) people.set(x.a, new Set()); people.get(x.a).add(x.d); }
   const personDays = [...people.values()].reduce((n, set) => n + set.size, 0);
@@ -211,7 +215,8 @@ function examples() {
   const from = since(days);
   const reasonsFor = new Map();
   for (const x of data.signals) if (x.t === 'reason') reasonsFor.set(x.a + '|' + x.d, x.rs || []);
-  const list = data.examples.filter(e => (e.date || e.at.slice(0, 10)) >= from).reverse();
+  const hidden = testers();
+  const list = data.examples.filter(e => (e.date || e.at.slice(0, 10)) >= from && !hidden.has(e.anon)).reverse();
   if (!list.length) return '<div class="muted">Bu dönemde 👎 yok.</div>';
   return list.map(e => {
     const c = e.context || {};
@@ -245,7 +250,7 @@ function draw() {
     tile('Stilist beğenisi', pct(m.up, m.up + m.down), `${m.up} 👍 · ${m.down} 👎`),
     tile('Olduğu gibi giyildi', pct(m.stylistWears, m.wears), `${m.stylistWears} / ${m.wears} giyilen kombin stilistin seçimiydi`),
     tile('Yeni kombin isteme', m.personDays ? (m.rerolls / m.personDays).toFixed(1) : '-', `kişi-gün başına zar (${m.rerolls} kez)`),
-    tile('Parça değiştirme', m.swaps, `${m.signals} sinyal toplam`),
+    tile('Parça değiştirme', m.swaps, `${m.signals} sinyal toplam` + (testers().size ? ` · ${testers().size} test cihazı hariç` : '')),
   ].join('');
   const max = Math.max(1, ...m.daily.map(d => d.n));
   const step = Math.ceil(m.daily.length / 10);

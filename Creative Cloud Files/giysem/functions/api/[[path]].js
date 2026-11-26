@@ -367,7 +367,7 @@ async function clientError(request, env, ip) {
   return new Response(null, { status: 204 });
 }
 
-const SIGNAL_TYPES = ['wear', 'swap', 'reroll', 'adjust', 'rate', 'reason'];
+const SIGNAL_TYPES = ['wear', 'swap', 'reroll', 'adjust', 'rate', 'reason', 'test'];
 const bounded = (v, lo, hi) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : null; };
 const word = (v, n) => clip(v, n).replace(/[^a-z_:0-9-]/gi, '');
 // An anonymous signal about the stylist's picks. Only these fields are kept; the

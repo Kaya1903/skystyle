@@ -359,7 +359,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def _handle_signal(self):
         """An anonymous stylist signal: kept in memory for the local /stats page (same fields as Cloudflare)."""
         body = self._read_json()
-        if body.get('type') in ('wear', 'swap', 'reroll', 'adjust', 'rate', 'reason'):
+        if body.get('type') in ('wear', 'swap', 'reroll', 'adjust', 'rate', 'reason', 'test'):
             word = lambda v, n: re.sub(r'[^a-zA-Z_:0-9-]', '', str(v if v is not None else '')[:n])
             entry = {k: word(body.get(k), n) for k, n in
                      (('type', 8), ('anon', 20), ('date', 10), ('rating', 4), ('occasion', 10), ('band', 12),
