@@ -1711,3 +1711,16 @@ p { margin: 0; }
 .gap-hide { border: 1px solid var(--line, rgba(0,0,0,.12)); background: transparent; color: var(--ink-soft); }
 .gaps-ready { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-soft); padding: 12px 16px; }
 .gaps-ready svg { width: 16px; height: 16px; flex: none; }
+
+/* "Turn sounds on" bubble under the speaker, until it's used once */
+.sound-hint { position: absolute; top: calc(100% + 10px); right: -4px; z-index: 39; display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap; padding: 8px 12px; border-radius: 999px; border: 0; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 700;
+  background: var(--ink); color: #fff; box-shadow: var(--shadow); opacity: 0; transform: translateY(-4px) scale(0.9);
+  animation: popIn 0.4s var(--spring) 1.2s both, hintPulse 2.4s ease-in-out 2s infinite; }
+.sound-hint::before { content: ''; position: absolute; top: -5px; right: 17px; width: 10px; height: 10px; background: inherit; transform: rotate(45deg); border-radius: 2px; }
+.sound-hint svg { width: 15px; height: 15px; }
+[dir="rtl"] .sound-hint { right: auto; left: -4px; }
+[dir="rtl"] .sound-hint::before { right: auto; left: 17px; }
+@keyframes hintPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .sound-hint { animation: none; } }
+.sound-hint.settled { opacity: 1; transform: none; animation: hintPulse 2.4s ease-in-out infinite; }

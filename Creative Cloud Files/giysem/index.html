@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <script>
+    // Phones: open at 95%, like zooming the page out one notch, so the screen feels less cramped.
+    if (matchMedia('(pointer: coarse) and (max-width: 600px)').matches) {
+      document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=0.95, viewport-fit=cover');
+    }
+  </script>
   <meta name="theme-color" content="#2a5fa8" />
   <title>SkyStyle · Hava nasıl olursa olsun, ne giyeceğin hazır</title>
   <meta name="description" content="Şehrinin havasına göre her gün kombin önerisi. Kendi dolabınla çalışır, seni tanıdıkça daha iyi önerir." />

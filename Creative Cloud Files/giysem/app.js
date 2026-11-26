@@ -1,6 +1,6 @@
 import { colorName, isValidColor, nearestColorKey, COLORS } from './colors.js';
 import { setSky } from './sky.js';
-import { unlockSound, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
+import { unlockSound, makeAudible, setAmbient, playTap, playToggle, playDice, playChime, playWhoosh, isSoundOn, setSoundOn } from './sound.js';
 import { skyKind } from './weather.js';
 import { geocodeCity, geocodeSingle, reverseGeocode, fetchForecast, buildDayView, buildWeekView, eveningTip, windowWeather } from './weather.js';
 import { loadWardrobe, addOrUpdateItem, removeItem, newItemId, resizePhoto, initPhotoStore, saveWardrobe, cropPrint } from './wardrobe.js';
@@ -123,7 +123,22 @@ export function toggleLangMenu() {
   render();
 }
 
+const SOUND_HINT_KEY = 'giysem_sound_hint_v1';
+export function soundHintDone() {
+  try { return localStorage.getItem(SOUND_HINT_KEY) === 'done'; } catch { return true; }
+}
+function markSoundHintDone() {
+  try { localStorage.setItem(SOUND_HINT_KEY, 'done'); } catch { /* private mode */ }
+}
+
+// The speaker button: one tap turns sound on (and loud enough to hear on an iPhone
+// in silent mode) and opens the volume panel.
 export function toggleSoundPanel() {
+  markSoundHintDone();
+  if (!state.soundPanelOpen) {
+    makeAudible();
+    if (!isSoundOn()) { setSoundOn(true); playToggle(true); }
+  }
   state.soundPanelOpen = !state.soundPanelOpen;
   state.langMenuOpen = false;
   state.quietRender = true;
@@ -304,7 +319,19 @@ export function currentDate() {
   return todayDate();
 }
 
+// The small "Turn sounds on" bubble under the speaker, shown until it's used once.
+export function acceptSoundHint() {
+  markSoundHintDone();
+  makeAudible();
+  if (!isSoundOn()) setSoundOn(true);
+  playChime();
+  state.quietRender = true;
+  render();
+}
+
 export function toggleSound() {
+  markSoundHintDone();
+  if (!isSoundOn()) makeAudible();
   setSoundOn(!isSoundOn());
   if (isSoundOn()) playToggle(true);
   state.quietRender = true;
@@ -1305,13 +1332,14 @@ function renderOverlays() {
 
 // Sounds: audio may only start after the first touch; then a soft tap for
 // buttons, and its own sound for the dice, "I'm wearing this", options and tabs.
-document.addEventListener('pointerdown', unlockSound, { capture: true });
-document.addEventListener('keydown', unlockSound, { capture: true });
+// Phones only allow audio from the moment the finger lifts (touchend/click), not
+// when it lands, so all of them are listened to; unlocking twice is harmless.
+for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, unlockSound, { capture: true });
 document.addEventListener('click', (e) => {
   const el = e.target.closest('button, [role="button"], a');
   if (!el || el.disabled) return;
   const action = el.dataset.action;
-  if (action === 'toggle-sound' || action === 'toggle-sound-panel') return;
+  if (action === 'toggle-sound' || action === 'toggle-sound-panel' || action === 'sound-hint') return;
   if (action === 'reroll' || el.dataset.swapSuggest || el.dataset.swap) playDice();
   else if (action === 'wear' || el.dataset.fb) playChime();
   else if (el.dataset.adjust) playToggle(!el.classList.contains('active'));

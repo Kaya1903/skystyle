@@ -82,6 +82,13 @@ export function unlockSound() {
   if (wantedAmbient && !ambient) startAmbient(wantedAmbient);
 }
 
+// iPhones mute web audio while the ring/silent switch is on. Once someone asks for
+// sound (taps the speaker), treat it like a media player so they actually hear it.
+export function makeAudible() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* older browsers */ }
+  unlockSound();
+}
+
 export function setSoundOn(on) {
   enabled = !!on;
   try { localStorage.setItem(KEY, enabled ? 'on' : 'off'); } catch { /* private mode */ }
