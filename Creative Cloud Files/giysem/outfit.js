@@ -906,7 +906,7 @@ function wardrobeReason(item, ctx, needsRain, needsWind, slotKey, lang, picked =
 
 // Advice for an outfit made only from the user's own clothes: what to add,
 // what may be too warm, what won't handle the weather.
-const TIP_TEXT = {
+export const TIP_TEXT = {
   tr: {
     add_layer: 'Bu hava için üstün ince kalıyor. Üstüne hırka veya kalın bir kat daha al.',
     add_coat: 'Dolabında bu soğuğa uygun bir mont yok. Dışarıda uzun kalacaksan kalın bir mont şart.',

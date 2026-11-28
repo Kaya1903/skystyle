@@ -28,6 +28,7 @@
 // as a cached system prompt; the task itself follows in the user message.
 
 import { STYLIST_GUIDE } from '../../cloudflare/stylist_guide.js';
+import { buildOutfits, stylistCandidates, ENGINE_VERSION } from '../../engine.js';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 // Quick text tasks stay on the fast, low-cost model. Reading a clothing photo
@@ -317,6 +318,9 @@ function isEval(body, env) {
 }
 
 async function stylistPick(body, env) {
+  return json(200, await stylistChoose(body, env));
+}
+async function stylistChoose(body, env) {
   const cands = Array.isArray(body.candidates) ? body.candidates : [];
   if (!cands.length) throw new Error('missing "candidates"');
   const ev = isEval(body, env);
@@ -332,11 +336,48 @@ async function stylistPick(body, env) {
   // Now and then a reply comes back without its JSON (cut short or only prose):
   // one more try before giving up, so the person still gets the stylist's pick.
   try {
-    return json(200, extractJsonObject(await callClaude(env, payload, 60000)));
+    return extractJsonObject(await callClaude(env, payload, 60000));
   } catch (e) {
     if (!/no JSON object/.test(String(e && e.message))) throw e;
-    return json(200, extractJsonObject(await callClaude(env, payload, 60000)));
+    return extractJsonObject(await callClaude(env, payload, 60000));
   }
+}
+
+// The outfit engine as a service (engine.js): a store's catalog and today's
+// conditions in, weather-safe outfits from that catalog out. With "stylist": true
+// the AI stylist also picks the best one and writes a short note for the customer.
+const ENGINE_HOURLY_LIMIT = 300;
+const ENGINE_MAX_BYTES = 400 * 1024;
+async function engine(request, env, ip) {
+  if (Number(request.headers.get('Content-Length') || 0) > ENGINE_MAX_BYTES) return json(413, { error: 'request too large' });
+  if (overLimit('engine', ip, ENGINE_HOURLY_LIMIT)) return json(429, { error: 'too many requests, try again in a while' });
+  const raw = await request.text();
+  if (raw.length > ENGINE_MAX_BYTES) return json(413, { error: 'request too large' });
+  let body;
+  try { body = JSON.parse(raw || '{}'); } catch { return json(400, { error: 'body must be JSON' }); }
+  const { outfits, warnings } = buildOutfits(body);
+  const out = { version: ENGINE_VERSION, outfits, warnings };
+  if (!body.stylist || !outfits.length) return json(outfits.length ? 200 : 422, out);
+  if (!isEval(body, env) && overLimit('ai', ip, AI_HOURLY_LIMIT)) return json(200, { ...out, stylist: { error: 'stylist busy, try again in a while' } });
+  const keyError = checkApiKey(env);
+  if (keyError) return json(200, { ...out, stylist: { error: 'stylist unavailable' } });
+  const w = body.weather || {};
+  const c = body.customer || {};
+  const fit = { women: 'kadin', men: 'erkek' }[c.fit] || 'unisex';
+  try {
+    const r = await stylistChoose({
+      lang: body.lang || 'en', store: true, occasion: c.occasion || null, recent: [],
+      weather: { feelsLike: w.feelsLike, wind: w.wind, rain: w.rain, uv: w.uv, sky: w.sky, late: !!w.evening },
+      person: { gender: fit, styleVibe: c.style || 'casual', comfort: 'normal', learned: '', taste: typeof c.taste === 'string' ? c.taste : '' },
+      candidates: stylistCandidates(outfits),
+      evalKey: body.evalKey, evalModel: body.evalModel, evalEffort: body.evalEffort,
+    }, env);
+    const pick = Number(r.pick);
+    out.stylist = Number.isInteger(pick) && pick >= 0 && pick < outfits.length ? { pick, note: String(r.note || '') } : { error: 'stylist gave no valid pick' };
+  } catch (e) {
+    out.stylist = { error: 'stylist failed' };
+  }
+  return json(200, out);
 }
 
 // The quality judge (stats page only): an independent fashion editor scores one
@@ -379,7 +420,7 @@ const AI_HOURLY_LIMIT = 120;
 const ERROR_HOURLY_LIMIT = 20;
 const HOUR = 3600 * 1000;
 const SIGNAL_HOURLY_LIMIT = 200;
-const hits = { ai: new Map(), error: new Map(), signal: new Map() };
+const hits = { ai: new Map(), error: new Map(), signal: new Map(), engine: new Map() };
 const KEEP_SECONDS = 90 * 24 * 3600;
 async function keep(env, prefix, entry, metadata) {
   const kv = env.DATA || env.ERRORS;
@@ -502,6 +543,7 @@ export async function onRequestPost({ request, env, params }) {
   if (route === 'client-error') return clientError(request, env, ip);
   if (route === 'signal') return signal(request, env, ip);
   if (route === 'stats') return stats(request, env, ip);
+  if (route === 'engine') return engine(request, env, ip);
   if (!['analyze-photo', 'style-tip', 'adjust-outfit', 'stylist', 'judge'].includes(route)) return json(404, { error: 'not found' });
   const body = await request.json().catch(() => ({}));
   // Quality tests with the owner's key aren't counted against the hourly limit.
@@ -518,6 +560,22 @@ export async function onRequestPost({ request, env, params }) {
     if (e instanceof UpstreamError) return json(502, { error: e.message, detail: e.detail });
     return json(500, { error: String(e && e.message ? e.message : e) });
   }
+}
+
+// GET /api/engine: a short description of the engine service for whoever builds on it.
+export function onRequestGet({ params }) {
+  if ((params.path || []).join('/') !== 'engine') return json(405, { error: 'use POST' });
+  return json(200, {
+    service: 'SkyStyle outfit engine', version: ENGINE_VERSION, method: 'POST /api/engine',
+    body: {
+      catalog: '[{ id, name, slot: top|mid|outer|bottom|shoes|accessory, kind?, color?, color2?, warmth? 1-5, formality? 1-3, fit? women|men|unisex, pattern?, rainproof?, windproof?, inStock? }] (up to 600)',
+      weather: '{ feelsLike (required, °C), wind (km/h), rain (chance %), uv, sky: clear|partly|cloudy|rain|snow|storm|fog, evening: true|false }',
+      customer: '{ fit: women|men|unisex, style: casual|elegant|sporty|minimal|bold, occasion?: work|school|date|event|sport|walk, taste? }',
+      count: '1-6 outfits (default 3)', date: 'YYYY-MM-DD (optional, sets the day-to-day variety)',
+      stylist: 'true to let the AI stylist pick the best outfit and write a note', lang: 'language of the note (en, tr, de, ...)',
+    },
+    returns: '{ version, outfits: [{ items: [{ slot, id, name, kind, color }], gaps: [{ code, id? }] }], warnings, stylist?: { pick, note } }',
+  });
 }
 
 export function onRequest() {
