@@ -56,6 +56,10 @@
     .opt { font-size: 12px; color: var(--ink-soft); margin: 2px 0; }
     .opt.picked { color: var(--ink); font-weight: 650; }
     .hidden { display: none; }
+    .pilot-table td.best { font-weight: 800; color: var(--good); }
+    .pilot-case { border-top: 1px solid var(--line); padding: 10px 0; font-size: 13px; }
+    .pilot-case .arm { margin: 6px 0 0 0; padding: 8px 10px; border-radius: 10px; background: #f6f7fb; }
+    .pilot-case .arm b { font-weight: 750; }
     @media (max-width: 600px) { .hbar { grid-template-columns: 100px 1fr 34px; } input[type=password] { min-width: 0; width: 100%; } }
   </style>
 </head>
@@ -95,6 +99,12 @@
 
     <div class="card" style="margin-bottom:12px"><h2>Son 👎 alan öneriler</h2><div id="examples"></div></div>
     <div class="card"><h2>Uygulama hataları</h2><div id="errors"></div></div>
+    <div class="card" style="margin-top:12px" id="pilot-card">
+      <h2>Stilist kalite testi (pilot)</h2>
+      <p class="muted" style="margin-bottom:10px">16 senaryo (8 kişi, 8 mağaza stoğu) × 3 stilist. Bağımsız bir hakem (Opus 5.5) her seçimi 1-10 puanlar. Yaklaşık 2 $ tutar, 6-8 dakika sürer.</p>
+      <div class="row"><button class="primary" id="pilot-run">Pilotu çalıştır</button><span id="pilot-status" class="muted"></span></div>
+      <div id="pilot-results" style="margin-top:14px"></div>
+    </div>
   </div>
 </main>
 
@@ -270,6 +280,102 @@ document.querySelectorAll('[data-days]').forEach(b => b.addEventListener('click'
 $('refresh').addEventListener('click', () => open(sessionKey()));
 $('logout').addEventListener('click', () => { setSessionKey(''); location.reload(); });
 if (sessionKey()) open(sessionKey());
+
+// ---------- Stylist quality pilot ----------
+// Builds each scenario's weather-safe options with the app's own engine (from the
+// person's suggestions, or only from a store's stock), asks three stylist setups to
+// choose, and has an independent judge score every choice.
+const DIMS = ['weather', 'occasion', 'colors', 'style', 'note', 'choice', 'overall'];
+const DIM_TR = { weather: 'Hava', occasion: 'Plan', colors: 'Renk', style: 'Stil', note: 'Not', choice: 'Seçim', overall: 'Genel', sellable: 'Satılabilir' };
+async function post(path, body) {
+  const t0 = Date.now();
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  return { ok: r.ok, data: j, secs: (Date.now() - t0) / 1000 };
+}
+async function runPilot() {
+  const key = sessionKey();
+  if (!key) return;
+  const btn = $('pilot-run'); btn.disabled = true;
+  const status = m => { $('pilot-status').textContent = m; };
+  const { generateOutfit } = await import('/outfit.js');
+  const { COLORS, colorName, nearestColorKey, isValidColor } = await import('/colors.js');
+  const { STORES, PILOT_SCENARIOS, PILOT_ARMS } = await import('/eval_data.js');
+  const ALIASES = { camel: 'bej', cream: 'beyaz', ivory: 'beyaz', tan: 'bej', sand: 'bej', charcoal: 'gri', gray: 'gri', olive: 'haki', maroon: 'bordo', wine: 'bordo', rust: 'turuncu', mustard: 'sari', lilac: 'mor' };
+  const EN_TO_KEY = { ...Object.fromEntries(Object.keys(COLORS).map(k => [colorName(k, 'en').toLowerCase(), k])), ...ALIASES };
+  const results = [];
+  let i = 0;
+  for (const [label, feelsLike, uv, rain, wind, gender, vibe, sky, x = {}] of PILOT_SCENARIOS) {
+    i++; status(`${i} / ${PILOT_SCENARIOS.length}: ${label}`);
+    const store = x.store ? STORES[x.store] : null;
+    const items = store ? store.items : [];
+    const seen = new Set(); const cands = [];
+    for (let roll = 0; roll < 10 && cands.length < 6; roll++) {
+      const o = generateOutfit({ feelsLike, wind, rainMax: rain, gender, lang: 'en', vibe, seed: '2026-12-03', kind: sky, uv, late: !!x.late, wardrobeOnly: !!store, occasion: x.occasion || null, adjust: roll ? { reroll: roll } : null }, items);
+      const sig = o.rows.map(r => `${r.slotKey}:${r.item}`).join('|');
+      if (seen.has(sig)) continue; seen.add(sig);
+      cands.push(o.rows.map(r => {
+        const own = r.fromWardrobe ? items.find(it => it.id === r.itemId) : null;
+        const hex = r.color || (r.look && r.look.color);
+        const k = own && isValidColor(own.color) ? own.color : hex ? nearestColorKey(hex) : null;
+        return { slot: r.slotKey, item: r.item, kind: r.art, owned: !!r.fromWardrobe, colorRule: r.colorRule || 'free', color: (r.fromWardrobe || r.colorRule === 'fixed') && k ? colorName(k, 'en').toLowerCase() : null };
+      }));
+    }
+    const situation = `Feels like ${feelsLike}°C, rain chance ${rain}%, wind ${wind} km/h, sky ${sky}${x.late ? ', it is evening' : ''}. ` +
+      `Person: ${gender === 'kadin' ? 'woman' : gender === 'erkek' ? 'man' : 'anyone'}, style ${vibe}${x.occasion ? `, today's plan: ${x.occasion}` : ''}.` +
+      (x.taste ? ` What we know of their taste: ${x.taste}` : '');
+    const optionsText = cands.map((c, n) => `Outfit ${n}: ` + c.map(r => `${r.slot} ${r.item}${r.color ? ` (${r.color})` : ''}`).join('; ')).join('\n');
+    const body = { lang: 'en', weather: { feelsLike, wind, rain, uv, sky, late: !!x.late }, person: { gender, styleVibe: vibe, comfort: 'normal', learned: '', taste: x.taste || '' },
+      recent: [], occasion: x.occasion || null, candidates: cands.map(rows => ({ rows })), evalKey: key };
+    const arms = await Promise.all(PILOT_ARMS.map(async arm => {
+      const r = await post('/api/stylist', { ...body, evalModel: arm.model, evalEffort: arm.effort });
+      const pick = Number(r.data && r.data.pick);
+      const chosen = Number.isInteger(pick) ? cands[pick] : null;
+      if (!r.ok || !chosen) return { arm: arm.id, error: (r.data && r.data.error) || 'invalid pick', secs: r.secs };
+      const colors = r.data.colors || {};
+      const chosenText = chosen.map(row => { const c = colors[row.slot] && !row.owned && row.colorRule !== 'fixed' ? String(colors[row.slot]).toLowerCase() : row.color; return `${row.slot} ${row.item}${c ? ` (${c})` : ''}`; }).join('; ');
+      return { arm: arm.id, secs: r.secs, pick, chosenText, note: r.data.note || '' };
+    }));
+    // The judge sees every choice blind: no model names.
+    await Promise.all(arms.map(async a => {
+      if (a.error) return;
+      const j = await post('/api/judge', { evalKey: key, case: { situation, store: store ? store.label : '', options: optionsText, chosen: a.chosenText, note: a.note } });
+      a.score = j.ok ? j.data : null;
+      if (!j.ok) a.error = 'judge: ' + ((j.data && j.data.error) || 'failed');
+    }));
+    results.push({ label, store: !!store, arms });
+    try { localStorage.setItem('skystyle_pilot_last', JSON.stringify(results)); } catch { /* fine */ }
+    drawPilot(results, PILOT_ARMS);
+  }
+  status(`Bitti: ${results.length} senaryo.`); btn.disabled = false;
+}
+function avg(list) { const v = list.filter(n => typeof n === 'number'); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; }
+function drawPilot(results, arms) {
+  const fmt = n => (n == null ? '-' : n.toFixed(1));
+  const rowsFor = filter => arms.map(arm => {
+    const picks = results.filter(filter).map(r => r.arms.find(a => a.arm === arm.id)).filter(a => a && a.score);
+    const errs = results.filter(filter).map(r => r.arms.find(a => a.arm === arm.id)).filter(a => a && a.error).length;
+    return { arm, n: picks.length, errs, secs: avg(results.filter(filter).map(r => (r.arms.find(a => a.arm === arm.id) || {}).secs)),
+      dims: Object.fromEntries([...DIMS, 'sellable'].map(d => [d, avg(picks.map(p => Number(p.score[d])))])) };
+  });
+  const table = (title, filter, dims) => {
+    const rows = rowsFor(filter);
+    const best = Math.max(...rows.map(r => r.dims.overall || 0));
+    return `<h2 style="margin-top:6px">${title}</h2><table class="pilot-table"><thead><tr><th>Stilist</th>${dims.map(d => `<th class="num">${DIM_TR[d]}</th>`).join('')}<th class="num">Süre</th><th class="num">Hata</th></tr></thead><tbody>${
+      rows.map(r => `<tr><td>${esc(r.arm.label)}</td>${dims.map(d => `<td class="num ${d === 'overall' && r.dims.overall === best ? 'best' : ''}">${fmt(r.dims[d])}</td>`).join('')}<td class="num">${fmt(r.secs)} sn</td><td class="num">${r.errs}</td></tr>`).join('')
+    }</tbody></table>`;
+  };
+  const cases = results.map(r => `<div class="pilot-case"><b>${esc(r.label)}</b>${r.arms.map(a => {
+    const arm = arms.find(x => x.id === a.arm);
+    if (a.error) return `<div class="arm"><b>${esc(arm.label)}</b>: ${esc(a.error)}</div>`;
+    const s = a.score || {};
+    return `<div class="arm"><b>${esc(arm.label)}</b> · genel <b>${esc(s.overall)}</b>${s.sellable ? ` · satılabilir ${esc(s.sellable)}` : ''} · ${a.secs.toFixed(1)} sn<br>${esc(a.chosenText)}<br><i>“${esc(a.note)}”</i>${s.issue ? `<br><span class="muted">Hakem: ${esc(s.issue)}</span>` : ''}</div>`;
+  }).join('')}</div>`).join('');
+  $('pilot-results').innerHTML = table('Tüm senaryolar', () => true, DIMS) + table('Sadece mağaza senaryoları', r => r.store, ['overall', 'sellable', 'colors', 'style', 'choice']) +
+    table('Sadece kişi senaryoları', r => !r.store, ['overall', 'weather', 'occasion', 'colors', 'style', 'note']) + `<h2 style="margin-top:14px">Tek tek</h2>${cases}`;
+}
+$('pilot-run').addEventListener('click', () => { if (confirm('Pilot yaklaşık 2 $ tutar ve 6-8 dakika sürer. Başlatalım mı?')) runPilot(); });
+try { const last = JSON.parse(localStorage.getItem('skystyle_pilot_last') || 'null'); if (last) import('/eval_data.js').then(m => drawPilot(last, m.PILOT_ARMS)); } catch { /* fine */ }
 </script>
 </body>
 </html>

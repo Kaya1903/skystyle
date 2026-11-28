@@ -50,6 +50,13 @@ export function setVolume(kind, level) {
   bus.gain.setTargetAtTime(max * volumes[kind], ctx.currentTime, 0.05);
 }
 
+// iPhones sometimes refuse to start audio (a call in progress, another app holding
+// the audio device). That isn't an error worth reporting: the sound just stays off
+// until the next tap tries again.
+function wake() {
+  try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch { /* same */ }
+}
+
 function ensure() {
   if (ctx) return true;
   const AC = window.AudioContext || window.webkitAudioContext;
@@ -69,7 +76,7 @@ function ensure() {
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
-    if (document.hidden) ctx.suspend(); else if (enabled) ctx.resume();
+    if (document.hidden) ctx.suspend().catch(() => {}); else if (enabled) wake();
   });
   return true;
 }
@@ -78,7 +85,7 @@ function ensure() {
 export function unlockSound() {
   if (!enabled) return;
   if (!ensure()) return;
-  if (ctx.state === 'suspended') ctx.resume();
+  if (ctx.state === 'suspended') wake();
   if (wantedAmbient && !ambient) startAmbient(wantedAmbient);
 }
 
@@ -98,7 +105,7 @@ export function setSoundOn(on) {
     return;
   }
   if (!ensure()) return;
-  ctx.resume();
+  wake();
   master.gain.setTargetAtTime(1, ctx.currentTime, 0.05);
   if (wantedAmbient) startAmbient(wantedAmbient);
 }
