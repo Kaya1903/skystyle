@@ -314,7 +314,11 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
     .filter(i => relaxed || !(needsWind && category === 'dis' && !i.windproof))
     .map(i => {
       let score = isAcc ? 3 : 3 - Math.abs((i.warmth || 3) - desired);
-      if (needsRain && category !== 'yanina') score += i.rainOk ? 2 : -3;
+      // In freezing weather (snow) a warm coat matters more than a rain-proof one:
+      // a down puffer beats a trench, and a thin coat loses twice.
+      const freezingCoat = bandKey === 'dondurucu' && category === 'dis';
+      if (freezingCoat) score += (needsRain && (i.rainOk || (i.warmth || 3) >= 5) ? 2 : 0) - Math.max(0, desired - (i.warmth || 3));
+      else if (needsRain && category !== 'yanina') score += i.rainOk ? 2 : -3;
       if (needsWind && category === 'dis') score += i.windproof ? 2 : -3;
       if (needsRain && i.rainOk) score += 0.5;
       if (planFit && !planFit(i)) score -= 2.5;
@@ -370,7 +374,7 @@ export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, need
   (function search(idx, weatherScore) {
     if (idx === slots.length) {
       const picked = chosen.map(c => c.item).filter(Boolean);
-      const total = weatherScore + COLOR_WEIGHT * outfitColorScore(picked) - layerPenalty(picked);
+      const total = weatherScore + COLOR_WEIGHT * outfitColorScore(picked) - layerPenalty(picked) - darkDayPenalty(picked, bandKey);
       if (total > bestScore) { bestScore = total; best = [...chosen]; }
       return;
     }
@@ -388,15 +392,28 @@ export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, need
 
 // Pieces that are a layer of their own: a heavy shirt-jacket, a fleece, a hoodie.
 const OVERSHIRT = /overshirt|shacket|shirt[- ]jacket|flannel|oduncu|gömlek ceket|kalın gömlek/i;
+const CHUNKY = /chunky|cable|heavy|kalın|iri örgü|saç örgü/i;
 function isBulkyTop(item) {
   const art = itemLook(item).art;
   if (['hoodie', 'fleece', 'sweatshirt'].includes(art)) return true;
   if (OVERSHIRT.test(item.name || '')) return true;
-  return art === 'sweater' && (item.warmth || 3) >= 4;
+  // A fine or ribbed knit (a turtleneck) sits fine under a cardigan; a chunky one doesn't.
+  return art === 'sweater' && (CHUNKY.test(item.name || '') || (item.warmth || 3) >= 5);
 }
 // Mid tones that turn into one muddy block when two neighbouring pieces share them.
 const MUDDY = { bej: 'sand', haki: 'olive', kahve: 'brown' };
 const sameMud = (a, b) => a && b && MUDDY[a.color] && MUDDY[a.color] === MUDDY[b.color];
+
+// On a mild or warm day an outfit of only deep colors (navy, black, burgundy,
+// brown) looks heavy and closed; one light piece among the big ones fixes it.
+const DEEP = ['siyah', 'lacivert', 'bordo', 'kahve'];
+const WARM_DAY = ['ilik', 'sicak', 'cok_sicak'];
+export function darkDayPenalty(items, bandKey) {
+  if (!WARM_DAY.includes(bandKey)) return 0;
+  const big = items.filter(i => i && ['ust', 'ustune', 'dis', 'alt'].includes(i.category) && i.color);
+  const deep = big.filter(i => DEEP.includes(i.color)).length;
+  return big.length >= 2 && deep >= 3 ? 1.5 : big.length >= 2 && deep === big.length ? 1 : 0;
+}
 
 // How much a set of pieces fights itself when worn together (0 = fine).
 export function layerPenalty(items) {

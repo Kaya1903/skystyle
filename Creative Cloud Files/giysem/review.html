@@ -93,7 +93,7 @@ const STYLE_TR = { casual: 'günlük', elegant: 'şık', minimal: 'sade', bold: 
 const SKY_TR = { clear: 'açık', partly: 'parçalı bulutlu', cloudy: 'bulutlu', rain: 'yağmurlu', snow: 'karlı' };
 const SLOT_TR = { ust: 'Üst', ustune: 'Ara katman', dis: 'Dış', alt: 'Alt', ayak: 'Ayakkabı', yanina: 'Aksesuar' };
 const REASONS = ['Renkler', 'Katmanlar', 'Havaya uymuyor', 'Plana uymuyor', 'Sıkıcı', 'Bir parça uymuyor', 'Satın almazdım'];
-const KEY = 'skystyle_review_v1';
+const KEY = 'skystyle_review_v2';
 const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let votes = {};
 try { votes = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { votes = {}; }
