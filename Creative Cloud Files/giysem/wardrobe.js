@@ -352,12 +352,19 @@ export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, need
     .filter(s => s.cands.length);
   if (!slots.length) return {};
 
+  // From the user's own clothes (or a store's stock) the extra warm layer may be
+  // left out, so a chunky top doesn't get a cardigan forced over it.
+  if (relaxed) {
+    const mid = slots.find(s => s.category === 'ustune' && !locks.ustune);
+    if (mid) mid.cands = mid.cands.concat({ item: null, score: mid.cands[0].score - 1.2 });
+  }
   let best = null;
   let bestScore = -Infinity;
   const chosen = [];
   (function search(idx, weatherScore) {
     if (idx === slots.length) {
-      const total = weatherScore + COLOR_WEIGHT * outfitColorScore(chosen.map(c => c.item));
+      const picked = chosen.map(c => c.item).filter(Boolean);
+      const total = weatherScore + COLOR_WEIGHT * outfitColorScore(picked) - layerPenalty(picked);
       if (total > bestScore) { bestScore = total; best = [...chosen]; }
       return;
     }
@@ -369,6 +376,36 @@ export function pickWardrobeOutfit(items, categories, { bandKey, needsRain, need
   })(0, 0);
 
   const result = {};
-  slots.forEach((s, i) => { result[s.category] = best[i].item; });
+  slots.forEach((s, i) => { if (best[i].item) result[s.category] = best[i].item; });
   return result;
+}
+
+// Pieces that are a layer of their own: a heavy shirt-jacket, a fleece, a hoodie.
+const OVERSHIRT = /overshirt|shacket|shirt[- ]jacket|flannel|oduncu|gömlek ceket|kalın gömlek/i;
+function isBulkyTop(item) {
+  const art = itemLook(item).art;
+  if (['hoodie', 'fleece', 'sweatshirt'].includes(art)) return true;
+  if (OVERSHIRT.test(item.name || '')) return true;
+  return art === 'sweater' && (item.warmth || 3) >= 4;
+}
+// Mid tones that turn into one muddy block when two neighbouring pieces share them.
+const MUDDY = { bej: 'sand', haki: 'olive', kahve: 'brown' };
+const sameMud = (a, b) => a && b && MUDDY[a.color] && MUDDY[a.color] === MUDDY[b.color];
+
+// How much a set of pieces fights itself when worn together (0 = fine).
+export function layerPenalty(items) {
+  const by = {};
+  for (const i of items) if (i) by[i.category] = i;
+  let p = 0;
+  // A chunky top or an overshirt under a cardigan or sweater: bulky, wrong order.
+  if (by.ust && by.ustune && isBulkyTop(by.ust)) p += 3;
+  // Two knits on top of each other (a crewneck under a quarter-zip).
+  else if (by.ust && by.ustune && itemLook(by.ust).art === 'sweater' && itemLook(by.ustune).art === 'sweater') p += 1.5;
+  // Under a dress only a thin fitted top works, not a sweater, blouse or shirt.
+  if (by.ust && by.alt && itemLook(by.alt).art === 'dress' && !['longsleeve', 'tee', 'tank'].includes(itemLook(by.ust).art)) p += 2;
+  // Same sand, olive or brown on pieces that sit next to each other.
+  if (sameMud(by.dis, by.alt)) p += 1.5;
+  if (sameMud(by.ust, by.dis) || sameMud(by.ustune, by.dis)) p += 1.2;
+  if (sameMud(by.alt, by.ayak)) p += 1;
+  return p;
 }

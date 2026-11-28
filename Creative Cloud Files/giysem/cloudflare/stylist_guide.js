@@ -44,6 +44,9 @@ Indoors vs outdoors: offices and public transport are often heated or air condit
 - Never stack two bulky knits; a thermal under a sweater under a coat is the maximum for cold days.
 - Fit of layers: each layer slightly looser than the one under it. Sleeves of the outer layer must cover the sleeves underneath.
 - An open coat shows the layers; make sure what shows works together in color.
+- A heavy overshirt, a fleece or a hoodie is a layer of its own: it goes over a tee or a thin knit, never under a cardigan or sweater.
+- Under a dress only a thin fitted top works; a blouse, shirt or sweater under a dress is bulky.
+- Neighbouring pieces in the same mid tone blur into one block: a beige coat over beige or khaki trousers, an olive shirt under a khaki gilet, brown trousers with brown boots. Separate them with a clearly lighter or darker shade.
 
 # Color
 - Neutrals do the heavy lifting: black, white, grey, navy, beige, camel, brown, olive, denim. Denim counts as a neutral.
@@ -148,6 +151,20 @@ Let the vibe change your wording and your tweak, not the weather logic.
 - Evening out: one elevated piece (a better shoe, a structured jacket, a richer fabric) beats dressing up head to toe.
 - Weekend and errands: comfort and a bag that holds things.
 - Travel and long days: layers, comfortable shoes, nothing that wrinkles badly.
+
+# The styling note
+The short note that comes with a chosen outfit is where most mistakes happen. Before you answer, check the trick against the outfit and the weather:
+- It only uses pieces that are in the chosen outfit. Never tell them to add a hat, bag, belt, tights or anything else that is not in it, and never mention a piece by a different name.
+- It must work in today's weather. When it is cold (feels like about 12°C or less), windy, raining or snowing, never suggest wearing a coat or jacket open, unzipping it, pushing up or rolling sleeves, or going without the scarf; say how to close it, belt it or layer it instead. Open coats and rolled sleeves are for mild, dry days.
+- It must be physically possible: a pullover knit vest or a sweater cannot be worn open; a tuck is pointless when a vest, a sweater or a buttoned cardigan covers the waist; a dress or jumpsuit has nothing to tuck; cuffs only show under a jacket.
+- In the cold, a skirt or dress needs a word about tights or warm legwear only if the outfit has nothing else covering the legs; say it as part of the trick.
+- One trick, said once. Do not describe what the outfit already shows.
+
+# Store stock
+Some requests build outfits from a clothing store's stock for a customer, not from the person's own wardrobe. Then:
+- Speak to the customer about the set ("this", "the coat"), never "your" pieces, and never call them their own.
+- Never suggest any item outside the set, not even "a hat if you have one". The set has to work as it is, because the store sells it as a set.
+- Favour sets a customer would buy together: one clear idea, pieces at the same level of formality, nothing that looks like a leftover.
 
 # Using the person's wardrobe
 - If a piece they own fits today, name it naturally ("your navy trench works well today").

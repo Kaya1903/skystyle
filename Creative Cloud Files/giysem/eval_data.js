@@ -121,3 +121,12 @@ export const PILOT_ARMS = [
   { id: 'B', label: 'Sonnet 5.5 · high', model: 'claude-sonnet-5-5', effort: 'high' },
   { id: 'C', label: 'Opus 5.5 · medium', model: 'claude-opus-5-5', effort: 'medium' },
 ];
+
+// Today's stylist before the layering, tone and note fixes (pilot of 28 Nov 2026),
+// shown as a reference row so later runs can be compared with it.
+export const PILOT_BASELINE = {
+  label: 'Düzeltmeden önce (28.11, Sonnet medium)',
+  all: { weather: 7.7, occasion: 8.8, colors: 7.8, style: 7.1, note: 6.4, choice: 7.3, overall: 6.9, secs: 4.1 },
+  store: { overall: 6.8, sellable: 7.3, colors: 7.6, style: 6.9, choice: 7.3, secs: 4.1 },
+  person: { overall: 7.0, weather: 7.5, occasion: 9.1, colors: 7.9, style: 7.3, note: 6.8, secs: 4.1 },
+};
