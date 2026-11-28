@@ -293,8 +293,14 @@ function slotCandidates(items, { category, bandKey, needsRain, needsWind, allowA
   const desired = BAND_WARMTH[bandKey];
   const kinds = allowArts && allowArts[category];
   const isAcc = category === 'yanina';
-  return items
-    .filter(i => i.category === category)
+  let pool = items.filter(i => i.category === category);
+  // From the user's own clothes (or a store's stock): a piece that doesn't suit
+  // today's plans is left out when the slot has another that does.
+  if (relaxed && planFit) {
+    const fit = pool.filter(i => planFit(i) && (!kinds || kinds.includes(itemLook(i).art)));
+    if (fit.length) pool = pool.filter(i => planFit(i));
+  }
+  return pool
     .filter(i => !kinds || kinds.includes(itemLook(i).art))
     // require a close warmth match to avoid nonsensical picks (e.g. a sweatshirt for a heatwave);
     // accessories are chosen by kind instead

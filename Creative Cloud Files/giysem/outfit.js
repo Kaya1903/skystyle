@@ -382,7 +382,8 @@ export const OCCASIONS = {
   date: { vibe: 'elegant', formality: [2, 3], sport: 'no', avoid: ['hoodie', 'sweatshirt', 'fleece', 'slide', 'cap', 'leggings'] },
   event: { vibe: 'elegant', formality: [3, 3], sport: 'no', avoid: ['hoodie', 'sweatshirt', 'fleece', 'tank', 'shorts', 'minishorts', 'slide', 'sneaker', 'cap', 'bucket', 'tote', 'leggings', 'windbreaker'] },
   sport: { vibe: 'sporty', sport: 'only', avoid: ['jeans', 'chinos', 'heel', 'flat', 'loafer', 'chelsea', 'espadrille', 'blazer', 'blazerw', 'shirt', 'blouse', 'dress', 'skirt', 'jumpsuit', 'coat', 'wrapcoat', 'trench'] },
-  walk: { vibe: null, formality: [1, 2], avoid: ['heel', 'flat', 'loafer', 'slide'], want: ['sneaker'] },
+  // comfort: the pieces it rules out are about walking all day, not about how dressy they are.
+  walk: { vibe: null, formality: [1, 2], comfort: true, avoid: ['heel', 'flat', 'loafer', 'slide'], want: ['sneaker'] },
 };
 export const OCCASION_KEYS = Object.keys(OCCASIONS);
 // Spare reasons per slot for when two pieces would say the same thing.
@@ -525,7 +526,8 @@ function ownedFitsPlan(occ) {
     const f = itemFormality(item);
     if (item.category === 'yanina') return !off.has(itemLook(item).art);
     if (occ.sport === 'only') return f < 3 && !off.has(itemLook(item).art);
-    if (isFormality(item.formality)) return f >= min;
+    // A dressiness the user set themselves wins, except where comfort is the point.
+    if (isFormality(item.formality)) return f >= min && !(occ.comfort && off.has(itemLook(item).art));
     return f >= min && !off.has(itemLook(item).art);
   };
 }
