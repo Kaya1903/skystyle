@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Kombin İnceleme</title>
+<link rel="icon" href="/favicon.png">
+<style>
+  :root {
+    --bg: #f4f5f8; --card: #ffffff; --ink: #1d2230; --muted: #6b7385; --line: #e3e6ee;
+    --accent: #3e6ff0; --good: #1f9d61; --good-bg: #e4f6ec; --bad: #d4483b; --bad-bg: #fbe8e6; --chip: #eef1f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #12151d; --card: #1b1f2b; --ink: #e9ecf3; --muted: #9aa2b4; --line: #2b3142; --accent: #7b9cff;
+      --good: #4fd08f; --good-bg: #183327; --bad: #ff7b6e; --bad-bg: #3a1f1d; --chip: #252a39; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 16px; }
+  .head-row { max-width: 1100px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  h1 { font-size: 18px; margin: 0; flex: 1 1 auto; }
+  .progress { color: var(--muted); font-size: 14px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 7px 12px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  .intro { color: var(--muted); margin: 0 0 18px; }
+  .scenario { margin: 0 0 26px; }
+  .scenario h2 { font-size: 16px; margin: 0 0 2px; }
+  .cond { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .card.up { border-color: var(--good); box-shadow: 0 0 0 1px var(--good) inset; }
+  .card.down { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad) inset; }
+  .look { display: flex; gap: 10px; align-items: flex-start; }
+  .fig { flex: 0 0 150px; }
+  .fig .figure { width: 150px; height: auto; display: block; }
+  .pieces { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .pieces li { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .pieces .garment { width: 34px; height: 34px; flex: 0 0 34px; }
+  .pieces .slot { color: var(--muted); font-size: 11px; display: block; }
+  .vote { display: flex; gap: 8px; }
+  .vote button { flex: 1; }
+  .vote .on-up { background: var(--good-bg); border-color: var(--good); color: var(--good); font-weight: 600; }
+  .vote .on-down { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); font-weight: 600; }
+  .reasons { display: none; flex-wrap: wrap; gap: 6px; }
+  .card.down .reasons { display: flex; }
+  .reasons button { font-size: 13px; padding: 4px 9px; border-radius: 999px; background: var(--chip); border-color: transparent; }
+  .reasons button.on { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+  .note { display: none; width: 100%; font: inherit; font-size: 13px; padding: 7px 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .card.up .note, .card.down .note { display: block; }
+  .copied { color: var(--good); font-size: 13px; }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } h1 { font-size: 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-row">
+    <h1>Kombin İnceleme</h1>
+    <span class="progress" id="progress"></span>
+    <button id="copy" class="primary">Sonuçları kopyala</button>
+    <span class="copied" id="copied"></span>
+  </div>
+</header>
+<main>
+  <p class="intro">Motorun iki örnek butik kataloğundan (kadın ve erkek) kurduğu kombinler. Her senaryoda motorun ilk iki önerisi var; stilist yok, sadece motor. Her kombin için 👍 ya da 👎 seç, 👎 ise sebebini işaretle, istersen kısa bir not yaz. Seçimlerin bu cihazda saklanır. Bitince "Sonuçları kopyala"ya basıp sohbete yapıştır.</p>
+  <div id="list"></div>
+</main>
+<script type="module">
+import { generateOutfit } from '/outfit.js';
+import { outfitFigure, figurePartsFromRows, garmentArt } from '/visuals.js';
+import { STORES } from '/eval_data.js';
+
+// [label, feelsLike, uv, rain%, wind, store, vibe, sky, occasion, evening]
+const SCENARIOS = [
+  ['Kadın · soğuk iş günü', 3, 1, 10, 14, 'womens', 'elegant', 'cloudy', 'work', false],
+  ['Kadın · yağmurlu serin gün', 11, 1, 80, 16, 'womens', 'minimal', 'rain', null, false],
+  ['Kadın · ılık randevu akşamı', 18, 3, 0, 8, 'womens', 'casual', 'clear', 'date', true],
+  ['Kadın · sıcak hafta sonu, bütün gün gezme', 29, 9, 0, 7, 'womens', 'casual', 'clear', 'walk', false],
+  ['Kadın · karlı dondurucu gün', -4, 1, 70, 15, 'womens', 'casual', 'snow', null, false],
+  ['Kadın · ılık güneşli günlük', 21, 6, 0, 8, 'womens', 'casual', 'clear', null, false],
+  ['Kadın · serin rüzgârlı gün', 13, 3, 10, 30, 'womens', 'casual', 'partly', null, false],
+  ['Erkek · dondurucu iş günü', -3, 1, 20, 15, 'mens', 'elegant', 'cloudy', 'work', false],
+  ['Erkek · serin hafta sonu', 13, 3, 0, 10, 'mens', 'casual', 'partly', null, false],
+  ['Erkek · sıcak düğün', 24, 6, 0, 6, 'mens', 'elegant', 'clear', 'event', false],
+  ['Erkek · yağmurlu rüzgârlı gün', 8, 1, 90, 30, 'mens', 'casual', 'rain', null, false],
+  ['Erkek · sıcak günlük', 30, 9, 0, 8, 'mens', 'casual', 'clear', null, false],
+  ['Erkek · ılık randevu akşamı', 17, 2, 0, 8, 'mens', 'casual', 'clear', 'date', true],
+  ['Erkek · soğuk güneşli hafta sonu', 4, 2, 0, 10, 'mens', 'minimal', 'clear', null, false],
+];
+const PLAN_TR = { work: 'iş', date: 'randevu', walk: 'gezme', event: 'davet' };
+const STYLE_TR = { casual: 'günlük', elegant: 'şık', minimal: 'sade', bold: 'iddialı', sporty: 'sportif' };
+const SKY_TR = { clear: 'açık', partly: 'parçalı bulutlu', cloudy: 'bulutlu', rain: 'yağmurlu', snow: 'karlı' };
+const SLOT_TR = { ust: 'Üst', ustune: 'Ara katman', dis: 'Dış', alt: 'Alt', ayak: 'Ayakkabı', yanina: 'Aksesuar' };
+const REASONS = ['Renkler', 'Katmanlar', 'Havaya uymuyor', 'Plana uymuyor', 'Sıkıcı', 'Bir parça uymuyor', 'Satın almazdım'];
+const KEY = 'skystyle_review_v1';
+const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let votes = {};
+try { votes = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { votes = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(votes)); } catch { /* fine */ } };
+
+// The engine's first two different outfits for each scenario, only from the store's stock.
+const cases = [];
+for (const [label, feelsLike, uv, rain, wind, store, vibe, sky, occasion, late] of SCENARIOS) {
+  const items = STORES[store].items;
+  const gender = store === 'womens' ? 'kadin' : 'erkek';
+  const seen = new Set();
+  const outs = [];
+  for (let roll = 0; roll < 8 && outs.length < 2; roll++) {
+    const o = generateOutfit({ feelsLike, wind, rainMax: rain, uv, kind: sky, gender, lang: 'en', vibe, seed: '2026-12-03', late, occasion, wardrobeOnly: true, adjust: roll ? { reroll: roll } : null }, items);
+    const sig = o.rows.map(r => r.itemId).join('|');
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    outs.push({ id: `${label} #${outs.length + 1}`, rows: o.rows });
+  }
+  const cond = [`hissedilen ${feelsLike}°`, SKY_TR[sky], rain >= 50 ? `yağmur %${rain}` : '', wind >= 20 ? `rüzgâr ${wind} km/sa` : '', late ? 'akşam' : '', `tarz: ${STYLE_TR[vibe]}`, occasion ? `plan: ${PLAN_TR[occasion]}` : ''].filter(Boolean).join(' · ');
+  cases.push({ label, cond, outs });
+}
+
+function card(o) {
+  const v = votes[o.id] || {};
+  const pieces = o.rows.map(r => `<li>${garmentArt(r.art, r.look && r.look.color, r.look || {}, 'flat')}<span><span class="slot">${SLOT_TR[r.slotKey]}</span>${esc(r.item)}</span></li>`).join('');
+  return `<div class="card ${v.vote || ''}" data-id="${esc(o.id)}">
+    <div class="look"><div class="fig">${outfitFigure(figurePartsFromRows(o.rows))}</div><ul class="pieces">${pieces}</ul></div>
+    <div class="vote"><button data-v="up" class="${v.vote === 'up' ? 'on-up' : ''}">👍 İyi</button><button data-v="down" class="${v.vote === 'down' ? 'on-down' : ''}">👎 Kötü</button></div>
+    <div class="reasons">${REASONS.map(r => `<button data-r="${esc(r)}" class="${(v.reasons || []).includes(r) ? 'on' : ''}">${esc(r)}</button>`).join('')}</div>
+    <input class="note" placeholder="Kısa not (isteğe bağlı)" value="${esc(v.note || '')}">
+  </div>`;
+}
+function render() {
+  document.getElementById('list').innerHTML = cases.map(c => `<section class="scenario"><h2>${esc(c.label)}</h2><p class="cond">${esc(c.cond)}</p><div class="grid">${c.outs.map(card).join('')}</div></section>`).join('');
+  progress();
+}
+function progress() {
+  const all = cases.flatMap(c => c.outs);
+  const done = all.filter(o => votes[o.id] && votes[o.id].vote).length;
+  const up = all.filter(o => (votes[o.id] || {}).vote === 'up').length;
+  document.getElementById('progress').textContent = `${done} / ${all.length} işaretlendi · ${up} 👍`;
+}
+document.getElementById('list').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  const cardEl = e.target.closest('.card');
+  if (!btn || !cardEl) return;
+  const id = cardEl.dataset.id;
+  const v = votes[id] || (votes[id] = {});
+  if (btn.dataset.v) {
+    v.vote = v.vote === btn.dataset.v ? null : btn.dataset.v;
+    if (v.vote !== 'down') v.reasons = [];
+    cardEl.className = `card ${v.vote || ''}`;
+    cardEl.querySelectorAll('.vote button').forEach(b => { b.className = b.dataset.v === v.vote ? `on-${v.vote}` : ''; });
+    cardEl.querySelectorAll('.reasons button').forEach(b => b.classList.toggle('on', (v.reasons || []).includes(b.dataset.r)));
+  } else if (btn.dataset.r) {
+    const list = v.reasons || (v.reasons = []);
+    const i = list.indexOf(btn.dataset.r);
+    if (i >= 0) list.splice(i, 1); else list.push(btn.dataset.r);
+    btn.classList.toggle('on', i < 0);
+  }
+  save(); progress();
+});
+document.getElementById('list').addEventListener('input', e => {
+  if (!e.target.classList.contains('note')) return;
+  const id = e.target.closest('.card').dataset.id;
+  (votes[id] || (votes[id] = {})).note = e.target.value.slice(0, 300);
+  save();
+});
+// A plain-text summary to paste into the chat: every rated outfit with its pieces.
+document.getElementById('copy').addEventListener('click', async () => {
+  const lines = [];
+  for (const c of cases) for (const o of c.outs) {
+    const v = votes[o.id];
+    if (!v || !v.vote) continue;
+    lines.push(`${v.vote === 'up' ? '👍' : '👎'} ${o.id} (${c.cond}): ${o.rows.map(r => r.item).join(' + ')}` +
+      (v.reasons && v.reasons.length ? ` | sebep: ${v.reasons.join(', ')}` : '') + (v.note ? ` | not: ${v.note}` : ''));
+  }
+  const all = cases.flatMap(c => c.outs).length;
+  const text = `Kombin inceleme: ${lines.length}/${all} işaretli, ${lines.filter(l => l.startsWith('👍')).length} iyi\n` + lines.join('\n');
+  const out = document.getElementById('copied');
+  try { await navigator.clipboard.writeText(text); out.textContent = 'Kopyalandı'; }
+  catch { window.prompt('Bu metni kopyala:', text); out.textContent = ''; }
+  setTimeout(() => { out.textContent = ''; }, 2500);
+});
+render();
+</script>
+</body>
+</html>
