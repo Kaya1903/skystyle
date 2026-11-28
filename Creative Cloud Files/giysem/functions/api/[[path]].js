@@ -329,7 +329,14 @@ async function stylistPick(body, env) {
     fallbacks: 'default',
     messages: [{ role: 'user', content: stylistPrompt(body) }],
   };
-  return json(200, extractJsonObject(await callClaude(env, payload, 60000)));
+  // Now and then a reply comes back without its JSON (cut short or only prose):
+  // one more try before giving up, so the person still gets the stylist's pick.
+  try {
+    return json(200, extractJsonObject(await callClaude(env, payload, 60000)));
+  } catch (e) {
+    if (!/no JSON object/.test(String(e && e.message))) throw e;
+    return json(200, extractJsonObject(await callClaude(env, payload, 60000)));
+  }
 }
 
 // The quality judge (stats page only): an independent fashion editor scores one

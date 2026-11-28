@@ -494,7 +494,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 'messages': [{'role': 'user', 'content': stylist_prompt(body)}],
             }
             text_out = self._call_claude(payload, timeout=45)
-            self._send_json(200, extract_json_object(text_out))
+            try:
+                result = extract_json_object(text_out)
+            except ValueError:
+                # A reply without its JSON now and then: one more try.
+                result = extract_json_object(self._call_claude(payload, timeout=45))
+            self._send_json(200, result)
         except urllib.error.HTTPError as e:
             detail = e.read().decode('utf-8', 'ignore')
             self._send_json(502, {'error': f'anthropic api error {e.code}', 'detail': detail[:300]})

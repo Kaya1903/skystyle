@@ -403,6 +403,9 @@ export function layerPenalty(items) {
   else if (by.ust && by.ustune && itemLook(by.ust).art === 'sweater' && itemLook(by.ustune).art === 'sweater') p += 1.5;
   // Under a dress only a thin fitted top works, not a sweater, blouse or shirt.
   if (by.ust && by.alt && itemLook(by.alt).art === 'dress' && !['longsleeve', 'tee', 'tank'].includes(itemLook(by.ust).art)) p += 2;
+  // A knit under a cardigan or another knit in the very same color: one flat block.
+  const KNITS = ['sweater', 'cardigan', 'vest', 'fleece', 'hoodie', 'sweatshirt'];
+  if (by.ust && by.ustune && by.ust.color && by.ust.color === by.ustune.color && KNITS.includes(itemLook(by.ust).art) && KNITS.includes(itemLook(by.ustune).art)) p += 1.5;
   // Same sand, olive or brown on pieces that sit next to each other.
   if (sameMud(by.dis, by.alt)) p += 1.5;
   if (sameMud(by.ust, by.dis) || sameMud(by.ustune, by.dis)) p += 1.2;
